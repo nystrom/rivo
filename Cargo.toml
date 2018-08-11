@@ -1,0 +1,30 @@
+[package]
+name = "rivo"
+version = "0.1.0"
+authors = ["Nate Nystrom <nate.nystrom@usi.ch>"]
+keywords = ["script", "scripting", "language", "ivo"]
+description = "A dynamically typed programming language with backward functions, implemented in Rust."
+license = "BSD-3"
+readme = "README.md"
+repository = "https://github.com/nystrom/rivo.git"
+homepage = "https://github.com/nystrom/rivo"
+
+[profile.release]
+opt-level = 3
+lto = true
+
+[dependencies]
+ansi_term = "*"
+clap = "*"
+env_logger = "*"
+lazy_static = "*"
+log = "*"
+range = "*"
+read_token = "*"
+rustc-serialize = "*"
+term = "*"
+num = "*"
+
+[dev-dependencies]
+pretty_assertions = "0.3.4"
+
