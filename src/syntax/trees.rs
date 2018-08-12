@@ -16,13 +16,13 @@ pub enum Lit {
     Nothing,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum FormulaFlag {
     Val,
     Var,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum MixfixFlag {
     Fun,
     Trait,
@@ -30,12 +30,12 @@ pub enum MixfixFlag {
 
 #[derive(Clone, Debug)]
 pub struct Param {
-    assoc: bool,
-    mode: CallingMode,
-    pat: Box<Located<Exp>>,
+    pub assoc: bool,
+    pub mode: CallingMode,
+    pub pat: Box<Located<Exp>>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum CallingMode {
     Input,
     Output,
@@ -59,10 +59,10 @@ pub enum Cmd {
 #[derive(Clone, Debug)]
 pub enum Def {
     FormulaDef { flag: FormulaFlag, formula: Box<Located<Exp>> },
-    MixfixDef { frame: symbols::Scope, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Param>, ret: Param },
-    ImportDef { import: Box<Import> },
+    MixfixDef { frame: symbols::Scope, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
+    ImportDef { import: Box<Located<Import>> },
 
-    AmbMixfixDef { flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Param>, ret: Param },
+    AmbMixfixDef { flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
     AmbImportDef { import: Box<Located<Import>> },
 }
 
@@ -98,8 +98,8 @@ pub enum Exp {
     GlobalFrame,
     CurrentFrame { scope: symbols::Scope },
 
-    AmbLayout { body: Vec<Located<Cmd>>, frame: symbols::Scope },
-    AmbTrait { body: Vec<Located<Cmd>>, frame: symbols::Scope },
+    AmbLayout { body: Vec<Located<Cmd>> },
+    AmbTrait { body: Vec<Located<Cmd>> },
     // Resolves to CurrentFrame or GlobalFrame.
     AmbFrame,
     AmbLambda { opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Exp>>, ret: Box<Located<Exp>> },
