@@ -1,13 +1,13 @@
 use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Debug)]
-pub struct Location {
+pub struct Loc {
     pub start: Pos,
     pub end: Pos,
     pub source: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Pos {
     pub offset: u32, // indexed from 0
     pub line: u32,   // indexed from 1
@@ -15,17 +15,17 @@ pub struct Pos {
 }
 
 pub const NO_POS: Pos = Pos { offset: 0, line: 1, column: 1 };
-pub const NO_LOC: Location = Location { start: NO_POS, end: NO_POS, source: None };
+pub const NO_LOC: Loc = Loc { start: NO_POS, end: NO_POS, source: None };
 
 #[derive(Clone, Debug)]
 pub struct Located<T> {
-    pub loc: Location,
+    pub loc: Loc,
     pub value: T,
 }
 
 impl<T> Located<T> {
     pub fn new(t: T, start: Pos, end: Pos, source: String) -> Located<T> {
-        Located { value: t, loc: Location { start: start, end: end, source: Some(source) } }
+        Located { value: t, loc: Loc { start: start, end: end, source: Some(source) } }
     }
 }
 
@@ -43,4 +43,3 @@ impl<T> DerefMut for Located<T> {
         &mut self.value
     }
 }
-
