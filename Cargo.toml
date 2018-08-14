@@ -33,7 +33,7 @@ read_token = "*"
 rustc-serialize = "*"
 term = "*"
 num = "*"
+unicode_categories = "*"
 
 [dev-dependencies]
 pretty_assertions = "0.3.4"
-
