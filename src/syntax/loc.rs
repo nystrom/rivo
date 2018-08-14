@@ -12,6 +12,9 @@ pub struct Pos {
     pub offset: u32, // indexed from 0
     pub line: u32,   // indexed from 1
     pub column: u32, // indexed from 1
+    pub offset: usize, // indexed from 0
+    pub line: usize,   // indexed from 1
+    pub column: usize, // indexed from 1
 }
 
 pub const NO_POS: Pos = Pos { offset: 0, line: 1, column: 1 };
@@ -26,6 +29,10 @@ pub struct Located<T> {
 impl<T> Located<T> {
     pub fn new(t: T, start: Pos, end: Pos, source: String) -> Located<T> {
         Located { value: t, loc: Loc { start: start, end: end, source: Some(source) } }
+    }
+
+    pub fn with_value<U>(&self, value: U) -> Located<U> {
+        Located { loc: self.loc.clone(), value }
     }
 }
 
