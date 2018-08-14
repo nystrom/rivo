@@ -1,17 +1,14 @@
 use std::ops::{Deref, DerefMut};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Loc {
     pub start: Pos,
     pub end: Pos,
     pub source: Option<String>,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Pos {
-    pub offset: u32, // indexed from 0
-    pub line: u32,   // indexed from 1
-    pub column: u32, // indexed from 1
     pub offset: usize, // indexed from 0
     pub line: usize,   // indexed from 1
     pub column: usize, // indexed from 1
@@ -20,7 +17,7 @@ pub struct Pos {
 pub const NO_POS: Pos = Pos { offset: 0, line: 1, column: 1 };
 pub const NO_LOC: Loc = Loc { start: NO_POS, end: NO_POS, source: None };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Located<T> {
     pub loc: Loc,
     pub value: T,

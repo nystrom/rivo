@@ -28,7 +28,7 @@ pub enum MixfixFlag {
     Trait,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Param {
     pub assoc: bool,
     pub mode: CallingMode,
@@ -41,7 +41,7 @@ pub enum CallingMode {
     Output,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Import {
     All { path: Box<Located<Exp>> },
     None { path: Box<Located<Exp>> },
@@ -50,13 +50,13 @@ pub enum Import {
     Renaming { path: Box<Located<Exp>>, name: Name, rename: Name },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Cmd {
     Def(Def),
     Exp(Exp),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Def {
     FormulaDef { flag: FormulaFlag, formula: Box<Located<Exp>> },
     MixfixDef { frame: symbols::Scope, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
@@ -66,7 +66,7 @@ pub enum Def {
     AmbImportDef { import: Box<Located<Import>> },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Exp {
     Layout { body: Vec<Located<Cmd>>, frame: symbols::Scope },
     Trait { body: Vec<Located<Cmd>>, frame: symbols::Scope },
@@ -124,7 +124,7 @@ pub enum Exp {
     MixfixRef { name: Name, lookup_ref: symbols::MixfixRef },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Root {
     Parsed { cmds: Vec<Located<Cmd>> },
     Prenamed { frame: symbols::Scope, cmds: Vec<Located<Cmd>> },
