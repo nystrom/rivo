@@ -64,17 +64,19 @@ impl<'a> Lexer<'a> {
 
     fn locate(&mut self, token: Token, len: usize) -> Located<Token> {
         // println!("locate offset={} len={}", self.offset, len);
+        use std::cmp::min;
+        
         Located {
             loc: Loc {
                 start: Pos {
-                    offset: self.offset + 1 - len,
+                    offset: self.offset - min(len, self.offset),
                     line: self.line,
-                    column: self.column + 1 - len,
+                    column: self.column - min(len, self.offset),
                 },
                 end: Pos {
-                    offset: self.offset,
+                    offset: self.offset - min(1, self.offset),
                     line: self.line,
-                    column: self.column,
+                    column: self.column - min(1, self.offset),
                 },
                 source: Some(String::from(self.source)),
             },
