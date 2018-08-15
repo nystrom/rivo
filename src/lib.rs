@@ -1,6 +1,8 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![allow(unreachable_code)]
+#![allow(unused_must_use)]
 
 extern crate ansi_term;
 extern crate term;
