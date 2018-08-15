@@ -28,8 +28,19 @@ impl<T> Located<T> {
         Located { value: t, loc: Loc { start: start, end: end, source: Some(source) } }
     }
 
+    pub fn with_loc(self, loc: &Loc) -> Located<T> {
+        Located { loc: loc.clone(), value: self.value }
+    }
+
     pub fn with_value<U>(&self, value: U) -> Located<U> {
         Located { loc: self.loc.clone(), value }
+    }
+
+    pub fn map<U, F>(self, f: F) -> Located<U> where F: Fn(T) -> U {
+        Located { loc: self.loc.clone(), value: f(self.value) }
+    }
+    pub fn map_with_loc<U, F>(self, f: F) -> Located<U> where F: Fn(Loc, T) -> U {
+        Located { loc: self.loc.clone(), value: f(self.loc.clone(), self.value) }
     }
 }
 
