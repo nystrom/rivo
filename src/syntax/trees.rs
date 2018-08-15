@@ -31,6 +31,7 @@ pub enum MixfixFlag {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Param {
     pub assoc: bool,
+    pub by_name: bool,
     pub mode: CallingMode,
     pub pat: Box<Located<Exp>>,
 }
@@ -68,10 +69,8 @@ pub enum Def {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Exp {
-    Layout { body: Vec<Located<Cmd>>, frame: symbols::Scope },
-    Trait { body: Vec<Located<Cmd>>, frame: symbols::Scope },
-
-    CallByName { pat: Box<Located<Exp>> },
+    Layout { cmds: Vec<Located<Cmd>>, frame: symbols::Scope },
+    Trait { cmds: Vec<Located<Cmd>>, frame: symbols::Scope },
 
     Union { es: Vec<Located<Exp>> },
     Intersect { es: Vec<Located<Exp>> },
@@ -98,8 +97,8 @@ pub enum Exp {
     GlobalFrame,
     CurrentFrame { scope: symbols::Scope },
 
-    AmbLayout { body: Vec<Located<Cmd>> },
-    AmbTrait { body: Vec<Located<Cmd>> },
+    AmbLayout { cmds: Vec<Located<Cmd>> },
+    AmbTrait { cmds: Vec<Located<Cmd>> },
     // Resolves to CurrentFrame or GlobalFrame.
     AmbFrame,
     AmbLambda { opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Exp>>, ret: Box<Located<Exp>> },

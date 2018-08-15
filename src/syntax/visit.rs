@@ -106,13 +106,10 @@ pub fn walk_def<'a, V: Rewriter<'a>>(v: &V, s: &'a Def) -> Def {
 }
 pub fn walk_exp<'a, V: Rewriter<'a>>(v: &V, s: &'a Exp) -> Exp {
     match *s {
-        Exp::Layout { ref body, ref frame } =>
-            Exp::Layout { body: walk_located_vec!(v, visit_cmd, body), frame: frame.clone() },
-        Exp::Trait { ref body, ref frame } =>
-            Exp::Trait { body: walk_located_vec!(v, visit_cmd, body), frame: frame.clone() },
-
-        Exp::CallByName { ref pat } =>
-            Exp::CallByName { pat: walk_located_box!(v, visit_exp, pat) },
+        Exp::Layout { ref cmds, ref frame } =>
+            Exp::Layout { cmds: walk_located_vec!(v, visit_cmd, cmds), frame: frame.clone() },
+        Exp::Trait { ref cmds, ref frame } =>
+            Exp::Trait { cmds: walk_located_vec!(v, visit_cmd, cmds), frame: frame.clone() },
 
         Exp::Union { ref es } =>
             Exp::Union { es: walk_located_vec!(v, visit_exp, es) },
@@ -158,10 +155,10 @@ pub fn walk_exp<'a, V: Rewriter<'a>>(v: &V, s: &'a Exp) -> Exp {
         Exp::CurrentFrame { ref scope } =>
             Exp::CurrentFrame { scope: scope.clone() },
 
-        Exp::AmbLayout { ref body } =>
-            Exp::AmbLayout { body: walk_located_vec!(v, visit_cmd, body) },
-        Exp::AmbTrait { ref body } =>
-            Exp::AmbTrait { body: walk_located_vec!(v, visit_cmd, body) },
+        Exp::AmbLayout { ref cmds } =>
+            Exp::AmbLayout { cmds: walk_located_vec!(v, visit_cmd, cmds) },
+        Exp::AmbTrait { ref cmds } =>
+            Exp::AmbTrait { cmds: walk_located_vec!(v, visit_cmd, cmds) },
         Exp::AmbFrame =>
             Exp::AmbFrame,
         Exp::AmbLambda { ref opt_guard, ref params, ref ret } =>
@@ -189,9 +186,9 @@ pub fn walk_exp<'a, V: Rewriter<'a>>(v: &V, s: &'a Exp) -> Exp {
 
 pub fn walk_param<'a, V: Rewriter<'a>>(v: &V, s: &'a Param) -> Param {
     match *s {
-        Param { assoc, mode, ref pat } => {
+        Param { assoc, by_name, mode, ref pat } => {
             let pat1 = walk_located!(v, visit_exp, pat);
-            Param { assoc: assoc, mode: mode, pat: Box::new(pat1) }
+            Param { assoc: assoc, by_name: by_name, mode: mode, pat: Box::new(pat1) }
         }
     }
 }
