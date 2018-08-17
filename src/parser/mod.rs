@@ -1,18 +1,12 @@
-use syntax::trees::{Root, Cmd, Exp, Lit};
-use syntax::loc::{Located, NO_LOC};
+use syntax::trees::Root;
+use syntax::loc::Located;
+use parser::parse::*;
 
-pub fn parse_string(input: String) -> Located<Root> {
-    let e = Located {
-        loc : NO_LOC,
-        value : Cmd::Exp(Exp::Literal { lit: Lit::Nothing })
-    };
-
-    Located {
-        loc : NO_LOC,
-        value : Root::Parsed { cmds: vec!(e) }
-    }
+pub fn parse_string(input: String) -> Result<Located<Root>, Located<String>> {
+    let mut p = Parser::new("(unknown)", input.as_str());
+    p.parse_bundle()
 }
 
-mod tokens;
-mod lex;
-mod parse;
+pub mod tokens;
+pub mod lex;
+pub mod parse;
