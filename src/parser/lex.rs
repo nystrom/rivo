@@ -12,6 +12,12 @@ use std::iter::Peekable;
 // Based on:
 // https://raw.githubusercontent.com/chr4/writing_an_interpreter_in_rust/master/src/lexer.rs
 
+// TODO: how do we minimize allocations, both here and in the parser.
+// Every clone() should be eliminated somehow.
+// First, we need Tokens to implement Copy, but since they contain
+// Strings we can't.
+// They could contain offsets into the input buffer, however.
+
 pub struct Lexer<'a> {
     // position of the lexer
     offset: usize,
@@ -65,7 +71,7 @@ impl<'a> Lexer<'a> {
     fn locate(&mut self, token: Token, len: usize) -> Located<Token> {
         // println!("locate offset={} len={}", self.offset, len);
         use std::cmp::min;
-        
+
         Located {
             loc: Loc {
                 start: Pos {
@@ -93,29 +99,28 @@ impl<'a> Lexer<'a> {
 
         self.newline();
 
+        let prev_can_end = self.prev_token_can_end_statement;
+        let next_token = self.next_token();
+
+        // println!("prev_can_end={:?} next={:?}", prev_can_end, next_token);
+
         // If we're in a block, generate a virtual semicolon.
+        let mut insert_semi = self.stack.is_empty();
         if let Some(Token::Lc) = self.stack.last() {
-            if self.prev_token_can_end_statement {
-                let next_token = self.next_token();
-                if can_start_statement(&next_token.value) {
-                    self.token_buffer.push(next_token);
-                    let semi = Located {
-                        loc: Loc { start: pos, end: pos, source: Some(String::from(self.source)) },
-                        value: Token::Semi
-                    };
-                    self.prev_token_can_end_statement = false;
-                    semi
-                }
-                else {
-                    next_token
-                }
-            }
-            else {
-                self.next_token()
-            }
+            insert_semi = true;
+        }
+
+        if insert_semi && prev_can_end && can_start_statement(&next_token.value) {
+            self.token_buffer.push(next_token);
+            let semi = Located {
+                loc: Loc { start: pos, end: pos, source: Some(String::from(self.source)) },
+                value: Token::Semi
+            };
+            self.prev_token_can_end_statement = false;
+            semi
         }
         else {
-            self.next_token()
+            next_token
         }
     }
 
@@ -125,7 +130,7 @@ impl<'a> Lexer<'a> {
         }
 
         let t = self.next_token();
-        self.token_buffer.push(t.clone());
+        self.token_buffer.insert(0, t.clone());
         t
     }
 
@@ -135,7 +140,9 @@ impl<'a> Lexer<'a> {
 
     pub fn next_token(&mut self) -> Located<Token> {
         if ! self.token_buffer.is_empty() {
-            return self.token_buffer.remove(0)
+            let x = self.token_buffer.remove(0);
+            self.prev_token_can_end_statement = can_end_statement(&x.value);
+            return x
         }
 
         let x = match self.peek_char() {
@@ -148,7 +155,6 @@ impl<'a> Lexer<'a> {
             },
             Some('\n') => {
                 self.read_char();
-                self.newline();
                 self.virtual_semi()
             },
             Some('/') => {
@@ -376,6 +382,7 @@ impl<'a> Lexer<'a> {
                 self.read_operator(ch)
             },
             Some(&ch) => {
+                self.read_char();
                 self.locate(Token::UnexpectedChar(ch), 1)
             },
             None => {
@@ -958,7 +965,8 @@ fn is_id_start(ch: char) -> bool {
 fn is_id_part(ch: char) -> bool {
     ch.is_number() ||
     ch.is_letter_modifier() ||
-    is_id_start(ch)
+    is_id_start(ch) ||
+    ch == '\''
 }
 
 fn is_op_char(ch: char) -> bool {
@@ -966,14 +974,14 @@ fn is_op_char(ch: char) -> bool {
         ch.is_symbol_currency() ||
         ch.is_symbol_math() ||
         ch.is_symbol_other() ||
-        ch.is_punctuation()
+        ch.is_punctuation() ||
+        ch == '^'
     ) && ! (
         ch == '(' || ch == ')' ||
         ch == '{' || ch == '}' ||
         ch == '[' || ch == ']' ||
         ch == ';' ||
         ch == ',' ||
-        ch == '.' ||
         ch.is_punctuation_open() ||
         ch.is_punctuation_close() ||
         is_id_part(ch)
@@ -1011,6 +1019,9 @@ fn can_end_statement(t: &Token) -> bool {
         Token::Lc => false,
         Token::Lp => false,
         Token::Lb => false,
+        Token::Rc => true,
+        Token::Rp => true,
+        Token::Rb => true,
         Token::Val => false,
         Token::Var => false,
         Token::Fun => false,
