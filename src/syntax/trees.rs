@@ -3,15 +3,27 @@ use num::rational::BigRational;
 
 use syntax::loc::Located;
 use syntax::names::Name;
-use syntax::symbols;
 
+// We embed name, mixfix, and scope ids in the AST.
+// These are used by the (Pre)namer.
+// The AST is not modified by the prenamer, but is rewritten
+// by the namer, replacing MixfixApply with Apply.
+pub type NameId = u32;
+pub type MixfixId = u32;
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+pub enum ScopeId {
+    Empty,
+    Global,
+    Scope(u32)
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Lit {
-    IntLit { value: BigInt },
-    RatLit { value: BigRational },
-    StringLit { value: String },
-    CharLit { value: char },
+    Int { value: BigInt },
+    Rat { value: BigRational },
+    String { value: String },
+    Char { value: char },
     Wildcard,
     Nothing,
 }
@@ -44,6 +56,9 @@ pub enum CallingMode {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Import {
+    // FIXME: redo to reflect the actual syntax.
+    // use Vec<Import> for the paths.
+    // add Frame for the base case import.
     All { path: Box<Located<Exp>> },
     None { path: Box<Located<Exp>> },
     Including { path: Box<Located<Exp>>, name: Name },
@@ -60,23 +75,27 @@ pub enum Cmd {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Def {
     FormulaDef { flag: FormulaFlag, formula: Box<Located<Exp>> },
-    MixfixDef { frame: symbols::Scope, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
-    ImportDef { import: Box<Located<Import>> },
-
-    AmbMixfixDef { flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
-    AmbImportDef { import: Box<Located<Import>> },
+    MixfixDef { scope_id: ScopeId, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
+    ImportDef { import: Box<Located<Exp>> },
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Exp {
-    Layout { cmds: Vec<Located<Cmd>>, frame: symbols::Scope },
-    Trait { cmds: Vec<Located<Cmd>>, frame: symbols::Scope },
+    Layout { scope_id: ScopeId , cmds: Vec<Located<Cmd>> },
+    Trait { scope_id: ScopeId, defs: Vec<Located<Def>> },
 
+    // A with B
     Union { es: Vec<Located<Exp>> },
+    // A @ B
     Intersect { es: Vec<Located<Exp>> },
 
-    Lambda { frame: symbols::Scope, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Exp>>, ret: Box<Located<Exp>> },
-    For { frame: symbols::Scope, generator: Box<Located<Exp>>, body: Box<Located<Exp>> },
+    // These should really be syntactic sugar, but we bake them in
+    // mainly to make AST building easier in the parser.
+    Tuple { es: Vec<Located<Exp>> },
+    List { es: Vec<Located<Exp>> },
+
+    Lambda { scope_id: ScopeId, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Exp>>, ret: Box<Located<Exp>> },
+    For { scope_id: ScopeId, generator: Box<Located<Exp>>, body: Box<Located<Exp>> },
 
     Ascribe { exp: Box<Located<Exp>>, pat: Box<Located<Exp>> },
     Arrow { arg: Box<Located<Exp>>, ret: Box<Located<Exp>> },
@@ -85,47 +104,28 @@ pub enum Exp {
     Bind { lhs: Box<Located<Exp>>, rhs: Box<Located<Exp>> },
 
     Select { exp: Box<Located<Exp>>, name: Name },
+
+    // e1.e2 is sugar for { import e1._, e2 }
+    Within { scope_id: ScopeId, e1: Box<Located<Exp>>, e2: Box<Located<Exp>> },
+
     Apply { fun: Box<Located<Exp>>, arg: Box<Located<Exp>> },
 
-    Var { name: Name, decls: Vec<symbols::Decl> },
-    Unknown { name: Name, decls: Vec<symbols::Decl> },
-    MixfixPart { name: Name, decls: Vec<symbols::Decl> },
-
-    Literal { lit: Lit },
+    Lit { lit: Lit },
 
     Native,
-    GlobalFrame,
-    CurrentFrame { scope: symbols::Scope },
 
-    AmbLayout { cmds: Vec<Located<Cmd>> },
-    AmbTrait { cmds: Vec<Located<Cmd>> },
     // Resolves to CurrentFrame or GlobalFrame.
-    AmbFrame,
-    AmbLambda { opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Exp>>, ret: Box<Located<Exp>> },
-    AmbFor { generator: Box<Located<Exp>>, body: Box<Located<Exp>> },
-    AmbWithin { e1: Box<Located<Exp>>, e2: Box<Located<Exp>> },
-
-    // A union gets desugared into a trait with public imports (i.e., exports).
-    // trait { fun x } with (A y)
-    // ->
-    // do { trait z = A y; trait { public import z._; fun x } }
-    AmbUnion { es: Vec<Located<Exp>> },
+    Frame { scope_id: ScopeId },
 
     // ambiguous names -- might resolve to variable names or parts of function names
     // or _ or ? or = as part of a function name or partial application
-    AmbName { name: Name },
+    Name { name: Name, id: NameId },
 
     // Parsed trees
-    MixfixApply { es: Vec<Located<Exp>> },
-
-    // Prenamed trees
-    VarRef { name: Name, lookup_ref: symbols::NameRef },
-    MixfixRef { name: Name, lookup_ref: symbols::MixfixRef },
+    MixfixApply { es: Vec<Located<Exp>>, id: MixfixId },
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Root {
-    Parsed { cmds: Vec<Located<Cmd>> },
-    Prenamed { frame: symbols::Scope, cmds: Vec<Located<Cmd>> },
-    Renamed { frame: symbols::Scope, cmds: Vec<Located<Cmd>> },
+    Bundle { scope_id: ScopeId, cmds: Vec<Located<Cmd>> },
 }

@@ -37,7 +37,15 @@ impl Loc {
         }
     }
 
-    pub fn span_from<T, U>(start: Located<T>, end: Located<U>) -> Loc {
+    pub fn from<T>(t: &Located<T>) -> Loc {
+        Loc {
+            start: t.loc.start,
+            end: t.loc.end,
+            source: t.loc.source.clone()
+        }
+    }
+
+    pub fn span_from<T, U>(start: &Located<T>, end: &Located<U>) -> Loc {
         Loc {
             start: start.loc.start,
             end: end.loc.end,
@@ -95,6 +103,7 @@ impl<T> Located<T> {
     pub fn map<U, F>(self, f: F) -> Located<U> where F: Fn(T) -> U {
         Located { loc: self.loc.clone(), value: f(self.value) }
     }
+
     pub fn map_with_loc<U, F>(self, f: F) -> Located<U> where F: Fn(Loc, T) -> U {
         Located { loc: self.loc.clone(), value: f(self.loc.clone(), self.value) }
     }

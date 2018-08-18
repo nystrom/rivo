@@ -414,6 +414,7 @@ impl<'a> Lexer<'a> {
             "native" => self.locate(Token::Native, text.len()),
             "for"    => self.locate(Token::For, text.len()),
             "with"   => self.locate(Token::With, text.len()),
+            "where"  => self.locate(Token::Where, text.len()),
             "import" => self.locate(Token::Import, text.len()),
             text     => self.locate(Token::Id(text.to_string()), text.len())
         }
@@ -1007,6 +1008,7 @@ fn mk_rat(i: BigInt, f: BigRational, e: i32) -> BigRational {
 
 fn can_start_statement(t: &Token) -> bool {
     match t {
+        Token::EOF => false,
         Token::Rb => false,
         Token::Rc => false,
         Token::Rp => false,
@@ -1016,12 +1018,10 @@ fn can_start_statement(t: &Token) -> bool {
 
 fn can_end_statement(t: &Token) -> bool {
     match t {
+        Token::EOF => false,
         Token::Lc => false,
         Token::Lp => false,
         Token::Lb => false,
-        Token::Rc => true,
-        Token::Rp => true,
-        Token::Rb => true,
         Token::Val => false,
         Token::Var => false,
         Token::Fun => false,
@@ -1044,6 +1044,7 @@ fn is_infix(t: &Token) -> bool {
         Token::Eq => true,
         Token::Semi => true,
         Token::With => true,
+        Token::Where => true,
         _ => false,
     }
 }
@@ -1057,7 +1058,6 @@ mod tests {
     use parser::tokens::Token;
     use parser::lex::Lexer;
 
-    #[macro_export]
     macro_rules! assert_tokens {
         ($s: expr, $($tokens: expr),+) => {
             let mut lex = Lexer::new("foo.ivo", $s);
@@ -1065,7 +1065,6 @@ mod tests {
         };
     }
 
-    #[macro_export]
     macro_rules! assert_tokens_with_lex {
         ($lex: expr, $token: expr) => {
             assert_eq!($lex.next_token().value, $token);
@@ -1126,7 +1125,7 @@ mod tests {
     #[test]
     fn test_keywords() {
         assert_tokens!(
-            "_ for fun import native val var trait with"
+            "_ for fun import native val var trait with where"
             , Token::Underscore
             , Token::For
             , Token::Fun
@@ -1136,6 +1135,7 @@ mod tests {
             , Token::Var
             , Token::Trait
             , Token::With
+            , Token::Where
             , Token::EOF
         );
     }
@@ -1309,20 +1309,9 @@ mod tests {
     #[test]
     fn test_strings() {
         assert_tokens!(
-            r#"
-            "hello"
-            ""
-            "\n"
-            "\x00"
-            "\u0000\u00000000"
-            " "
-            r"hello world\n"
-
-            r"one line \"
+            r#" "hello" "" "\n" "\x00" "\u0000\u00000000" " " r"hello world\n" r"one line \"
             another line
-            "
-
-            "#
+            " "#
             , Token::String(String::from("hello"))
             , Token::String(String::from(""))
             , Token::String(String::from("\n"))
