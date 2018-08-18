@@ -12,8 +12,9 @@ run:
 	cargo run
 
 test:
-	cargo test -- --nocapture
+	RUST_BACKTRACE=1 cargo test -- --nocapture
 
 test-loop:
-	-@cargo test -- --nocapture
-	-@fswatch -o src Cargo.toml tests | while read f; do cargo test -- --nocapture; done
+	-@make test
+	-@echo Waiting for changes...
+	-@fswatch -o src Cargo.toml tests | while read f; do make test; echo Waiting for changes...; done
