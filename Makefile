@@ -3,7 +3,8 @@ build:
 
 loop:
 	-@cargo build
-	-@fswatch -o src Cargo.toml tests | while read f; do cargo test; done
+	-@echo Waiting for changes...
+	-@fswatch -o src Cargo.toml tests | while read f; do cargo build; echo Waiting for changes...; done
 
 opt:
 	cargo build --release
