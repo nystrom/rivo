@@ -7,7 +7,7 @@ use parser::tokens::Token;
 use unicode_categories::UnicodeCategories;
 use std::str::Chars;
 use std::iter::Peekable;
-
+use std::collections::VecDeque;
 
 // Based on:
 // https://raw.githubusercontent.com/chr4/writing_an_interpreter_in_rust/master/src/lexer.rs
@@ -27,7 +27,7 @@ pub struct Lexer<'a> {
 
     // stack of brackets used for deciding when to insert a virtual ;
     stack: Vec<Token>,
-    token_buffer: Vec<Located<Token>>,
+    token_buffer: VecDeque<Located<Token>>,
     prev_token_can_end_statement: bool,
     input: Peekable<Chars<'a>>,
 }
@@ -40,7 +40,7 @@ impl<'a> Lexer<'a> {
             column: 1,
             source: source,
             stack: vec![],
-            token_buffer: vec![],
+            token_buffer: VecDeque::new(),
             prev_token_can_end_statement: false,
             input: input.chars().peekable()
         }
@@ -111,7 +111,7 @@ impl<'a> Lexer<'a> {
         }
 
         if insert_semi && prev_can_end && can_start_statement(&next_token.value) {
-            self.token_buffer.push(next_token);
+            self.token_buffer.push_back(next_token);
             let semi = Located {
                 loc: Loc { start: pos, end: pos, source: Some(String::from(self.source)) },
                 value: Token::Semi
@@ -125,7 +125,7 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn peek_token(&mut self) -> Located<Token> {
-        if let Some(t) = self.token_buffer.first() {
+        if let Some(t) = self.token_buffer.front() {
             return t.clone()
         }
 
@@ -139,10 +139,9 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn next_token(&mut self) -> Located<Token> {
-        if ! self.token_buffer.is_empty() {
-            let x = self.token_buffer.remove(0);
-            self.prev_token_can_end_statement = can_end_statement(&x.value);
-            return x
+        if let Some(t) = self.token_buffer.pop_front() {
+            self.prev_token_can_end_statement = can_end_statement(&t.value);
+            return t
         }
 
         let x = match self.peek_char() {
