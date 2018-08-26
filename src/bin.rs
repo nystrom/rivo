@@ -81,13 +81,16 @@ fn main() {
             }
         }
         else {
+            use ivo::syntax::pretty::ToDoc;
+
             let mut parser = Parser::new(source, input.as_str());
             let r = parser.parse_bundle();
             match r {
                 Ok(t) => {
-                    println!("{:#?}", *t);
+                    // println!("{:#?}", *t);
                     let s = SmokeTest.visit_root(&*t);
-                    println!("{:#?}", s);
+                    // println!("{:#?}", s);
+                    println!("{}", s.to_doc().pretty(80));
                 },
                 Err(msg) => {
                     println!("{}: parse error {}", msg.loc, *msg);

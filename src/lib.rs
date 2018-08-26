@@ -12,6 +12,7 @@ extern crate typed_arena;
 #[cfg(test)] #[macro_use] extern crate pretty_assertions;
 extern crate num;
 extern crate unicode_categories;
+extern crate pretty;
 
 pub mod parser;
 pub mod syntax;
