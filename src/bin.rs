@@ -6,11 +6,10 @@ use std::io::Read;
 use clap::{Arg, App};
 
 use ivo::parser::parse::Parser;
-use ivo::syntax::visit::Rewriter;
+use ivo::visit::rewrite::Rewriter;
 
 struct SmokeTest;
 impl<'a> Rewriter<'a> for SmokeTest {}
-
 
 fn main() {
     let matches = App::new("rivo")

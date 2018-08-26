@@ -16,3 +16,4 @@ extern crate unicode_categories;
 pub mod parser;
 pub mod syntax;
 pub mod namer;
+pub mod visit;
