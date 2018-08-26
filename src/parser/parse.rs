@@ -190,6 +190,12 @@ impl<'a> Parser<'a> {
         Err(lmsg)
     }
 
+    fn error_void(&mut self, loc: Loc, msg: &str) {
+        let lmsg = Located { loc: loc, value: String::from(msg) };
+        self.errors.push(lmsg.clone());
+        panic!("{:?}", lmsg);
+    }
+
     fn error_string<T>(&mut self, lmsg: Located<String>) -> PResult<T> {
         println!("{}", lmsg.value);
         self.errors.push(lmsg.clone());
@@ -201,26 +207,26 @@ impl<'a> Parser<'a> {
         let loc = t.loc.clone();
         match *t {
             Token::BadInt => {
-                self.error::<()>(loc, "bad integer literal");
+                self.error_void(loc, "bad integer literal");
             },
             Token::BadChar => {
-                self.error::<()>(loc, "bad character literal");
+                self.error_void(loc, "bad character literal");
             },
             Token::BadString => {
-                self.error::<()>(loc, "bad string literal");
+                self.error_void(loc, "bad string literal");
             },
             Token::BadRat => {
-                self.error::<()>(loc, "bad rational literal");
+                self.error_void(loc, "bad rational literal");
             },
             Token::BadComment => {
-                self.error::<()>(loc, "bad comment");
+                self.error_void(loc, "bad comment");
             },
             Token::UnexpectedChar(ch) => {
-                self.error::<()>(loc, "unexpected character");
+                self.error_void(loc, "unexpected character");
             },
             _ => {
                 self.last_token = self.lex.next_token();
-                println!("token {} {:?}", self.last_token.loc, self.last_token.value);
+                // println!("token {} {:?}", self.last_token.loc, self.last_token.value);
             },
         }
     }
@@ -962,7 +968,7 @@ impl<'a> Parser<'a> {
                     }
 
                     let opt_guard = self.parse_opt_guard()?;
-                    consume!(self, Token::Arrow);
+                    consume!(self, Token::Arrow)?;
                     let body = self.parse_exp()?;
 
                     Ok(Exp::Lambda {
@@ -1437,14 +1443,23 @@ fn make_param_from_exp(e: Located<Exp>, mode: CallingMode) -> Located<Param> {
     )
 }
 
+#[cfg(test)]
 mod tests {
     use parser::parse::Parser;
     use syntax::trees::*;
     use syntax::names::*;
     use syntax::loc::*;
 
-    macro_rules! loc {
-        ($p: pat) => ( Located { loc, value: $p } )
+    macro_rules! test_parse_ok {
+        ($input: expr, $ast: expr) => {
+            let mut p = Parser::new("foo.ivo", $input);
+            match p.parse_bundle() {
+                Ok(t) =>
+                    assert_eq!(*t, $ast),
+                Err(msg) =>
+                    assert_eq!(*msg, String::from("no error")),
+            }
+        };
     }
 
     #[test]
@@ -1540,18 +1555,6 @@ mod tests {
                 assert!(false)
             }
         }
-    }
-
-    macro_rules! test_parse_ok {
-        ($input: expr, $ast: expr) => {
-            let mut p = Parser::new("foo.ivo", $input);
-            match p.parse_bundle() {
-                Ok(t) =>
-                    assert_eq!(*t, $ast),
-                Err(msg) =>
-                    assert_eq!(*msg, String::from("no error")),
-            }
-        };
     }
 
     #[test]
