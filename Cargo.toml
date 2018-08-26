@@ -25,12 +25,7 @@ lto = true
 [dependencies]
 ansi_term = "*"
 clap = "*"
-env_logger = "*"
-lazy_static = "*"
-log = "*"
 range = "*"
-read_token = "*"
-rustc-serialize = "*"
 term = "*"
 num = "*"
 unicode_categories = "*"
