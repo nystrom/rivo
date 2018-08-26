@@ -1,7 +1,7 @@
 use syntax::names::Name;
 use syntax::trees::CallingMode;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Scope {
     EmptyScope,
     GlobalScope,
@@ -9,7 +9,7 @@ pub enum Scope {
     EnvScope(Env),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Env {
     pub decls: Vec<Decl>,
     pub imports: Vec<Import>,
@@ -17,7 +17,7 @@ pub struct Env {
     pub includes: Vec<Scope>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Import {
     All { path: Box<Scope> },
     None { path: Box<Scope> },
@@ -38,7 +38,7 @@ impl Decl {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Decl {
     Trait {
         scope: Box<Scope>,
@@ -77,42 +77,43 @@ pub enum Decl {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Ref {
     Name(NameRef),
     Mixfix(MixfixRef),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum NameRef {
     Lookup(LookupRef),
     LookupHere(LookupHereRef),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LookupRef {
     pub scope: Box<Scope>,
     pub name: Name,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LookupHereRef {
     pub scope: Box<Scope>,
     pub name: Name,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct MixfixRef {
     pub scope: Box<Scope>,
     pub parts: Vec<Part>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Part {
     Name(NameRef),
     Placeholder,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MixfixTree {
     Name(Name, Vec<Decl>),
     Apply(Box<MixfixTree>, Box<MixfixTree>),
