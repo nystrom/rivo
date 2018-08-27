@@ -1,4 +1,35 @@
 use syntax::trees::*;
+use syntax::loc::*;
+
+// Macros for walking the AST.
+macro_rules! walk_located {
+    ($visitor: expr, $method: ident, $located: expr) => {
+        Located { loc: $located.loc.clone(), value: $visitor.$method(&*$located) }
+    };
+}
+
+macro_rules! walk_located_vec {
+    ($visitor: expr, $method: ident, $list: expr) => {
+        $list.into_iter().map(
+            |located| walk_located!($visitor, $method, located)
+        ).collect()
+    };
+}
+
+macro_rules! walk_located_box {
+    ($visitor: expr, $method: ident, $located: expr) => {
+        Box::new(walk_located!($visitor, $method, $located))
+    };
+}
+
+macro_rules! walk_located_opt {
+    ($visitor: expr, $method: ident, $located: expr) => {
+        match $located {
+            Some(e) => Some(walk_located_box!($visitor, $method, e)),
+            None => None
+        }
+    };
+}
 
 /// Rewriter trait
 /// 'a is the lifetime of the source tree.
@@ -14,7 +45,7 @@ pub trait Rewriter<'a>: Sized {
                 self.leave_root(s1)
             },
             None => {
-                let s1 = walk::walk_root(self, s);
+                let s1 = self.walk_root(s);
                 self.leave_root(s1)
             },
         }
@@ -34,7 +65,7 @@ pub trait Rewriter<'a>: Sized {
                 self.leave_cmd(s1)
             },
             None => {
-                let s1 = walk::walk_cmd(self, s);
+                let s1 = self.walk_cmd(s);
                 self.leave_cmd(s1)
             },
         }
@@ -54,7 +85,7 @@ pub trait Rewriter<'a>: Sized {
                 self.leave_def(s1)
             },
             None => {
-                let s1 = walk::walk_def(self, s);
+                let s1 = self.walk_def(s);
                 self.leave_def(s1)
             },
         }
@@ -74,7 +105,7 @@ pub trait Rewriter<'a>: Sized {
                 self.leave_exp(s1)
             },
             None => {
-                let s1 = walk::walk_exp(self, s);
+                let s1 = self.walk_exp(s);
                 self.leave_exp(s1)
             },
         }
@@ -94,7 +125,7 @@ pub trait Rewriter<'a>: Sized {
                 self.leave_param(s1)
             },
             None => {
-                let s1 = walk::walk_param(self, s);
+                let s1 = self.walk_param(s);
                 self.leave_param(s1)
             },
         }
@@ -114,7 +145,7 @@ pub trait Rewriter<'a>: Sized {
                 self.leave_import(s1)
             },
             None => {
-                let s1 = walk::walk_import(self, s);
+                let s1 = self.walk_import(s);
                 self.leave_import(s1)
             },
         }
@@ -127,111 +158,76 @@ pub trait Rewriter<'a>: Sized {
     fn leave_import(&self, s: Import) -> Import {
         s
     }
-}
 
-mod walk {
-    use syntax::trees::*;
-    use syntax::loc::*;
-    use visit::rewrite::Rewriter;
-
-    macro_rules! walk_located {
-        ($visitor: expr, $method: ident, $located: expr) => {
-            Located { loc: $located.loc.clone(), value: $visitor.$method(&*$located) }
-        };
-    }
-
-    macro_rules! walk_located_vec {
-        ($visitor: expr, $method: ident, $list: expr) => {
-            $list.into_iter().map(
-                |located| walk_located!($visitor, $method, located)
-            ).collect()
-        };
-    }
-
-    macro_rules! walk_located_box {
-        ($visitor: expr, $method: ident, $located: expr) => {
-            Box::new(walk_located!($visitor, $method, $located))
-        };
-    }
-
-    macro_rules! walk_located_opt {
-        ($visitor: expr, $method: ident, $located: expr) => {
-            match $located {
-                Some(e) => Some(walk_located_box!($visitor, $method, e)),
-                None => None
-            }
-        };
-    }
-
-    pub fn walk_root<'a, V: Rewriter<'a>>(v: &V, s: &'a Root) -> Root {
+    fn walk_root(&self, s: &'a Root) -> Root {
         match *s {
             Root::Bundle { scope_id, ref cmds } => {
-                Root::Bundle { scope_id, cmds: walk_located_vec!(v, visit_cmd, &cmds) }
+                Root::Bundle { scope_id, cmds: walk_located_vec!(self, visit_cmd, &cmds) }
             },
         }
     }
 
-    pub fn walk_cmd<'a, V: Rewriter<'a>>(v: &V, s: &'a Cmd) -> Cmd {
+    fn walk_cmd(&self, s: &'a Cmd) -> Cmd {
         match *s {
-            Cmd::Def(ref d) => Cmd::Def(v.visit_def(&d)),
-            Cmd::Exp(ref e) => Cmd::Exp(v.visit_exp(&e))
+            Cmd::Def(ref d) => Cmd::Def(self.visit_def(&d)),
+            Cmd::Exp(ref e) => Cmd::Exp(self.visit_exp(&e))
         }
     }
 
-    pub fn walk_def<'a, V: Rewriter<'a>>(v: &V, s: &'a Def) -> Def {
+    fn walk_def(&self, s: &'a Def) -> Def {
         match *s {
             Def::FormulaDef { ref flag, ref formula } => {
-                Def::FormulaDef { flag: *flag, formula: walk_located_box!(v, visit_exp, formula) }
+                Def::FormulaDef { flag: *flag, formula: walk_located_box!(self, visit_exp, formula) }
             },
             Def::MixfixDef { scope_id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
-                Def::MixfixDef { scope_id, flag: *flag, name: name.clone(), opt_guard: walk_located_opt!(v, visit_exp, opt_guard), params: walk_located_vec!(v, visit_param, params), ret: walk_located!(v, visit_param, ret) }
+                Def::MixfixDef { scope_id, flag: *flag, name: name.clone(), opt_guard: walk_located_opt!(self, visit_exp, opt_guard), params: walk_located_vec!(self, visit_param, params), ret: walk_located!(self, visit_param, ret) }
             },
             Def::ImportDef { ref import } => {
-                Def::ImportDef { import: walk_located_box!(v, visit_exp, import) }
+                Def::ImportDef { import: walk_located_box!(self, visit_exp, import) }
             },
         }
 
     }
-    pub fn walk_exp<'a, V: Rewriter<'a>>(v: &V, s: &'a Exp) -> Exp {
+    fn walk_exp(&self, s: &'a Exp) -> Exp {
         match *s {
             Exp::Layout { scope_id, ref cmds } =>
-                Exp::Layout { scope_id, cmds: walk_located_vec!(v, visit_cmd, cmds) },
+                Exp::Layout { scope_id, cmds: walk_located_vec!(self, visit_cmd, cmds) },
             Exp::Trait { scope_id, ref defs } =>
-                Exp::Trait { scope_id, defs: walk_located_vec!(v, visit_def, defs) },
+                Exp::Trait { scope_id, defs: walk_located_vec!(self, visit_def, defs) },
 
             Exp::Union { ref es } =>
-                Exp::Union { es: walk_located_vec!(v, visit_exp, es) },
+                Exp::Union { es: walk_located_vec!(self, visit_exp, es) },
             Exp::Intersect { ref es } =>
-                Exp::Intersect { es: walk_located_vec!(v, visit_exp, es) },
+                Exp::Intersect { es: walk_located_vec!(self, visit_exp, es) },
 
             Exp::Tuple { ref es } =>
-                Exp::Tuple { es: walk_located_vec!(v, visit_exp, es) },
+                Exp::Tuple { es: walk_located_vec!(self, visit_exp, es) },
             Exp::List { ref es } =>
-                Exp::List { es: walk_located_vec!(v, visit_exp, es) },
+                Exp::List { es: walk_located_vec!(self, visit_exp, es) },
 
             Exp::Lambda { scope_id, ref opt_guard, ref params, ref ret } =>
-                Exp::Lambda { scope_id, opt_guard: walk_located_opt!(v, visit_exp, opt_guard), params: walk_located_vec!(v, visit_exp, params), ret: walk_located_box!(v, visit_exp, ret) },
+                Exp::Lambda { scope_id, opt_guard: walk_located_opt!(self, visit_exp, opt_guard), params: walk_located_vec!(self, visit_exp, params), ret: walk_located_box!(self, visit_exp, ret) },
             Exp::For { scope_id, ref generator, ref body } =>
-                Exp::For { scope_id, generator: walk_located_box!(v, visit_exp, generator), body: walk_located_box!(v, visit_exp, body) },
+                Exp::For { scope_id, generator: walk_located_box!(self, visit_exp, generator), body: walk_located_box!(self, visit_exp, body) },
 
             Exp::Ascribe { ref exp, ref pat } =>
-                Exp::Ascribe { exp: walk_located_box!(v, visit_exp, exp), pat: walk_located_box!(v, visit_exp, pat) },
+                Exp::Ascribe { exp: walk_located_box!(self, visit_exp, exp), pat: walk_located_box!(self, visit_exp, pat) },
             Exp::Arrow { ref arg, ref ret } =>
-                Exp::Arrow { arg: walk_located_box!(v, visit_exp, arg), ret: walk_located_box!(v, visit_exp, ret) },
+                Exp::Arrow { arg: walk_located_box!(self, visit_exp, arg), ret: walk_located_box!(self, visit_exp, ret) },
             Exp::Assign { ref lhs, ref rhs } =>
-                Exp::Assign { lhs: walk_located_box!(v, visit_exp, lhs), rhs: walk_located_box!(v, visit_exp, rhs) },
+                Exp::Assign { lhs: walk_located_box!(self, visit_exp, lhs), rhs: walk_located_box!(self, visit_exp, rhs) },
             Exp::Generator { ref lhs, ref rhs } =>
-                Exp::Generator { lhs: walk_located_box!(v, visit_exp, lhs), rhs: walk_located_box!(v, visit_exp, rhs) },
+                Exp::Generator { lhs: walk_located_box!(self, visit_exp, lhs), rhs: walk_located_box!(self, visit_exp, rhs) },
             Exp::Bind { ref lhs, ref rhs } =>
-                Exp::Bind { lhs: walk_located_box!(v, visit_exp, lhs), rhs: walk_located_box!(v, visit_exp, rhs) },
+                Exp::Bind { lhs: walk_located_box!(self, visit_exp, lhs), rhs: walk_located_box!(self, visit_exp, rhs) },
 
             Exp::Select { ref exp, ref name } =>
-                Exp::Select { exp: walk_located_box!(v, visit_exp, exp), name: name.clone() },
+                Exp::Select { exp: walk_located_box!(self, visit_exp, exp), name: name.clone() },
             Exp::Within { scope_id, ref e1, ref e2 } =>
-                Exp::Within { scope_id, e1: walk_located_box!(v, visit_exp, e1), e2: walk_located_box!(v, visit_exp, e2) },
+                Exp::Within { scope_id, e1: walk_located_box!(self, visit_exp, e1), e2: walk_located_box!(self, visit_exp, e2) },
 
             Exp::Apply { ref fun, ref arg } =>
-                Exp::Apply { fun: walk_located_box!(v, visit_exp, fun), arg: walk_located_box!(v, visit_exp, arg) },
+                Exp::Apply { fun: walk_located_box!(self, visit_exp, fun), arg: walk_located_box!(self, visit_exp, arg) },
 
             Exp::Lit { ref lit } =>
                 Exp::Lit { lit: lit.clone() },
@@ -245,35 +241,35 @@ mod walk {
                 Exp::Name { name: name.clone(), id },
 
             Exp::MixfixApply { ref es, id } =>
-                Exp::MixfixApply { es: walk_located_vec!(v, visit_exp, es), id },
+                Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es), id },
         }
     }
 
-    pub fn walk_param<'a, V: Rewriter<'a>>(v: &V, s: &'a Param) -> Param {
+    fn walk_param(&self, s: &'a Param) -> Param {
         match *s {
             Param { assoc, by_name, mode, ref pat } => {
-                let pat1 = walk_located!(v, visit_exp, pat);
+                let pat1 = walk_located!(self, visit_exp, pat);
                 Param { assoc: assoc, by_name: by_name, mode: mode, pat: Box::new(pat1) }
             }
         }
     }
 
-    pub fn walk_import<'a, V: Rewriter<'a>>(v: &V, s: &'a Import) -> Import {
+    fn walk_import(&self, s: &'a Import) -> Import {
         match *s {
             Import::All { ref path } => {
-                Import::All { path: walk_located_box!(v, visit_exp, path) }
+                Import::All { path: walk_located_box!(self, visit_exp, path) }
             }
             Import::None { ref path } => {
-                Import::None { path: walk_located_box!(v, visit_exp, path) }
+                Import::None { path: walk_located_box!(self, visit_exp, path) }
             }
             Import::Including { ref path, ref name } => {
-                Import::Including { path: walk_located_box!(v, visit_exp, path), name: name.clone() }
+                Import::Including { path: walk_located_box!(self, visit_exp, path), name: name.clone() }
             }
             Import::Excluding { ref path, ref name } => {
-                Import::Excluding { path: walk_located_box!(v, visit_exp, path), name: name.clone() }
+                Import::Excluding { path: walk_located_box!(self, visit_exp, path), name: name.clone() }
             }
             Import::Renaming { ref path, ref name, ref rename } => {
-                Import::Renaming { path: walk_located_box!(v, visit_exp, path), name: name.clone(), rename: rename.clone() }
+                Import::Renaming { path: walk_located_box!(self, visit_exp, path), name: name.clone(), rename: rename.clone() }
             }
         }
     }

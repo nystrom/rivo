@@ -42,8 +42,8 @@ pub enum MixfixFlag {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Param {
-    pub assoc: bool,
-    pub by_name: bool,
+    pub assoc: Assoc,
+    pub by_name: CallingConv,
     pub mode: CallingMode,
     pub pat: Box<Located<Exp>>,
 }
@@ -52,6 +52,18 @@ pub struct Param {
 pub enum CallingMode {
     Input,
     Output,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+pub enum Assoc {
+    NonAssoc,
+    Assoc,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+pub enum CallingConv {
+    ByValue,
+    ByName,
 }
 
 #[derive(Clone, Debug, PartialEq)]

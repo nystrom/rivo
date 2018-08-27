@@ -24,7 +24,7 @@ use std::collections::VecDeque;
 use syntax::loc::*;
 use syntax::names::*;
 use syntax::trees::ScopeId;
-use syntax::symbols::MixfixTree;
+use namer::symbols::MixfixTree;
 
 type Prio = u32;
 

@@ -265,12 +265,12 @@ impl ToDoc for Param {
             Param { assoc, by_name, mode, ref pat } => {
                 let pat1 = show_located_box!(pat);
                 let (left1, right1) = match by_name {
-                    false => (Doc::text("("), Doc::text(")")),
-                    true  => (Doc::text("{"), Doc::text("}")),
+                    CallingConv::ByValue => (Doc::text("("), Doc::text(")")),
+                    CallingConv::ByName  => (Doc::text("{"), Doc::text("}")),
                 };
                 let (left, right) = match assoc {
-                    false => (left1, right1),
-                    true  => (left1.clone().append(left1), right1.clone().append(right1)),
+                    Assoc::NonAssoc => (left1, right1),
+                    Assoc::Assoc  => (left1.clone().append(left1), right1.clone().append(right1)),
                 };
                 let mode1 = match mode {
                     CallingMode::Input => Doc::text("?"),

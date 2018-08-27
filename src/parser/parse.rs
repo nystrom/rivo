@@ -340,8 +340,8 @@ impl<'a> Parser<'a> {
                             let e = self.parse_tuple()?;
                             consume!(self, Token::Rp)?;
                             Ok(Param {
-                                assoc: false,
-                                by_name: false,
+                                assoc: Assoc::NonAssoc,
+                                by_name: CallingConv::ByValue,
                                 mode: CallingMode::Input,
                                 pat: Box::new(e),
                             })
@@ -350,8 +350,8 @@ impl<'a> Parser<'a> {
                             let e = self.parse_tuple()?;
                             consume!(self, Token::Rp)?;
                             Ok(Param {
-                                assoc: false,
-                                by_name: false,
+                                assoc: Assoc::NonAssoc,
+                                by_name: CallingConv::ByValue,
                                 mode: CallingMode::Input,
                                 pat: Box::new(e),
                             })
@@ -366,8 +366,8 @@ impl<'a> Parser<'a> {
                             let e = self.parse_tuple()?;
                             consume!(self, Token::Rc)?;
                             Ok(Param {
-                                assoc: false,
-                                by_name: true,
+                                assoc: Assoc::NonAssoc,
+                                by_name: CallingConv::ByName,
                                 mode: CallingMode::Input,
                                 pat: Box::new(e),
                             })
@@ -376,8 +376,8 @@ impl<'a> Parser<'a> {
                             let e = self.parse_tuple()?;
                             consume!(self, Token::Rc)?;
                             Ok(Param {
-                                assoc: false,
-                                by_name: true,
+                                assoc: Assoc::NonAssoc,
+                                by_name: CallingConv::ByName,
                                 mode: CallingMode::Input,
                                 pat: Box::new(e),
                             })
@@ -387,8 +387,8 @@ impl<'a> Parser<'a> {
                 _ => {
                     let e = self.parse_exp()?;
                     Ok(Param {
-                        assoc: false,
-                        by_name: false,
+                        assoc: Assoc::NonAssoc,
+                        by_name: CallingConv::ByValue,
                         mode: CallingMode::Input,
                         pat: Box::new(e),
                     })
@@ -449,8 +449,8 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
-                                            assoc: true,
-                                            by_name: false,
+                                            assoc: Assoc::Assoc,
+                                            by_name: CallingConv::ByValue,
                                             mode: CallingMode::Output,
                                             pat: Box::new(e),
                                         }
@@ -461,8 +461,8 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
-                                            assoc: true,
-                                            by_name: false,
+                                            assoc: Assoc::Assoc,
+                                            by_name: CallingConv::ByValue,
                                             mode: CallingMode::Input,
                                             pat: Box::new(e),
                                         }
@@ -472,8 +472,8 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
-                                            assoc: true,
-                                            by_name: false,
+                                            assoc: Assoc::Assoc,
+                                            by_name: CallingConv::ByValue,
                                             mode: CallingMode::Input,
                                             pat: Box::new(e),
                                         }
@@ -485,8 +485,8 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
-                                    assoc: false,
-                                    by_name: false,
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByValue,
                                     mode: CallingMode::Output,
                                     pat: Box::new(e),
                                 }
@@ -496,8 +496,8 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
-                                    assoc: false,
-                                    by_name: false,
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByValue,
                                     mode: CallingMode::Input,
                                     pat: Box::new(e),
                                 }
@@ -506,8 +506,8 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
-                                    assoc: false,
-                                    by_name: false,
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByValue,
                                     mode: CallingMode::Input,
                                     pat: Box::new(e),
                                 }
@@ -529,8 +529,8 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
-                                            assoc: true,
-                                            by_name: true,
+                                            assoc: Assoc::Assoc,
+                                            by_name: CallingConv::ByName,
                                             mode: CallingMode::Output,
                                             pat: Box::new(e),
                                         }
@@ -541,8 +541,8 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
-                                            assoc: true,
-                                            by_name: true,
+                                            assoc: Assoc::Assoc,
+                                            by_name: CallingConv::ByName,
                                             mode: CallingMode::Input,
                                             pat: Box::new(e),
                                         }
@@ -552,8 +552,8 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
-                                            assoc: true,
-                                            by_name: true,
+                                            assoc: Assoc::Assoc,
+                                            by_name: CallingConv::ByName,
                                             mode: CallingMode::Input,
                                             pat: Box::new(e),
                                         }
@@ -565,8 +565,8 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
-                                    assoc: false,
-                                    by_name: true,
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByName,
                                     mode: CallingMode::Output,
                                     pat: Box::new(e),
                                 }
@@ -576,8 +576,8 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
-                                    assoc: false,
-                                    by_name: true,
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByName,
                                     mode: CallingMode::Input,
                                     pat: Box::new(e),
                                 }
@@ -586,8 +586,8 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
-                                    assoc: false,
-                                    by_name: true,
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByName,
                                     mode: CallingMode::Input,
                                     pat: Box::new(e),
                                 }
@@ -629,10 +629,10 @@ impl<'a> Parser<'a> {
 
                 for param in params {
                     match *param {
-                        Param { assoc: true, .. } => {
+                        Param { assoc: Assoc::Assoc, .. } => {
                             return self.error(param.loc.clone(), "anonymous function parameter cannot be associative.")
                         },
-                        Param { by_name: true, .. } => {
+                        Param { by_name: CallingConv::ByName, .. } => {
                             return self.error(param.loc.clone(), "anonymous function parameter cannot be call-by-name.")
                         },
                         Param { mode: CallingMode::Output, .. } => {
@@ -1435,8 +1435,8 @@ fn make_params(elements: &Vec<MixfixParam>) -> Vec<Located<Param>> {
 fn make_param_from_exp(e: Located<Exp>, mode: CallingMode) -> Located<Param> {
     e.map_with_loc(
         |loc, e| Param {
-            assoc: false,
-            by_name: false,
+            assoc: Assoc::NonAssoc,
+            by_name: CallingConv::ByValue,
             mode: mode,
             pat: Box::new(Located{ loc: loc, value: e })
         }
@@ -1612,8 +1612,8 @@ mod tests {
                                     Located::new(
                                         NO_LOC,
                                         Param {
-                                            assoc: false,
-                                            by_name: false,
+                                            assoc: NonAssoc,
+                                            by_name: CallingConv::ByValue,
                                             mode: CallingMode::Input,
                                             pat: Box::new(
                                                 Located::new(
@@ -1630,8 +1630,8 @@ mod tests {
                                 ret: Located::new(
                                     NO_LOC,
                                     Param {
-                                        assoc: false,
-                                        by_name: false,
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
                                         mode: CallingMode::Input,
                                         pat: Box::new(
                                             Located::new(
