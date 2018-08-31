@@ -1,33 +1,105 @@
 use syntax::names::Name;
+use syntax::names::Part;
+use syntax::loc::*;
+use syntax::trees::Assoc;
+use syntax::trees::CallingConv;
 use syntax::trees::CallingMode;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+// During naming we form a graph of scopes, refs, and declarations.
+// Rather than represent the graph using references, we use
+// vector indices. This simplifies the memory management considerably.
+// We wrap the indexes some structs to improve type safety.
+
+use namer::namer::{LookupIndex, LookupHereIndex, MixfixIndex, EnvIndex};
+
+// need to implement hash for breadcrumbs to work.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Scope {
-    EmptyScope,
-    GlobalScope,
-    RefScope(Ref),
-    EnvScope(Env),
+    Empty,
+    Global,
+    Lookup(LookupIndex),
+    LookupHere(LookupHereIndex),
+    Mixfix(MixfixIndex),
+    Env(EnvIndex),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Env {
     pub decls: Vec<Decl>,
-    pub imports: Vec<Import>,
+    pub imports: Vec<Located<Import>>,
     pub parents: Vec<Scope>,
     pub includes: Vec<Scope>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Import {
-    All { path: Box<Scope> },
-    None { path: Box<Scope> },
-    Including { path: Box<Scope>, name: Name },
-    Excluding { path: Box<Scope>, name: Name },
-    Renaming { path: Box<Scope>, name: Name, rename: Name },
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Prio(usize);
+
+impl Env {
+    pub fn new() -> Env {
+        Env {
+            decls: vec![],
+            imports: vec![],
+            parents: vec![],
+            includes: vec![],
+        }
+    }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Import {
+    All { path: Scope },
+    None { path: Scope },
+    Including { path: Scope, name: Name },
+    Excluding { path: Scope, name: Name },
+    Renaming { path: Scope, name: Name, rename: Name },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Decl {
+    Trait {
+        scope: Scope,
+        name: Name,
+        param_assocs: Vec<Assoc>,
+        param_convs: Vec<CallingConv>,
+        param_modes: Vec<CallingMode>,
+        ret_mode: CallingMode,
+        ret_conv: CallingConv,
+        prio: Prio,
+        body: Vec<Scope>,
+    },
+
+    Fun {
+        scope: Scope,
+        name: Name,
+        param_assocs: Vec<Assoc>,
+        param_convs: Vec<CallingConv>,
+        param_modes: Vec<CallingMode>,
+        ret_mode: CallingMode,
+        ret_conv: CallingConv,
+        prio: Prio,
+    },
+
+    Val {
+        scope: Scope,
+        name: Name,
+    },
+
+    Var {
+        scope: Scope,
+        name: Name,
+    },
+
+    MixfixPart {
+        name: Name,
+        index: usize,
+        full: Name,
+        orig: Box<Decl>
+    },
+}
+
+
 impl Decl {
-    fn name(&self) -> Name {
+    pub fn name(&self) -> Name {
         match *self {
             Decl::Trait { ref name, .. } => name.clone(),
             Decl::Fun { ref name, .. } => name.clone(),
@@ -38,84 +110,31 @@ impl Decl {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Decl {
-    Trait {
-        scope: Box<Scope>,
-        name: Name,
-        assoc: Vec<bool>,
-        param_modes: Vec<CallingMode>,
-        ret_mode: CallingMode,
-        prio: u32,
-        body: Vec<Scope>,
-    },
-
-    Fun {
-        scope: Box<Scope>,
-        name: Name,
-        assoc: Vec<bool>,
-        param_modes: Vec<CallingMode>,
-        ret_mode: CallingMode,
-        prio: u32,
-    },
-
-    Val {
-        scope: Box<Scope>,
-        name: Name,
-    },
-
-    Var {
-        scope: Box<Scope>,
-        name: Name,
-    },
-
-    MixfixPart {
-        name: Name,
-        index: u32,
-        full: Name,
-        orig: Box<Decl>
-    },
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Ref {
-    Name(NameRef),
-    Mixfix(MixfixRef),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum NameRef {
-    Lookup(LookupRef),
-    LookupHere(LookupHereRef),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LookupRef {
-    pub scope: Box<Scope>,
+    pub scope: Scope,
     pub name: Name,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LookupHereRef {
-    pub scope: Box<Scope>,
+    pub scope: Scope,
     pub name: Name,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MixfixRef {
-    pub scope: Box<Scope>,
-    pub parts: Vec<Part>,
+    pub parts: Vec<MixfixPart>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Part {
-    Name(NameRef),
-    Placeholder,
+#[derive(Clone, Debug, PartialEq)]
+pub struct MixfixPart {
+    pub name_ref: Option<LookupRef>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MixfixTree {
-    Name(Name, Vec<Decl>),
+    Name(Name, Vec<Located<Decl>>),
     Apply(Box<MixfixTree>, Box<MixfixTree>),
     Exp,
 }
