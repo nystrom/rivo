@@ -25,13 +25,14 @@ use syntax::loc::*;
 use syntax::names::*;
 use syntax::trees::ScopeId;
 use namer::symbols::MixfixTree;
+use namer::symbols::Decl;
 
 type Prio = u32;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Exp(MixfixTree),
-    Name(Part),
+    Name(Part, Vec<Decl>),
     End,
 }
 
@@ -57,7 +58,7 @@ impl Term {
     fn from(t: &Token) -> Term {
         match t {
             Token::Exp(_) => Term::Primary,
-            Token::Name(x) => Term::Name(x.clone()),
+            Token::Name(x, _) => Term::Name(x.clone()),
             Token::End => Term::End,
         }
     }
@@ -98,20 +99,22 @@ impl LR {
         }
     }
 
-    pub fn parse(&mut self, input: &Vec<Token>) -> Vec<MixfixTree> {
-        if input.is_empty() {
-            return vec!()
-        }
-
-        if let Some(Token::Exp(ref e)) = input.first() {
-            if input.len() == 1 {
-                return vec!(e.clone())
-            }
-        }
-
-        // self.glr_parse(input)
-        vec![]
-    }
+    // pub fn parse(&mut self, input: &Vec<Token>) -> Vec<MixfixTree> {
+    //     if input.is_empty() {
+    //         return vec!()
+    //     }
+    //
+    //     if let Some(Token::Exp(ref e)) = input.first() {
+    //         if input.len() == 1 {
+    //             return vec!(e.clone())
+    //         }
+    //     }
+    //
+    //     GLR::new(self)
+    //
+    //     // self.glr_parse(input)
+    //     vec![]
+    // }
 
     fn get_items(&self, state: &State) -> Vec<Item> {
         match self.states.get(state.0) {
@@ -209,21 +212,6 @@ impl LR {
 
         new_items
     }
-
-/*
-    fn glr_parse(&mut self, input: Vec<Token>) -> Vec<MixfixTree> {
-        let start_item = Item {
-            dot: 0,
-            lhs: Nonterm::S,
-            rhs: vec!(Symbol::Nonterm(Nonterm::E), Symbol::Term(Term::End)),
-        }
-
-        let start_state = self.closure(vec!(start_item));
-
-        let mut glr = GLR::new(start_state);
-        glr.parse(input)
-    }
-    */
 }
 
 #[derive(Debug)]
@@ -273,8 +261,7 @@ impl GLR {
         self.do_shifts(&Token::End);
         println!("PARSING DONE");
 
-        let vs = self.get_accepts();
-        vs
+        self.get_accepts()
     }
 
 
@@ -420,6 +407,7 @@ impl GLR {
     fn make_semantic_value(values: &Vec<Token>, rhs: &Vec<Symbol>) -> Option<Token> {
         let mut args = Vec::new();
         let mut parts = Vec::new();
+        let mut decls = Vec::new();
 
         for (token, symbol) in values.iter().zip(rhs.iter()) {
             match (token, symbol) {
@@ -431,8 +419,11 @@ impl GLR {
                     args.push(e.clone());
                     parts.push(Part::Placeholder);
                 },
-                (Token::Name(x), Symbol::Term(Term::Name(y))) if x == y => {
+                (Token::Name(x, xdecls), Symbol::Term(Term::Name(y))) if x == y => {
                     parts.push(x.clone());
+                    for xd in xdecls {
+                        decls.push(xd);
+                    }
                 },
                 _ => {
                     return None;
@@ -476,7 +467,12 @@ impl GLR {
     fn merge_values(t1: &Token, t2: &Token) -> Option<Token> {
         match (t1, t2) {
             (Token::End, Token::End) => Some(Token::End),
-            (Token::Name(ref s1), Token::Name(ref s2)) if s1 == s2 => Some(t1.clone()),
+            (Token::Name(ref s1, ref decls1), Token::Name(ref s2, ref decls2)) if s1 == s2 => {
+                let mut decls = Vec::new();
+                for d in decls1 { decls.push(d.clone()); }
+                for d in decls2 { decls.push(d.clone()); }
+                Some(Token::Name(s1.clone(), decls))
+            },
             (Token::Exp(ref e1), Token::Exp(ref e2)) if e1 == e2 => Some(t1.clone()),
             _ => unimplemented!()
         }
@@ -519,11 +515,11 @@ impl GLR {
 
 #[cfg(test)]
 mod tests {
-    use namer::mixfix::*;
+    use namer::glr::*;
     use syntax::trees::ScopeId;
     use syntax::names::Part;
     use syntax::names::Name;
-    use syntax::symbols::*;
+    use namer::symbols::*;
 
     struct OneRule;
     impl OneRule {
@@ -641,7 +637,7 @@ mod tests {
         let mut glr = BinaryPlusLeft::glr();
         let input = vec![
             Token::Exp(MixfixTree::Exp),
-            Token::Name(Part::Op(String::from("+"))),
+            Token::Name(Part::Op(String::from("+")), vec![]),
             Token::Exp(MixfixTree::Exp),
         ];
         let output = glr.parse(input);
@@ -670,7 +666,7 @@ mod tests {
         let mut glr = BinaryPlusRight::glr();
         let input = vec![
             Token::Exp(MixfixTree::Exp),
-            Token::Name(Part::Op(String::from("+"))),
+            Token::Name(Part::Op(String::from("+")), vec![]),
             Token::Exp(MixfixTree::Exp),
         ];
         let output = glr.parse(input);
@@ -699,7 +695,7 @@ mod tests {
         let mut glr = BinaryPlusNone::glr();
         let input = vec![
             Token::Exp(MixfixTree::Exp),
-            Token::Name(Part::Op(String::from("+"))),
+            Token::Name(Part::Op(String::from("+")), vec![]),
             Token::Exp(MixfixTree::Exp),
         ];
         let output = glr.parse(input);
@@ -728,9 +724,9 @@ mod tests {
         let mut glr = BinaryPlusLeft::glr();
         let input = vec![
             Token::Exp(MixfixTree::Exp),
-            Token::Name(Part::Op(String::from("+"))),
+            Token::Name(Part::Op(String::from("+")), vec![]),
             Token::Exp(MixfixTree::Exp),
-            Token::Name(Part::Op(String::from("+"))),
+            Token::Name(Part::Op(String::from("+")), vec![]),
             Token::Exp(MixfixTree::Exp),
         ];
         let output = glr.parse(input);
@@ -775,9 +771,9 @@ mod tests {
         let mut glr = BinaryPlusRight::glr();
         let input = vec![
             Token::Exp(MixfixTree::Exp),
-            Token::Name(Part::Op(String::from("+"))),
+            Token::Name(Part::Op(String::from("+")), vec![]),
             Token::Exp(MixfixTree::Exp),
-            Token::Name(Part::Op(String::from("+"))),
+            Token::Name(Part::Op(String::from("+")), vec![]),
             Token::Exp(MixfixTree::Exp),
         ];
         let output = glr.parse(input);
