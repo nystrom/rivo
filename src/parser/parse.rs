@@ -8,6 +8,12 @@ use syntax::names::*;
 use parser::tokens::*;
 use parser::lex::Lexer;
 
+// TODO: parse groups of definitions directly rather than building a dummy trait.
+// TODO: rename Trait to Record and add a tag, generate by the parser.
+// TODO: support pragmas. Add pragmas to the Def ASTs.
+// #(prio 0)
+// pragmas must be stable paths
+
 // Turns a PResult<T> into a PResult<Located<T>>.
 macro_rules! located_ok {
     ($parser: expr, $body: expr) => {
@@ -111,9 +117,9 @@ pub struct Parser<'a> {
     pub lex: Lexer<'a>,
     pub last_token: Located<Token>,
     pub errors: Vec<Located<String>>,
-    pub next_name_id: u32,
-    pub next_mixfix_id: u32,
-    pub next_scope_id: u32,
+    pub next_name_id: usize,
+    pub next_mixfix_id: usize,
+    pub next_scope_id: usize,
     pub scope_stack: Vec<ScopeId>,
 }
 
@@ -929,7 +935,10 @@ impl<'a> Parser<'a> {
                 Token::Arrow => {
                     self.eat();
                     let right = self.parse_exp()?;
-                    Ok(Exp::Arrow { arg: Box::new(left), ret: Box::new(right) })
+                    Ok(Exp::Arrow {
+                        arg: Box::new(left),
+                        ret: Box::new(right)
+                    })
                 },
                 _ => {
                     Ok(left.value)
@@ -1304,6 +1313,9 @@ impl<'a> Parser<'a> {
                             Cmd::Def(ref d) => {
                                 all_arrows = false;
                             },
+                            Cmd::Exp(ref e @ Exp::Lambda { .. }) => {
+                                all_defs = false;
+                            },
                             Cmd::Exp(ref e @ Exp::Arrow { .. }) => {
                                 all_defs = false;
                             },
@@ -1612,7 +1624,7 @@ mod tests {
                                     Located::new(
                                         NO_LOC,
                                         Param {
-                                            assoc: NonAssoc,
+                                            assoc: Assoc::NonAssoc,
                                             by_name: CallingConv::ByValue,
                                             mode: CallingMode::Input,
                                             pat: Box::new(

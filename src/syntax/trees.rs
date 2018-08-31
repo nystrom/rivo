@@ -8,14 +8,14 @@ use syntax::names::Name;
 // These are used by the (Pre)namer.
 // The AST is not modified by the prenamer, but is rewritten
 // by the namer, replacing MixfixApply with Apply.
-pub type NameId = u32;
-pub type MixfixId = u32;
+pub type NameId = usize;
+pub type MixfixId = usize;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum ScopeId {
     Empty,
     Global,
-    Scope(u32)
+    Scope(usize)
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
