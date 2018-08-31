@@ -25,12 +25,14 @@ lto = true
 [dependencies]
 ansi_term = "*"
 clap = "*"
-range = "*"
 term = "*"
 num = "*"
 unicode_categories = "*"
+lazy_static = "*"
+lazycell = "*"
 typed-arena = "*"
 pretty = "*"
+rpds = "*"
 
 [dev-dependencies]
 pretty_assertions = "0.3.4"
