@@ -41,6 +41,10 @@ macro_rules! show_located_opt {
 
 pub trait ToDoc {
     fn to_doc(&self) -> Doc<BoxDoc<()>>;
+
+    fn pretty(&self, width: usize) -> String {
+        format!("{}", self.to_doc().pretty(width))
+    }
 }
 
 impl ToDoc for Name {
@@ -277,41 +281,6 @@ impl ToDoc for Param {
                     CallingMode::Output => Doc::text("!"),
                 };
                 left.append(mode1).append(Doc::space()).append(pat1).append(right)
-            }
-        }
-    }
-}
-
-impl ToDoc for Import {
-    fn to_doc(&self) -> Doc<BoxDoc<()>> {
-        match *self {
-            Import::All { ref path } => {
-                path.to_doc()
-                .append(Doc::text("."))
-                .append(Doc::text("_"))
-            }
-            Import::None { ref path } => {
-                path.to_doc()
-                .append(Doc::text("."))
-                .append(Doc::text("()"))
-            }
-            Import::Including { ref path, ref name } => {
-                path.to_doc()
-                .append(Doc::text("."))
-                .append(name.to_doc())
-            }
-            Import::Excluding { ref path, ref name } => {
-                path.to_doc()
-                .append(Doc::text(".("))
-                .append(name.to_doc())
-                .append(Doc::text(" -> _)"))
-            }
-            Import::Renaming { ref path, ref name, ref rename } => {
-                path.to_doc()
-                .append(Doc::text(".("))
-                .append(name.to_doc())
-                .append(Doc::text(" -> "))
-                .append(rename.to_doc()).append(Doc::text(")"))
             }
         }
     }

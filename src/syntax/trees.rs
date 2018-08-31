@@ -67,18 +67,6 @@ pub enum CallingConv {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Import {
-    // FIXME: redo to reflect the actual syntax.
-    // use Vec<Import> for the paths.
-    // add Frame for the base case import.
-    All { path: Box<Located<Exp>> },
-    None { path: Box<Located<Exp>> },
-    Including { path: Box<Located<Exp>>, name: Name },
-    Excluding { path: Box<Located<Exp>>, name: Name },
-    Renaming { path: Box<Located<Exp>>, name: Name, rename: Name },
-}
-
-#[derive(Clone, Debug, PartialEq)]
 pub enum Cmd {
     Def(Def),
     Exp(Exp),
