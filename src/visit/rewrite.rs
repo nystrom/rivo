@@ -139,26 +139,6 @@ pub trait Rewriter<'a>: Sized {
         s
     }
 
-    fn visit_import(&self, s: &'a Import) -> Import {
-        match self.enter_import(s) {
-            Some(s1) => {
-                self.leave_import(s1)
-            },
-            None => {
-                let s1 = self.walk_import(s);
-                self.leave_import(s1)
-            },
-        }
-    }
-
-    fn enter_import(&self, s: &'a Import) -> Option<Import> {
-        None
-    }
-
-    fn leave_import(&self, s: Import) -> Import {
-        s
-    }
-
     fn walk_root(&self, s: &'a Root) -> Root {
         match *s {
             Root::Bundle { scope_id, ref cmds } => {
@@ -250,26 +230,6 @@ pub trait Rewriter<'a>: Sized {
             Param { assoc, by_name, mode, ref pat } => {
                 let pat1 = walk_located!(self, visit_exp, pat);
                 Param { assoc: assoc, by_name: by_name, mode: mode, pat: Box::new(pat1) }
-            }
-        }
-    }
-
-    fn walk_import(&self, s: &'a Import) -> Import {
-        match *s {
-            Import::All { ref path } => {
-                Import::All { path: walk_located_box!(self, visit_exp, path) }
-            }
-            Import::None { ref path } => {
-                Import::None { path: walk_located_box!(self, visit_exp, path) }
-            }
-            Import::Including { ref path, ref name } => {
-                Import::Including { path: walk_located_box!(self, visit_exp, path), name: name.clone() }
-            }
-            Import::Excluding { ref path, ref name } => {
-                Import::Excluding { path: walk_located_box!(self, visit_exp, path), name: name.clone() }
-            }
-            Import::Renaming { ref path, ref name, ref rename } => {
-                Import::Renaming { path: walk_located_box!(self, visit_exp, path), name: name.clone(), rename: rename.clone() }
             }
         }
     }
