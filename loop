@@ -2,18 +2,10 @@
 
 eval "$@"
 
-if [ $? -ne 0 ]; then
-  exit $?
-fi
-
 echo Waiting for changes...
 
 fswatch -o src Cargo.toml tests | while read f; do
   eval "$@"
-
-  if [ $? -ne 0 ]; then
-    exit $?
-  fi
 
   echo Waiting for changes...
 done
