@@ -968,17 +968,21 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
             },
 
             Exp::Name { name, id } => {
-                let _lookup = self.lookup_here(*id, ctx.scope, name.clone());
+                self.scopes.insert(*id, ctx.scope);
+
+                // let _lookup = self.lookup_here(*id, ctx.scope, name.clone());
                 self.walk_exp(s, ctx, loc)
             },
 
             Exp::MixfixApply { es, id } => {
+                self.scopes.insert(*id, ctx.scope);
+
                 let new_node = self.walk_exp(s, &ctx, &loc);
                 match &new_node {
-                    Exp::MixfixApply { es, id } => {
-                        let _lookup = self.parse_mixfix(*id, ctx.scope, es);
-                        new_node
-                    },
+                    // Exp::MixfixApply { es, id } => {
+                    //     let _lookup = self.parse_mixfix(*id, ctx.scope, es);
+                    //     new_node
+                    // },
                     _ => {
                         new_node
                     },

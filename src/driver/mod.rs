@@ -239,6 +239,9 @@ impl Interpreter {
     }
 
     pub fn name_bundle(&mut self, index: BundleIndex) -> Result<(), Located<String>> {
+        use namer::rename::Renamer;
+        use visit::rewrite::Rewriter;
+
         let bundle = &self.bundles[index.0];
 
         match bundle {
@@ -266,6 +269,13 @@ impl Interpreter {
 
                 {
                     let mut graph = g.clone();
+
+                    let mut renamer = Renamer {
+                        graph: &mut graph,
+                        driver: self
+                    };
+
+                    renamer.visit_root(&tree1.value, &scopes1, &tree1.loc);
                     graph.solve(self)?;
 
                     let new_bundle = Bundle::Named { tree: tree1, envs: graph.get_envs(), scopes: scopes1 };

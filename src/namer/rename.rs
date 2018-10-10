@@ -48,16 +48,18 @@ pub struct Renamer<'a> {
 }
 
 // visit any node that has a node id.
-impl<'tables, 'a> Rewriter<'a, Scope> for Renamer<'tables> {
-    fn visit_exp(&mut self, s: &'a Exp, scope: &Scope, loc: &Loc) -> Exp {
+impl<'tables, 'a> Rewriter<'a, HashMap<NodeId, Scope>> for Renamer<'tables> {
+    fn visit_exp(&mut self, s: &'a Exp, scopes: &HashMap<NodeId, Scope>, loc: &Loc) -> Exp {
         match s {
             Exp::Name { name, id } => {
+                let scope = scopes.get(id).unwrap();
                 let _lookup = self.lookup_here(*id, *scope, name.clone());
-                self.walk_exp(s, ctx, loc)
+                self.walk_exp(s, scopes, loc)
             },
 
             Exp::MixfixApply { es, id } => {
-                let new_node = self.walk_exp(s, &ctx, &loc);
+                let scope = scopes.get(id).unwrap();
+                let new_node = self.walk_exp(s, scopes, &loc);
                 match &new_node {
                     Exp::MixfixApply { es, id } => {
                         let _lookup = self.parse_mixfix(*id, *scope, es);
@@ -70,7 +72,7 @@ impl<'tables, 'a> Rewriter<'a, Scope> for Renamer<'tables> {
             },
 
             _ => {
-                self.walk_exp(s, ctx, loc)
+                self.walk_exp(s, scopes, loc)
             },
         }
     }
