@@ -8,15 +8,11 @@ license = "BSD-3"
 readme = "README.md"
 repository = "https://github.com/nystrom/rivo.git"
 homepage = "https://github.com/nystrom/rivo"
-autobins = false
+# build = "build.rs"
 
 [lib]
 name = "ivo"
 path = "src/lib.rs"
-
-[[bin]]
-name = "rivo"
-path = "src/bin.rs"
 
 [profile.release]
 opt-level = 3
@@ -33,6 +29,11 @@ lazycell = "*"
 typed-arena = "*"
 pretty = "*"
 rpds = "*"
+trace = { git = "https://github.com/nystrom/trace.git" }
+# menhir = "*"
 
 [dev-dependencies]
 pretty_assertions = "0.3.4"
+
+# [build-dependencies]
+# menhir = "*"

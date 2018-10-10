@@ -2,10 +2,17 @@ use std::ops::{Deref, DerefMut};
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum Source {
+    StringSource(String),
+    FileSource(String),
+    NoSource
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct Loc {
     pub start: Pos,
     pub end: Pos,
-    pub source: Option<String>,
+    pub source: Source,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -16,7 +23,7 @@ pub struct Pos {
 }
 
 pub const NO_POS: Pos = Pos { offset: 0, line: 1, column: 1 };
-pub const NO_LOC: Loc = Loc { start: NO_POS, end: NO_POS, source: None };
+pub const NO_LOC: Loc = Loc { start: NO_POS, end: NO_POS, source: Source::NoSource };
 
 impl Loc {
     pub fn no_loc() -> Loc { NO_LOC }
@@ -25,7 +32,7 @@ impl Loc {
         Loc {
             start: NO_POS,
             end: NO_POS,
-            source: Some(String::from("Prelude.ivo"))
+            source: Source::FileSource(String::from("Prelude.ivo"))
         }
     }
 
@@ -62,11 +69,19 @@ pub struct Located<T> {
 
 impl fmt::Display for Loc {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.source {
-            Some(ref src) =>
-                write!(f, "{}:{}-{}", src, self.start, self.end),
-            None =>
-                write!(f, "(input):{}-{}", self.start, self.end),
+        write!(f, "{}:{}-{}", self.source, self.start, self.end)
+    }
+}
+
+impl fmt::Display for Source {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Source::FileSource(ref src) =>
+                write!(f, "{}", src),
+            Source::StringSource(_) =>
+                write!(f, "(input)"),
+            Source::NoSource =>
+                write!(f, "(unknown)"),
         }
     }
 }

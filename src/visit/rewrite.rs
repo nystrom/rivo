@@ -2,30 +2,37 @@ use syntax::trees::*;
 use syntax::loc::*;
 
 // Macros for walking the AST.
+#[macro_export]
 macro_rules! walk_located {
-    ($visitor: expr, $method: ident, $located: expr) => {
-        Located { loc: $located.loc.clone(), value: $visitor.$method(&*$located) }
+    ($visitor: expr, $method: ident, $located: expr, $ctx: expr) => {
+        Located {
+            loc: $located.loc.clone(),
+            value: $visitor.$method(&$located.value, $ctx, &$located.loc)
+        }
     };
 }
 
+#[macro_export]
 macro_rules! walk_located_vec {
-    ($visitor: expr, $method: ident, $list: expr) => {
+    ($visitor: expr, $method: ident, $list: expr, $ctx: expr) => {
         $list.into_iter().map(
-            |located| walk_located!($visitor, $method, located)
+            |located| walk_located!($visitor, $method, located, $ctx)
         ).collect()
     };
 }
 
+#[macro_export]
 macro_rules! walk_located_box {
-    ($visitor: expr, $method: ident, $located: expr) => {
-        Box::new(walk_located!($visitor, $method, $located))
+    ($visitor: expr, $method: ident, $located: expr, $ctx: expr) => {
+        Box::new(walk_located!($visitor, $method, $located, $ctx))
     };
 }
 
+#[macro_export]
 macro_rules! walk_located_opt {
-    ($visitor: expr, $method: ident, $located: expr) => {
+    ($visitor: expr, $method: ident, $located: expr, $ctx: expr) => {
         match $located {
-            Some(e) => Some(walk_located_box!($visitor, $method, e)),
+            Some(e) => Some(walk_located_box!($visitor, $method, e, $ctx)),
             None => None
         }
     };
@@ -33,202 +40,122 @@ macro_rules! walk_located_opt {
 
 /// Rewriter trait
 /// 'a is the lifetime of the source tree.
-/// The protocol is as follows:
-/// if enter_xxx returns Some(n), the new node is returned.
-/// if enter_xxx returns None, the children are visited with walk_xxx,
-/// creating a new node.
-/// leave_xxx is called with the new node.
-pub trait Rewriter<'a>: Sized {
-    fn visit_root(&self, s: &'a Root) -> Root {
-        match self.enter_root(s) {
-            Some(s1) => {
-                self.leave_root(s1)
-            },
-            None => {
-                let s1 = self.walk_root(s);
-                self.leave_root(s1)
-            },
-        }
+/// Instances should override visit_xxx and leave walk_xxx alone.
+pub trait Rewriter<'a, Ctx>: Sized {
+    fn visit_root(&mut self, s: &'a Root, ctx: &Ctx, loc: &Loc) -> Root {
+        self.walk_root(s, ctx, loc)
     }
 
-    fn enter_root(&self, s: &'a Root) -> Option<Root> {
-        None
+    fn visit_cmd(&mut self, s: &'a Cmd, ctx: &Ctx, loc: &Loc) -> Cmd {
+        self.walk_cmd(s, ctx, loc)
     }
 
-    fn leave_root(&self, s: Root) -> Root {
-        s
+    fn visit_def(&mut self, s: &'a Def, ctx: &Ctx, loc: &Loc) -> Def {
+        self.walk_def(s, ctx, loc)
     }
 
-    fn visit_cmd(&self, s: &'a Cmd) -> Cmd {
-        match self.enter_cmd(s) {
-            Some(s1) => {
-                self.leave_cmd(s1)
-            },
-            None => {
-                let s1 = self.walk_cmd(s);
-                self.leave_cmd(s1)
-            },
-        }
+    fn visit_exp(&mut self, s: &'a Exp, ctx: &Ctx, loc: &Loc) -> Exp {
+        self.walk_exp(s, ctx, loc)
     }
 
-    fn enter_cmd(&self, s: &'a Cmd) -> Option<Cmd> {
-        None
+    fn visit_param(&mut self, s: &'a Param, ctx: &Ctx, loc: &Loc) -> Param {
+        self.walk_param(s, ctx, loc)
     }
 
-    fn leave_cmd(&self, s: Cmd) -> Cmd {
-        s
-    }
-
-    fn visit_def(&self, s: &'a Def) -> Def {
-        match self.enter_def(s) {
-            Some(s1) => {
-                self.leave_def(s1)
-            },
-            None => {
-                let s1 = self.walk_def(s);
-                self.leave_def(s1)
-            },
-        }
-    }
-
-    fn enter_def(&self, s: &'a Def) -> Option<Def> {
-        None
-    }
-
-    fn leave_def(&self, s: Def) -> Def {
-        s
-    }
-
-    fn visit_exp(&self, s: &'a Exp) -> Exp {
-        match self.enter_exp(s) {
-            Some(s1) => {
-                self.leave_exp(s1)
-            },
-            None => {
-                let s1 = self.walk_exp(s);
-                self.leave_exp(s1)
-            },
-        }
-    }
-
-    fn enter_exp(&self, s: &'a Exp) -> Option<Exp> {
-        None
-    }
-
-    fn leave_exp(&self, s: Exp) -> Exp {
-        s
-    }
-
-    fn visit_param(&self, s: &'a Param) -> Param {
-        match self.enter_param(s) {
-            Some(s1) => {
-                self.leave_param(s1)
-            },
-            None => {
-                let s1 = self.walk_param(s);
-                self.leave_param(s1)
-            },
-        }
-    }
-
-    fn enter_param(&self, s: &'a Param) -> Option<Param> {
-        None
-    }
-
-    fn leave_param(&self, s: Param) -> Param {
-        s
-    }
-
-    fn walk_root(&self, s: &'a Root) -> Root {
+    fn walk_root(&mut self, s: &'a Root, ctx: &Ctx, loc: &Loc) -> Root {
         match *s {
-            Root::Bundle { scope_id, ref cmds } => {
-                Root::Bundle { scope_id, cmds: walk_located_vec!(self, visit_cmd, &cmds) }
+            Root::Bundle { id, ref cmds } => {
+                Root::Bundle { id, cmds: walk_located_vec!(self, visit_cmd, &cmds, ctx) }
             },
         }
     }
 
-    fn walk_cmd(&self, s: &'a Cmd) -> Cmd {
+    fn walk_cmd(&mut self, s: &'a Cmd, ctx: &Ctx, loc: &Loc) -> Cmd {
         match *s {
-            Cmd::Def(ref d) => Cmd::Def(self.visit_def(&d)),
-            Cmd::Exp(ref e) => Cmd::Exp(self.visit_exp(&e))
+            Cmd::Def(ref d) => {
+                Cmd::Def(self.visit_def(&d, ctx, loc))
+            },
+            Cmd::Exp(ref e) => {
+                Cmd::Exp(self.visit_exp(&e, ctx, loc))
+            }
         }
     }
 
-    fn walk_def(&self, s: &'a Def) -> Def {
+    fn walk_def(&mut self, s: &'a Def, ctx: &Ctx, loc: &Loc) -> Def {
         match *s {
             Def::FormulaDef { ref flag, ref formula } => {
-                Def::FormulaDef { flag: *flag, formula: walk_located_box!(self, visit_exp, formula) }
+                Def::FormulaDef { flag: *flag, formula: walk_located_box!(self, visit_exp, formula, ctx) }
             },
-            Def::MixfixDef { scope_id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
-                Def::MixfixDef { scope_id, flag: *flag, name: name.clone(), opt_guard: walk_located_opt!(self, visit_exp, opt_guard), params: walk_located_vec!(self, visit_param, params), ret: walk_located!(self, visit_param, ret) }
+            Def::MixfixDef { id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
+                Def::MixfixDef { id, flag: *flag, name: name.clone(), opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), params: walk_located_vec!(self, visit_param, params, ctx), ret: walk_located!(self, visit_param, ret, ctx) }
             },
             Def::ImportDef { ref import } => {
-                Def::ImportDef { import: walk_located_box!(self, visit_exp, import) }
+                Def::ImportDef { import: walk_located_box!(self, visit_exp, import, ctx) }
             },
         }
-
     }
-    fn walk_exp(&self, s: &'a Exp) -> Exp {
+
+    fn walk_exp(&mut self, s: &'a Exp, ctx: &Ctx, loc: &Loc) -> Exp {
         match *s {
-            Exp::Layout { scope_id, ref cmds } =>
-                Exp::Layout { scope_id, cmds: walk_located_vec!(self, visit_cmd, cmds) },
-            Exp::Trait { scope_id, ref defs } =>
-                Exp::Trait { scope_id, defs: walk_located_vec!(self, visit_def, defs) },
+            Exp::Layout { id, ref cmds } =>
+                Exp::Layout { id, cmds: walk_located_vec!(self, visit_cmd, cmds, ctx) },
+            Exp::Record { id, ref defs } =>
+                Exp::Record { id, defs: walk_located_vec!(self, visit_def, defs, ctx) },
 
             Exp::Union { ref es } =>
-                Exp::Union { es: walk_located_vec!(self, visit_exp, es) },
+                Exp::Union { es: walk_located_vec!(self, visit_exp, es, ctx) },
             Exp::Intersect { ref es } =>
-                Exp::Intersect { es: walk_located_vec!(self, visit_exp, es) },
+                Exp::Intersect { es: walk_located_vec!(self, visit_exp, es, ctx) },
 
             Exp::Tuple { ref es } =>
-                Exp::Tuple { es: walk_located_vec!(self, visit_exp, es) },
+                Exp::Tuple { es: walk_located_vec!(self, visit_exp, es, ctx) },
             Exp::List { ref es } =>
-                Exp::List { es: walk_located_vec!(self, visit_exp, es) },
+                Exp::List { es: walk_located_vec!(self, visit_exp, es, ctx) },
 
-            Exp::Lambda { scope_id, ref opt_guard, ref params, ref ret } =>
-                Exp::Lambda { scope_id, opt_guard: walk_located_opt!(self, visit_exp, opt_guard), params: walk_located_vec!(self, visit_exp, params), ret: walk_located_box!(self, visit_exp, ret) },
-            Exp::For { scope_id, ref generator, ref body } =>
-                Exp::For { scope_id, generator: walk_located_box!(self, visit_exp, generator), body: walk_located_box!(self, visit_exp, body) },
+            Exp::Lambda { id, ref opt_guard, ref params, ref ret } =>
+                Exp::Lambda { id, opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), params: walk_located_vec!(self, visit_exp, params, ctx), ret: walk_located_box!(self, visit_exp, ret, ctx) },
+            Exp::For { id, ref generator, ref body } =>
+                Exp::For { id, generator: walk_located_box!(self, visit_exp, generator, ctx), body: walk_located_box!(self, visit_exp, body, ctx) },
 
             Exp::Ascribe { ref exp, ref pat } =>
-                Exp::Ascribe { exp: walk_located_box!(self, visit_exp, exp), pat: walk_located_box!(self, visit_exp, pat) },
-            Exp::Arrow { ref arg, ref ret } =>
-                Exp::Arrow { arg: walk_located_box!(self, visit_exp, arg), ret: walk_located_box!(self, visit_exp, ret) },
+                Exp::Ascribe { exp: walk_located_box!(self, visit_exp, exp, ctx), pat: walk_located_box!(self, visit_exp, pat, ctx) },
+            Exp::Arrow { id, ref arg, ref ret } =>
+                Exp::Arrow { id, arg: walk_located_box!(self, visit_exp, arg, ctx), ret: walk_located_box!(self, visit_exp, ret, ctx) },
             Exp::Assign { ref lhs, ref rhs } =>
-                Exp::Assign { lhs: walk_located_box!(self, visit_exp, lhs), rhs: walk_located_box!(self, visit_exp, rhs) },
+                Exp::Assign { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
             Exp::Generator { ref lhs, ref rhs } =>
-                Exp::Generator { lhs: walk_located_box!(self, visit_exp, lhs), rhs: walk_located_box!(self, visit_exp, rhs) },
+                Exp::Generator { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
             Exp::Bind { ref lhs, ref rhs } =>
-                Exp::Bind { lhs: walk_located_box!(self, visit_exp, lhs), rhs: walk_located_box!(self, visit_exp, rhs) },
+                Exp::Bind { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
 
             Exp::Select { ref exp, ref name } =>
-                Exp::Select { exp: walk_located_box!(self, visit_exp, exp), name: name.clone() },
-            Exp::Within { scope_id, ref e1, ref e2 } =>
-                Exp::Within { scope_id, e1: walk_located_box!(self, visit_exp, e1), e2: walk_located_box!(self, visit_exp, e2) },
+                Exp::Select { exp: walk_located_box!(self, visit_exp, exp, ctx), name: name.clone() },
+            Exp::Within { id, ref e1, ref e2 } =>
+                Exp::Within { id, e1: walk_located_box!(self, visit_exp, e1, ctx), e2: walk_located_box!(self, visit_exp, e2, ctx) },
 
             Exp::Apply { ref fun, ref arg } =>
-                Exp::Apply { fun: walk_located_box!(self, visit_exp, fun), arg: walk_located_box!(self, visit_exp, arg) },
+                Exp::Apply { fun: walk_located_box!(self, visit_exp, fun, ctx), arg: walk_located_box!(self, visit_exp, arg, ctx) },
 
             Exp::Lit { ref lit } =>
                 Exp::Lit { lit: lit.clone() },
 
             Exp::Native =>
                 Exp::Native,
-            Exp::Frame { scope_id } =>
-                Exp::Frame { scope_id },
+            Exp::Frame { id } =>
+                Exp::Frame { id },
 
             Exp::Name { ref name, id } =>
                 Exp::Name { name: name.clone(), id },
 
             Exp::MixfixApply { ref es, id } =>
-                Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es), id },
+                Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es, ctx), id },
         }
     }
 
-    fn walk_param(&self, s: &'a Param) -> Param {
+    fn walk_param(&mut self, s: &'a Param, ctx: &Ctx, loc: &Loc) -> Param {
         match *s {
             Param { assoc, by_name, mode, ref pat } => {
-                let pat1 = walk_located!(self, visit_exp, pat);
+                let pat1 = walk_located!(self, visit_exp, pat, ctx);
                 Param { assoc: assoc, by_name: by_name, mode: mode, pat: Box::new(pat1) }
             }
         }

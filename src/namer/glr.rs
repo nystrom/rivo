@@ -23,7 +23,7 @@ use std::collections::VecDeque;
 
 use syntax::loc::*;
 use syntax::names::*;
-use syntax::trees::ScopeId;
+use syntax::trees::NodeId;
 use namer::symbols::MixfixTree;
 use namer::symbols::Decl;
 
@@ -44,7 +44,7 @@ pub enum Symbol {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Nonterm {
-    S, E, M(ScopeId, Prio), Pr, Br,
+    S, E, M(NodeId, Prio), Pr, Br,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -516,7 +516,7 @@ impl GLR {
 #[cfg(test)]
 mod tests {
     use namer::glr::*;
-    use syntax::trees::ScopeId;
+    use syntax::trees::NodeId;
     use syntax::names::Part;
     use syntax::names::Name;
     use namer::symbols::*;
@@ -557,14 +557,14 @@ mod tests {
             let rules = vec![
                 start_rule.clone(),
                 Rule { lhs: Nonterm::E, rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 0))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 0)),
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0)),
                     Symbol::Term(Term::Name(Part::Op(String::from("+")))),
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 1))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 1))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 1), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 1), rhs: vec![
                     Symbol::Term(Term::Primary)] },
             ];
             let mut lr = LR::new(rules);
@@ -586,14 +586,14 @@ mod tests {
             let rules = vec![
                 start_rule.clone(),
                 Rule { lhs: Nonterm::E, rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 0))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 1)),
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1)),
                     Symbol::Term(Term::Name(Part::Op(String::from("+")))),
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 0))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 1))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 1), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 1), rhs: vec![
                     Symbol::Term(Term::Primary)] },
             ];
             let mut lr = LR::new(rules);
@@ -615,14 +615,14 @@ mod tests {
             let rules = vec![
                 start_rule.clone(),
                 Rule { lhs: Nonterm::E, rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 0))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 1)),
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1)),
                     Symbol::Term(Term::Name(Part::Op(String::from("+")))),
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 1))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(ScopeId::Global, 1))] },
-                Rule { lhs: Nonterm::M(ScopeId::Global, 1), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
+                Rule { lhs: Nonterm::M(NodeId(0), 1), rhs: vec![
                     Symbol::Term(Term::Primary)] },
             ];
             let mut lr = LR::new(rules);

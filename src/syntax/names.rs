@@ -45,11 +45,15 @@ impl Part {
 impl Name {
     pub fn is_bundle_name(&self) -> bool {
         match *self {
-            Name::Id(_) => true,
+            Name::Id(ref x) => match x.chars().next() {
+                None => false,
+                Some(ref c) => c.is_uppercase(),
+            }
             Name::Op(_) => false,
-            Name::Mixfix(ref parts) => {
-                self.is_prefix_name() && parts.first().unwrap().to_name().is_bundle_name()
-            },
+            Name::Mixfix(ref parts) => false,
+            // Name::Mixfix(ref parts) => {
+            //     self.is_prefix_name() && parts.first().unwrap().to_name().is_bundle_name()
+            // },
         }
     }
 

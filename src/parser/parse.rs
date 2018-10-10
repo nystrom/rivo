@@ -95,17 +95,6 @@ macro_rules! filter_collect_loc {
     };
 }
 
-macro_rules! with_scope {
-    ($self: expr, $scope: expr, $s: expr) => {
-        {
-            $self.scope_stack.push($scope);
-            let x = $s;
-            $self.scope_stack.pop();
-            x
-        }
-    };
-}
-
 enum MixfixParam {
     Name(Part),
     Param(Located<Param>),
@@ -117,14 +106,11 @@ pub struct Parser<'a> {
     pub lex: Lexer<'a>,
     pub last_token: Located<Token>,
     pub errors: Vec<Located<String>>,
-    pub next_name_id: usize,
-    pub next_mixfix_id: usize,
-    pub next_scope_id: usize,
-    pub scope_stack: Vec<ScopeId>,
+    pub next_node_id: usize,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(source: &'a str, input: &'a str) -> Parser<'a> {
+    pub fn new(source: &'a Source, input: &'a str) -> Parser<'a> {
         Parser {
             lex: Lexer::new(source, input),
             last_token: Located {
@@ -132,10 +118,7 @@ impl<'a> Parser<'a> {
                 value: Token::EOF
             },
             errors: vec!(),
-            next_name_id: 0,
-            next_mixfix_id: 0,
-            next_scope_id: 0,
-            scope_stack: Vec::new(),
+            next_node_id: 0,
         }
     }
 
@@ -147,21 +130,8 @@ impl<'a> Parser<'a> {
                 value: Token::EOF
             },
             errors: vec!(),
-            next_name_id: 0,
-            next_mixfix_id: 0,
-            next_scope_id: 0,
-            scope_stack: Vec::new(),
+            next_node_id: 0,
         }
-    }
-
-    fn current_scope(&self) -> ScopeId {
-        *self.scope_stack.last().unwrap_or(&ScopeId::Global)
-    }
-
-    fn parent_scope(&self) -> ScopeId {
-        // return the scope just before the last scope.
-        let i = self.scope_stack.len() - 2;
-        *self.scope_stack.get(i).unwrap_or(&ScopeId::Global)
     }
 
     fn lookahead(&mut self) -> Located<Token> {
@@ -239,11 +209,9 @@ impl<'a> Parser<'a> {
 
     pub fn parse_bundle(&mut self) -> PResult<Located<Root>> {
         located_ok!(self, {
-            let id = self.alloc_scope();
-            with_scope!(self, id, {
-                let cmds = self.parse_cmds()?;
-                Ok(Root::Bundle { scope_id: id, cmds })
-            })
+            let id = self.alloc_node_id();
+            let cmds = self.parse_cmds()?;
+            Ok(Root::Bundle { id, cmds })
         })
     }
 
@@ -271,8 +239,10 @@ impl<'a> Parser<'a> {
                 },
                 _ => {
                     match self.parse_cmd() {
-                        Ok(c) => {
-                            cmds.push(c);
+                        Ok(cs) => {
+                            for c in cs {
+                                cmds.push(c);
+                            }
 
                             // A command should be followed by a ; or } or EOF.
                             match *self.lookahead() {
@@ -307,30 +277,88 @@ impl<'a> Parser<'a> {
         Ok(cmds)
     }
 
-    fn parse_cmd(&mut self) -> PResult<Located<Cmd>> {
+    fn parse_cmd(&mut self) -> PResult<Vec<Located<Cmd>>> {
         match *self.lookahead() {
             Token::Fun => {
-                self.parse_fun_cmd()
+                let cmd = self.parse_fun_cmd()?;
+                Ok(vec![cmd])
             },
             Token::Val => {
                 let r = self.parse_val_def()?;
-                Ok(r.map(|d| Cmd::Def(d)))
+                Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Var => {
                 let r = self.parse_var_def()?;
-                Ok(r.map(|d| Cmd::Def(d)))
+                Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Import => {
                 let r = self.parse_import_def()?;
-                Ok(r.map(|d| Cmd::Def(d)))
+                Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Trait => {
                 let r = self.parse_trait_def()?;
-                Ok(r.map(|d| Cmd::Def(d)))
+                Ok(vec![r.map(|d| Cmd::Def(d))])
             },
+            /*
+            Token::Lc => {
+                let start = self.lookahead();
+
+                // We have a nested block.
+                // We need to pass the priority down.
+                let cmds = self.parse_block(Some(prio))?;
+
+                let end = &self.last_token;
+
+                let loc = Loc::span_from(&start, end);
+
+                let mut all_arrows = true;
+                let mut all_defs = true;
+
+                for cmd in &cmds {
+                    match **cmd {
+                        Cmd::Def(ref d) => {
+                            all_arrows = false;
+                        },
+                        Cmd::Exp(ref e @ Exp::Lambda { .. }) => {
+                            all_defs = false;
+                        },
+                        Cmd::Exp(ref e @ Exp::Arrow { .. }) => {
+                            all_defs = false;
+                        },
+                        _ => {
+                            all_arrows = false;
+                            all_defs = false;
+                        },
+                    }
+                }
+
+                if cmds.len() == 0 {
+                    // The block is empty.
+                    // Create a nothing.
+                    Ok(vec![Located { loc, value: Cmd::Exp(Exp::Lit { lit: Lit::Nothing }) }])
+                }
+                else if all_arrows {
+                    // All the commands are arrows.
+                    // Create a union of functions.
+                    let arrows: Vec<Located<Exp>> = filter_collect_loc!(cmds, Cmd::Exp(e), e);
+                    Ok(vec![Located { loc, value: Cmd::Exp(Exp::Union { es: arrows }) }])
+                }
+                else if all_defs {
+                    // All the cmds are defs.
+                    // Inline the cmds into the enclosing block.
+                    let defs: Vec<Located<Def>> = filter_collect_loc!(cmds, Cmd::Def(d), d);
+                    Ok(defs.iter().map(|Located { loc, value: d }| Located { loc: loc.clone(), value: Cmd::Def(d.clone()) }).collect())
+                }
+                else {
+                    // At least some of the cmds are expressions.
+                    // Create a layout.
+                    Ok(vec![Located { loc, value: Cmd::Exp(Exp::Layout { id: self.alloc_node_id(), cmds: cmds }) }])
+                }
+            }
+            */
             _ => {
                 let r = self.parse_exp()?;
-                Ok(r.map(|e| Cmd::Exp(e)))
+                Ok(vec![r.map(|e| Cmd::Exp(e))])
             },
         }
     }
@@ -656,11 +684,11 @@ impl<'a> Parser<'a> {
 
                 let body = self.parse_exp()?;
 
-                let id = self.alloc_scope();
+                let id = self.alloc_node_id();
 
                 Ok(Cmd::Exp(
                     Exp::Lambda {
-                        scope_id: id,
+                        id,
                         opt_guard: opt_guard.map(|e| Box::new(e)),
                         params: lambda_params,
                         ret: Box::new(body),
@@ -671,31 +699,31 @@ impl<'a> Parser<'a> {
                 // We have a function definition.
                 let name = make_mixfix_name(&elements);
 
-                let id = self.alloc_scope();
+                let id = self.alloc_node_id();
 
                 match *self.lookahead() {
                     Token::Eq => {
                         self.eat();
                         let e = self.parse_exp()?;
                         Ok(Cmd::Def(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Fun,
                             name,
                             opt_guard: opt_guard.map(|e| Box::new(e)),
                             params,
-                            ret: make_param_from_exp(e, CallingMode::Output)
+                            ret: make_param_from_exp(e, CallingMode::Output),
                         }))
                     },
                     Token::Arrow => {
                         self.eat();
                         let e = self.parse_exp()?;
                         Ok(Cmd::Def(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Fun,
                             name,
                             opt_guard: opt_guard.map(|e| Box::new(e)),
                             params,
-                            ret: make_param_from_exp(e, CallingMode::Output)
+                            ret: make_param_from_exp(e, CallingMode::Output),
                         }))
                     },
                     Token::BackArrow => {
@@ -706,7 +734,7 @@ impl<'a> Parser<'a> {
                             None => self.parse_opt_guard()?
                         };
                         Ok(Cmd::Def(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Fun,
                             name,
                             opt_guard: opt_guard2.map(|e| Box::new(e)),
@@ -730,12 +758,12 @@ impl<'a> Parser<'a> {
                         };
 
                         Ok(Cmd::Def(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Fun,
                             name,
                             opt_guard: opt_guard2.map(|e| Box::new(e)),
                             params,
-                            ret: make_param_from_exp(nothing, CallingMode::Output)
+                            ret: make_param_from_exp(nothing, CallingMode::Output),
                         }))
                     },
                 }
@@ -805,31 +833,31 @@ impl<'a> Parser<'a> {
                 // We have a trait definition.
                 let name = make_mixfix_name(&elements);
 
-                let id = self.alloc_scope();
+                let id = self.alloc_node_id();
 
                 match *self.lookahead() {
                     Token::Eq => {
                         self.eat();
                         let e = self.parse_exp()?;
                         Ok(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Trait,
                             name,
                             opt_guard: opt_guard.map(|e| Box::new(e)),
                             params,
-                            ret: make_param_from_exp(e, CallingMode::Output)
+                            ret: make_param_from_exp(e, CallingMode::Output),
                         })
                     },
                     Token::Arrow => {
                         self.eat();
                         let e = self.parse_exp()?;
                         Ok(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Trait,
                             name,
                             opt_guard: opt_guard.map(|e| Box::new(e)),
                             params,
-                            ret: make_param_from_exp(e, CallingMode::Output)
+                            ret: make_param_from_exp(e, CallingMode::Output),
                         })
                     },
                     Token::BackArrow => {
@@ -840,7 +868,7 @@ impl<'a> Parser<'a> {
                             None => self.parse_opt_guard()?
                         };
                         Ok(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Trait,
                             name,
                             opt_guard: opt_guard2.map(|e| Box::new(e)),
@@ -852,19 +880,19 @@ impl<'a> Parser<'a> {
                         // trait T (a)
                         // trait T (a) = { }
                         let tr = located!(self, {
-                            Exp::Trait {
-                                scope_id: self.alloc_scope(),
+                            Exp::Record {
+                                id: self.alloc_node_id(),
                                 defs: vec!(),
                             }
                         });
 
                         Ok(Def::MixfixDef {
-                            scope_id: id,
+                            id,
                             flag: MixfixFlag::Trait,
                             name,
                             opt_guard: opt_guard.map(|e| Box::new(e)),
                             params,
-                            ret: make_param_from_exp(tr, CallingMode::Output)
+                            ret: make_param_from_exp(tr, CallingMode::Output),
                         })
                     },
                 }
@@ -902,7 +930,7 @@ impl<'a> Parser<'a> {
                         Token::Arrow => {
                             self.eat();
                             let right = self.parse_exp()?;
-                            Ok(Exp::Arrow { arg: Box::new(left), ret: Box::new(right) })
+                            Ok(Exp::Arrow { id: self.alloc_node_id(), arg: Box::new(left), ret: Box::new(right) })
                         },
                         Token::With => {
                             self.eat();
@@ -936,6 +964,7 @@ impl<'a> Parser<'a> {
                     self.eat();
                     let right = self.parse_exp()?;
                     Ok(Exp::Arrow {
+                        id : self.alloc_node_id(),
                         arg: Box::new(left),
                         ret: Box::new(right)
                     })
@@ -953,12 +982,12 @@ impl<'a> Parser<'a> {
                 located_ok!(self, {
                     self.eat();
 
-                    let id = self.alloc_scope();
+                    let id = self.alloc_node_id();
                     let generator = self.parse_select()?;
                     let body = self.parse_exp()?;
 
                     Ok(Exp::For {
-                        scope_id: id,
+                        id,
                         generator: Box::new(generator),
                         body: Box::new(body)
                     })
@@ -968,7 +997,7 @@ impl<'a> Parser<'a> {
                 located_ok!(self, {
                     self.eat();
 
-                    let id = self.alloc_scope();
+                    let id = self.alloc_node_id();
                     let mut params = Vec::new();
 
                     while *self.lookahead() == Token::Lp {
@@ -981,7 +1010,7 @@ impl<'a> Parser<'a> {
                     let body = self.parse_exp()?;
 
                     Ok(Exp::Lambda {
-                        scope_id: id,
+                        id,
                         opt_guard: opt_guard.map(|e| Box::new(e)),
                         params,
                         ret: Box::new(body),
@@ -1006,7 +1035,7 @@ impl<'a> Parser<'a> {
                                     Ok(Exp::MixfixApply { id, es: more })
                                 },
                                 _ => {
-                                    let id = self.alloc_mixfix();
+                                    let id = self.alloc_node_id();
                                     let more = vec!(first, rest);
                                     Ok(Exp::MixfixApply { id, es: more })
                                 },
@@ -1063,20 +1092,18 @@ impl<'a> Parser<'a> {
                 }
             },
             Token::Underscore | Token::Lp => {
-                let id = self.alloc_scope();
+                let id = self.alloc_node_id();
 
-                let lsel = with_scope!(self, id, {
-                    let right = self.parse_primary()?;
-                    let loc = Loc::span_from(&left, &right);
+                let right = self.parse_primary()?;
+                let loc = Loc::span_from(&left, &right);
 
-                    Ok(Located::new(
-                        loc,
-                        Exp::Within {
-                            scope_id: id,
-                            e1: Box::new(left),
-                            e2: Box::new(right),
-                        }))
-                })?;
+                let lsel = Located::new(
+                    loc,
+                    Exp::Within {
+                        id,
+                        e1: Box::new(left),
+                        e2: Box::new(right),
+                    });
 
                 match *self.lookahead() {
                     Token::Dot => self.parse_selectors(lsel),
@@ -1341,16 +1368,16 @@ impl<'a> Parser<'a> {
                         // All the cmds are defs.
                         // Create a trait.
                         let defs: Vec<Located<Def>> = filter_collect_loc!(cmds, Cmd::Def(d), d);
-                        Ok(Exp::Trait { scope_id: self.alloc_scope(), defs: defs })
+                        Ok(Exp::Record { id: self.alloc_node_id(), defs: defs })
                     }
                     else {
                         // At least some of the cmds are expressions.
                         // Create a layout.
-                        Ok(Exp::Layout { scope_id: self.alloc_scope(), cmds: cmds })
+                        Ok(Exp::Layout { id: self.alloc_node_id(), cmds: cmds })
                     }
                 },
                 Token::Id(_) | Token::Op(_) | Token::Bang | Token::Question | Token::Tick => {
-                    let id = self.alloc_name();
+                    let id = self.alloc_node_id();
                     let name = self.parse_name()?;
                     Ok(Exp::Name { name, id })
                 },
@@ -1389,22 +1416,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn alloc_scope(&mut self) -> ScopeId {
-        let id = self.next_scope_id;
-        self.next_scope_id += 1;
-        ScopeId::Scope(id)
-    }
-
-    fn alloc_name(&mut self) -> NameId {
-        let id = self.next_name_id;
-        self.next_name_id += 1;
-        id
-    }
-
-    fn alloc_mixfix(&mut self) -> MixfixId {
-        let id = self.next_mixfix_id;
-        self.next_mixfix_id += 1;
-        id
+    fn alloc_node_id(&mut self) -> NodeId {
+        let id = self.next_node_id;
+        self.next_node_id += 1;
+        NodeId(id)
     }
 }
 
@@ -1479,7 +1494,7 @@ mod tests {
         let mut p = Parser::new("foo.ivo", "");
         match p.parse_bundle() {
             Ok(t) =>
-                assert_eq!(*t, Root::Bundle { scope_id: ScopeId::Scope(0), cmds: vec!() }),
+                assert_eq!(*t, Root::Bundle { id: NodeId(0), cmds: vec!() }),
             Err(msg) => {
                 println!("{:?}", msg);
                 assert!(false)
@@ -1492,7 +1507,7 @@ mod tests {
         let mut p = Parser::new("foo.ivo", ";;;;");
         match p.parse_bundle() {
             Ok(t) =>
-                assert_eq!(*t, Root::Bundle { scope_id: ScopeId::Scope(0), cmds: vec!() }),
+                assert_eq!(*t, Root::Bundle { id: NodeId(0), cmds: vec!() }),
             Err(msg) => {
                 println!("{:?}", msg);
                 assert!(false)
@@ -1506,12 +1521,12 @@ mod tests {
         match p.parse_bundle() {
             Ok(t) =>
                 assert_eq!(*t, Root::Bundle {
-                    scope_id: ScopeId::Scope(0),
+                    scope_id: NodeId(0),
                     cmds: vec![
                         Located {
                             loc: Loc { start: Pos { offset: 0, line: 1, column: 1 }, end: Pos { offset: 11, line: 1, column: 12 }, source: Some(String::from("foo.ivo")) },
                             value: Cmd::Exp(Exp::Lambda {
-                                scope_id: ScopeId::Scope(1),
+                                scope_id: NodeId(1),
                                 opt_guard: None,
                                 params: vec![
                                     Located {
@@ -1541,7 +1556,7 @@ mod tests {
         match p.parse_bundle() {
             Ok(t) =>
                 assert_eq!(*t, Root::Bundle {
-                    scope_id: ScopeId::Scope(0),
+                    scope_id: NodeId(0),
                     cmds: vec!()
                 }),
             Err(msg) => {
@@ -1559,7 +1574,7 @@ mod tests {
         match p.parse_bundle() {
             Ok(t) =>
                 assert_eq!(*t, Root::Bundle {
-                    scope_id: ScopeId::Scope(0),
+                    scope_id: NodeId(0),
                     cmds: vec!()
                 }),
             Err(msg) => {
@@ -1573,7 +1588,7 @@ mod tests {
     fn test_trait_with_union() {
         test_parse_ok!("trait T = A with B",
             Root::Bundle {
-                scope_id: ScopeId::Scope(0),
+                scope_id: NodeId(0),
                 cmds: vec!()
             });
     }
@@ -1582,7 +1597,7 @@ mod tests {
     fn test_trait_with_param() {
         test_parse_ok!("trait T (x)",
             Root::Bundle {
-                scope_id: ScopeId::Scope(0),
+                scope_id: NodeId(0),
                 cmds: vec!()
             });
     }
@@ -1591,7 +1606,7 @@ mod tests {
     fn test_trait_with_union_with_empty() {
         test_parse_ok!("trait T = A with {}",
             Root::Bundle {
-                scope_id: ScopeId::Scope(0),
+                scope_id: NodeId(0),
                 cmds: vec!()
             });
     }
@@ -1600,13 +1615,13 @@ mod tests {
     fn test_trait_with_guard() {
         test_parse_ok!("trait T (x) for x = {}",
             Root::Bundle {
-                scope_id: ScopeId::Scope(0),
+                scope_id: NodeId(0),
                 cmds: vec!(
                     Located::new(
                         NO_LOC,
                         Cmd::Def(
                             Def::MixfixDef {
-                                scope_id: ScopeId::Scope(1),
+                                scope_id: NodeId(1),
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(String::from("T")),
                                 opt_guard: Some(
@@ -1648,8 +1663,8 @@ mod tests {
                                         pat: Box::new(
                                             Located::new(
                                                 NO_LOC,
-                                                Exp::Trait {
-                                                    scope_id: ScopeId::Scope(2),
+                                                Exp::Record {
+                                                    scope_id: NodeId(2),
                                                     defs: vec!()
                                                 }
                                             )
@@ -1671,7 +1686,7 @@ mod tests {
         match p.parse_bundle() {
             Ok(t) =>
                 assert_eq!(*t, Root::Bundle {
-                    scope_id: ScopeId::Scope(0),
+                    scope_id: NodeId(0),
                     cmds: vec!()
                 }),
             Err(msg) => {

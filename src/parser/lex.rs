@@ -23,7 +23,7 @@ pub struct Lexer<'a> {
     offset: usize,
     line: usize,
     column: usize,
-    source: &'a str,
+    source: &'a Source,
 
     // stack of brackets used for deciding when to insert a virtual ;
     stack: Vec<Token>,
@@ -33,7 +33,7 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(source: &'a str, input: &'a str) -> Lexer<'a> {
+    pub fn new(source: &'a Source, input: &'a str) -> Lexer<'a> {
         Lexer {
             offset: 0,
             line: 1,
@@ -84,7 +84,7 @@ impl<'a> Lexer<'a> {
                     line: self.line,
                     column: self.column - min(1, self.offset),
                 },
-                source: Some(String::from(self.source)),
+                source: self.source.clone(),
             },
             value: token
         }
@@ -113,7 +113,7 @@ impl<'a> Lexer<'a> {
         if insert_semi && prev_can_end && can_start_statement(&next_token.value) {
             self.token_buffer.push_back(next_token);
             let semi = Located {
-                loc: Loc { start: pos, end: pos, source: Some(String::from(self.source)) },
+                loc: Loc { start: pos, end: pos, source: self.source.clone() },
                 value: Token::Semi
             };
             self.prev_token_can_end_statement = false;

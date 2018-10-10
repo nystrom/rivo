@@ -1,3 +1,6 @@
+#![feature(custom_attribute, plugin)]
+#![plugin(trace)]
+
 #![allow(unused_variables)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
@@ -24,3 +27,4 @@ pub mod parser;
 pub mod syntax;
 pub mod namer;
 pub mod visit;
+pub mod driver;

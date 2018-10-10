@@ -93,7 +93,7 @@ impl ToDoc for Lit {
 impl ToDoc for Root {
     fn to_doc(&self) -> Doc<BoxDoc<()>> {
         match *self {
-            Root::Bundle { scope_id, ref cmds } =>
+            Root::Bundle { id, ref cmds } =>
                 show_located_vec!(cmds, Doc::text(";").append(Doc::newline())),
         }
     }
@@ -119,7 +119,7 @@ impl ToDoc for Def {
                 doc.append(Doc::space())
                    .append(show_located_box!(formula))
             },
-            Def::MixfixDef { scope_id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
+            Def::MixfixDef { id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
                 let doc = match *flag {
                     MixfixFlag::Trait => Doc::text("trait"),
                     MixfixFlag::Fun => Doc::text("fun"),
@@ -149,13 +149,13 @@ impl ToDoc for Def {
 impl ToDoc for Exp {
     fn to_doc(&self) -> Doc<BoxDoc<()>> {
         match *self {
-            Exp::Layout { scope_id, ref cmds } =>
+            Exp::Layout { id, ref cmds } =>
                 Doc::text("{")
                 .append(Doc::newline())
                 .append(show_located_vec!(cmds, Doc::text(";").append(Doc::newline())).nest(1))
                 .append(Doc::newline())
                 .append(Doc::text("}")),
-            Exp::Trait { scope_id, ref defs } =>
+            Exp::Record { id, ref defs } =>
                 Doc::text("{")
                 .append(Doc::newline())
                 .append(show_located_vec!(defs, Doc::text(";").append(Doc::newline())).nest(1))
@@ -176,7 +176,7 @@ impl ToDoc for Exp {
                 .append(show_located_vec!(es, Doc::text(", ")))
                 .append(Doc::text("]")),
 
-            Exp::Lambda { scope_id, ref opt_guard, ref params, ref ret } =>
+            Exp::Lambda { id, ref opt_guard, ref params, ref ret } =>
                 Doc::text("fun")
                 .append(Doc::space())
                 .append(show_located_vec!(params, Doc::space()))
@@ -184,7 +184,7 @@ impl ToDoc for Exp {
                 .append(Doc::text("->"))
                 .append(Doc::space())
                 .append(show_located_box!(ret)),
-            Exp::For { scope_id, ref generator, ref body } =>
+            Exp::For { id, ref generator, ref body } =>
                 Doc::text("for")
                 .append(Doc::space())
                 .append(show_located_box!(generator))
@@ -198,7 +198,7 @@ impl ToDoc for Exp {
                 .append(Doc::text("@"))
                 .append(Doc::space())
                 .append(show_located_box!(pat)),
-            Exp::Arrow { ref arg, ref ret } =>
+            Exp::Arrow { id, ref arg, ref ret } =>
                 Doc::nil()
                 .append(show_located_box!(arg))
                 .append(Doc::space())
@@ -232,7 +232,7 @@ impl ToDoc for Exp {
                 .append(show_located_box!(exp))
                 .append(Doc::text("."))
                 .append(name.to_doc()),
-            Exp::Within { scope_id, ref e1, ref e2 } =>
+            Exp::Within { id, ref e1, ref e2 } =>
                 Doc::nil()
                 .append(show_located_box!(e1))
                 .append(Doc::text("."))
@@ -249,7 +249,7 @@ impl ToDoc for Exp {
 
             Exp::Native =>
                 Doc::text("native"),
-            Exp::Frame { scope_id } =>
+            Exp::Frame { id } =>
                 Doc::text("self"),
 
             Exp::Name { ref name, id } =>

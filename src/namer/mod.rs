@@ -1,3 +1,4 @@
 pub mod glr;
 pub mod symbols;
-pub mod namer;
+pub mod graph;
+pub mod prename;

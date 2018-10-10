@@ -10,7 +10,7 @@ use syntax::trees::CallingMode;
 // vector indices. This simplifies the memory management considerably.
 // We wrap the indexes some structs to improve type safety.
 
-use namer::namer::{LookupIndex, LookupHereIndex, MixfixIndex, EnvIndex};
+use namer::graph::{LookupIndex, LookupHereIndex, MixfixIndex, EnvIndex};
 
 // need to implement hash for breadcrumbs to work.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -25,14 +25,14 @@ pub enum Scope {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Env {
-    pub decls: Vec<Decl>,
+    pub decls: Vec<Located<Decl>>,
     pub imports: Vec<Located<Import>>,
     pub parents: Vec<Scope>,
     pub includes: Vec<Scope>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Prio(usize);
+pub struct Prio(pub usize);
 
 impl Env {
     pub fn new() -> Env {
@@ -110,26 +110,26 @@ impl Decl {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LookupRef {
     pub scope: Scope,
     pub name: Name,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LookupHereRef {
     pub scope: Scope,
     pub name: Name,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct MixfixRef {
     pub parts: Vec<MixfixPart>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct MixfixPart {
-    pub name_ref: Option<LookupRef>,
+    pub name_ref: Option<LookupIndex>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
