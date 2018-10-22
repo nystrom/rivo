@@ -1015,6 +1015,51 @@ trait Ord (a, b, c) = {
   fun (a1, b1, c1) > (a2, b2, c2) -> (a1 > a2) || ((a1 == a2) && ((b1, c1) > (b2, c2)))
 }
 
+trait Option = {
+  trait None
+  trait Some (value: a)
+  trait Option (a) = None with (Some a)
+
+  fun (Option a) or (Option a) -> Option a
+  fun (None) or (o) -> o
+  fun (Some a) or (o) -> Some a
+
+  fun (Option a) then (a -> Option b) -> Option b
+  fun (None) then (f) -> None
+  fun (Some a) then (f) -> f a
+
+  fun unwrap (Option a) or {a} -> a
+  fun unwrap (Some a) or {_} -> a
+  fun unwrap (None) or {a} -> a
+
+  fun unwrap (Option a) -> a
+  fun unwrap (Some a) -> a
+}
+
+// Result is like Either
+trait Result = {
+  trait Ok (value: a)
+  trait Err (value: e)
+
+  trait Result (a) (e) = (Ok a) with (Err e)
+
+  fun (Result a e) then (a -> Result b e) -> Result b e
+  fun (Ok a) then (f) -> f a
+  fun (Err b) then (f) -> Err b
+
+  fun (Result a e) and {Result b e} -> Result b e
+  fun (Ok a) then {r} -> r
+  fun (Err b) then {_} -> Err b
+
+  fun (Result a e) else (e -> Result b e) -> Result b e
+  fun (Ok a) else (_) -> Ok a
+  fun (Err e) else (f) -> f e
+
+  fun (Result a e) or {Result b e} -> Result b e
+  fun (Ok a) else {_} -> Ok a
+  fun (Err e) else {r} -> r
+}
+
 trait List
     = (Sequence (List.(List _)))
     with (Functor (List.(List _)))
@@ -1034,6 +1079,16 @@ trait List
   //trait [ (xs..) ] = xs
   //fun [ (x) .. (y) ] = toList (InclusiveRange x y)
   //fun [ (x) ..< (y) ] = toList (ExclusiveRange x y)
+}
+
+trait Filter (s) (a) = {
+  fun filter (p: a -> Boolean) (_: s)
+}
+
+trait Filter (List.(List a)) (a) = {
+  fun filter (p) (Nil) -> Nil
+  fun filter (p) (Cons x xs) where p x     = Cons x (filter p xs)
+  fun filter (p) (Cons x xs) where ! (p x) = filter p xs
 }
 
 trait Sequence (s) = {
@@ -1100,6 +1155,8 @@ trait Monad (m) = {
   fun return (a) -> (m a)
   fun (m a) >>= (a -> m b) -> m b
   fun (ma) >> (mb) -> ma >>= (fun (_) -> mb)
+
+  fun (m a) then (a -> m b) -> m b
 }
 
 trait Applicative (List.(List a)) = (Functor List.(List a)) with {

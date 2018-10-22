@@ -10,16 +10,13 @@
 #![feature(vec_remove_item)]
 #![feature(nll)]
 
-extern crate ansi_term;
 extern crate term;
-extern crate typed_arena;
 extern crate num;
 extern crate unicode_categories;
 extern crate pretty;
-extern crate rpds;
-
-#[macro_use] extern crate lazy_static;
 extern crate lazycell;
+extern crate rpds;
+#[macro_use] extern crate failure;
 
 #[cfg(test)] #[macro_use] extern crate pretty_assertions;
 

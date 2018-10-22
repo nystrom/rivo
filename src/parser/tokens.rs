@@ -2,52 +2,49 @@ use num::bigint::BigInt;
 use num::rational::BigRational;
 use std::fmt;
 
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
-  EOF,
+    EOF,
 
-  Arrow,
-  Assign,
-  At,
-  BackArrow,
-  Bang,
-  Colon,
-  Comma,
-  Dot,
-  Eq,
-  Question,
-  Semi,
-  Tick,
-  Underscore,
+    Arrow,
+    Assign,
+    At,
+    BackArrow,
+    Bang,
+    Colon,
+    Comma,
+    Dot,
+    Eq,
+    Question,
+    Semi,
+    Tick,
+    Underscore,
 
-  Lb, Rb,
-  Lc, Rc,
-  Lp, Rp,
+    Lb,
+    Rb,
+    Lc,
+    Rc,
+    Lp,
+    Rp,
 
-  Op(String),
-  Id(String),
+    Op(String),
+    Id(String),
 
-  For,
-  Fun,
-  Import,
-  Native,
-  Val,
-  Var,
-  Trait,
-  With,
-  Where,
+    For,
+    Fun,
+    Import,
+    Native,
+    Val,
+    Var,
+    Trait,
+    With,
+    Where,
 
-  Char(char),
-  Rat(BigRational, String),
-  Int(BigInt, String),
-  String(String),
-
-  BadChar,
-  BadString,
-  BadInt,
-  BadRat,
-  BadComment,
-  UnexpectedChar(char),
+    Char(char),
+    Rat(BigRational, String),
+    Int(BigInt, String),
+    String(String),
 }
 
 pub struct TokenVec(pub Vec<Token>);
@@ -107,13 +104,6 @@ impl fmt::Display for Token {
             Token::Rat(ref n, ref s) => write!(f, "rational literal {}", s),
             Token::Int(ref n, ref s) => write!(f, "integer literal {}", n),
             Token::String(ref s) => write!(f, "string literal \"{}\"", s),
-
-            Token::BadChar => write!(f, "bad character literal"),
-            Token::BadString => write!(f, "bad string literal"),
-            Token::BadInt => write!(f, "bad integer literal"),
-            Token::BadRat => write!(f, "bad rational literal"),
-            Token::BadComment => write!(f, "bad comment"),
-            Token::UnexpectedChar(ref ch) => write!(f, "unexpected char {}", ch),
         }
     }
 }

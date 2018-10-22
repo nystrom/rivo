@@ -3,9 +3,14 @@
 use syntax::loc::*;
 use syntax::names::*;
 use syntax::trees;
+
 use namer::symbols::*;
+use namer::glr;
+
 use driver;
 use driver::*;
+use driver::bundle::*;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -19,13 +24,13 @@ type Crumbs = HashTrieSet<Scope>;
 // The vectors in this data structure are indexed by the *Index types.
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct LookupIndex(usize);
+pub struct LookupIndex(pub(super) usize);
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct LookupHereIndex(usize);
+pub struct LookupHereIndex(pub(super) usize);
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct MixfixIndex(usize);
+pub struct MixfixIndex(pub(super) usize);
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct EnvIndex(pub usize);
@@ -147,19 +152,20 @@ impl ScopeGraph {
     }
 }
 
-#[derive(Debug)]
-pub struct Cachex {
-    pub lookup_here_cache: HashMap<LookupHereRef, Vec<Located<Decl>>>,
-    pub lookup_cache: HashMap<LookupRef, Vec<Located<Decl>>>,
-    pub mixfix_cache: HashMap<MixfixRef, Vec<Located<MixfixTree>>>
+// Same as Cache, but indexed by index rather than ref.
+#[derive(Debug, Clone)]
+pub struct SolverResult {
+    pub lookup_here_cache: HashMap<LookupHereIndex, Vec<Located<Decl>>>,
+    pub lookup_cache: HashMap<LookupIndex, Vec<Located<Decl>>>,
+    pub mixfix_cache: HashMap<MixfixIndex, Vec<MixfixTree>>
 }
 
-// FIXME: is there a way to derive this type from the above type?
+// internal cache
 #[derive(Debug)]
-pub struct Cache<'a> {
+struct Cache<'a> {
     pub lookup_here_cache: &'a HashMap<LookupHereRef, Vec<Located<Decl>>>,
     pub lookup_cache: &'a HashMap<LookupRef, Vec<Located<Decl>>>,
-    pub mixfix_cache: &'a HashMap<MixfixRef, Vec<Located<MixfixTree>>>
+    pub mixfix_cache: &'a HashMap<MixfixRef, Vec<MixfixTree>>
 }
 
 type LookupResult<T> = Result<T, Located<String>>;
@@ -167,92 +173,100 @@ type LookupResult<T> = Result<T, Located<String>>;
 // TODO: use this instead of the impl below
 pub struct Solver<'a> {
     graph: &'a mut ScopeGraph,
-    driver: &'a mut driver::Interpreter,
+    driver: &'a mut driver::Driver,
     cache: &'a mut Cache<'a>,
 }
 
 impl ScopeGraph {
-    // The only effect this has is to update the cache.
-    // TODO:
-    // Make the actual lookup take an immutable &self,
-    // but pass the cache around as mutable.
-    pub fn solve(&mut self, driver: &mut driver::Interpreter) -> LookupResult<Cachex> {
+    pub fn solve(&self, driver: &mut driver::Driver) -> LookupResult<SolverResult> {
+        // internal cache
         let mut lookup_here_cache = HashMap::new();
         let mut lookup_cache = HashMap::new();
         let mut mixfix_cache = HashMap::new();
 
-        for r in self.lookups_here.clone() {
-            match lookup_here_cache.get(&r) {
+        // lookup result
+        let mut lookup_here_cachex = HashMap::new();
+        let mut lookup_cachex = HashMap::new();
+        let mut mixfix_cachex = HashMap::new();
+
+        for (i, r) in self.lookups_here.clone().iter().enumerate() {
+            match lookup_here_cache.get(r) {
                 None => {
                     println!("lookup_here miss");
                     let crumbs = HashTrieSet::new();
                     let cache = Cache { lookup_here_cache: &lookup_here_cache, lookup_cache: &lookup_cache, mixfix_cache: &mixfix_cache };
                     let decls = self.do_lookup_here(driver, r.clone(), &crumbs, &cache)?;
-                    lookup_here_cache.insert(r, decls);
+                    lookup_here_cache.insert(r.clone(), decls.clone());
+                    lookup_here_cachex.insert(LookupHereIndex(i), decls);
                 },
                 Some(decls) => {
                     println!("lookup_here hit");
+                    lookup_here_cachex.insert(LookupHereIndex(i), decls.clone());
                 },
             }
         }
-        for r in self.lookups.clone() {
+        for (i, r) in self.lookups.clone().iter().enumerate() {
             match lookup_cache.get(&r) {
                 None => {
                     println!("lookup miss");
                     let crumbs = HashTrieSet::new();
                     let cache = Cache { lookup_here_cache: &lookup_here_cache, lookup_cache: &lookup_cache, mixfix_cache: &mixfix_cache };
                     let decls = self.do_lookup(driver, r.clone(), &crumbs, &cache)?;
-                    lookup_cache.insert(r, decls);
+                    lookup_cache.insert(r.clone(), decls.clone());
+                    lookup_cachex.insert(LookupIndex(i), decls);
                 },
                 Some(decls) => {
                     println!("lookup hit");
+                    lookup_cachex.insert(LookupIndex(i), decls.clone());
                 },
             }
         }
-        for r in self.mixfixes.clone() {
+        for (i, r) in self.mixfixes.clone().iter().enumerate() {
             match mixfix_cache.get(&r) {
                 None => {
                     println!("mixfix miss");
                     let crumbs = HashTrieSet::new();
                     let cache = Cache { lookup_here_cache: &lookup_here_cache, lookup_cache: &lookup_cache, mixfix_cache: &mixfix_cache };
                     let trees = self.do_mixfix(driver, r.clone(), &crumbs, &cache)?;
-                    mixfix_cache.insert(r, trees);
+                    mixfix_cache.insert(r.clone(), trees.clone());
+                    mixfix_cachex.insert(MixfixIndex(i), trees);
                 },
                 Some(trees) => {
                     println!("mixfix hit");
+                    mixfix_cachex.insert(MixfixIndex(i), trees.clone());
                 },
             }
         }
 
         Ok(
-            Cachex {
-                lookup_here_cache,
-                lookup_cache,
-                mixfix_cache,
+            SolverResult {
+                lookup_here_cache: lookup_here_cachex,
+                lookup_cache: lookup_cachex,
+                mixfix_cache: mixfix_cachex,
             }
         )
     }
 
-    fn do_lookup(&mut self, driver: &mut driver::Interpreter, r: LookupRef, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
+    fn do_lookup(&self, driver: &mut driver::Driver, r: LookupRef, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
         match r {
             LookupRef { scope, name } => self.lookup_in_scope(driver, scope, &name, crumbs, cache)
         }
     }
 
-    fn do_lookup_here(&mut self, driver: &mut driver::Interpreter, r: LookupHereRef, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
+    fn do_lookup_here(&self, driver: &mut driver::Driver, r: LookupHereRef, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
         match r {
             LookupHereRef { scope, name } => self.lookup_here_in_scope(driver, scope, &name, crumbs, cache)
         }
     }
 
-    fn do_mixfix(&mut self, driver: &mut driver::Interpreter, r: MixfixRef, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<MixfixTree>>> {
+    fn do_mixfix(&self, driver: &mut driver::Driver, r: MixfixRef, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<MixfixTree>> {
         match r {
             MixfixRef { parts } => self.resolve_mixfix(driver, &parts, crumbs, cache)
         }
     }
 
-    #[trace(disable(driver, cache))]
-    fn resolve_mixfix(&mut self, driver: &mut driver::Interpreter, parts: &Vec<MixfixPart>, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<MixfixTree>>> {
+    #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
+    fn resolve_mixfix(&self, driver: &mut driver::Driver, parts: &Vec<MixfixPart>, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<MixfixTree>> {
         match cache.mixfix_cache.get(&MixfixRef { parts: parts.clone() }) {
             Some(trees) => {
                 println!("mixfix cache hit");
@@ -263,17 +277,114 @@ impl ScopeGraph {
             },
         }
 
-        // TODO
+        use crate::namer::glr::Token;
 
-        // make m_tokens
-        // lookup the decls to make the grammar
-        // call glr with the grammar and the input
+        let mut refs: Vec<Option<LookupRef>> = vec![];
 
-        Ok(vec![])
+        for part in parts {
+            match part.name_ref {
+                Some(LookupIndex(index)) => {
+                    let r = self.lookups.get(index);
+                    match r {
+                        Some(r) => refs.push(Some(r.clone())),
+                        None => refs.push(None),
+                    }
+                },
+                None => {
+                    refs.push(None);
+                },
+            }
+        }
+
+        let mut tokens = vec![];
+        let mut has_name = false;
+
+        for r in refs {
+            match r {
+                Some(r) => {
+                    let decls = self.do_lookup(driver, r.clone(), &crumbs, &cache)?;
+
+                    if ! decls.is_empty() && ScopeGraph::all_mixfix(&decls) {
+                        match &r.name {
+                            Name::Id(x) => {
+                                tokens.push(Token::Name(Part::Id(x.to_owned()), decls.iter().map(|l| l.value.clone()).collect()));
+                                has_name = true;
+                            },
+                            Name::Op(x) => {
+                                tokens.push(Token::Name(Part::Op(x.to_owned()), decls.iter().map(|l| l.value.clone()).collect()));
+                                has_name = true;
+                            },
+                            _ => {
+                                tokens.push(Token::Exp(MixfixTree::Exp));
+                            },
+                        }
+                    }
+                    else {
+                        // Either the name resolved at least one non-mixfix declaration
+                        // or it resolved to nothing. In the latter case, we'll get an error later during
+                        // renaming, but treat it like an expression so mixfix parsing might
+                        // possibly succeed and we won't report an error for that too.
+                        tokens.push(Token::Exp(MixfixTree::Exp));
+                    }
+                },
+                None => {
+                    tokens.push(Token::Exp(MixfixTree::Exp));
+                },
+            }
+        }
+
+        if ! has_name {
+            // FIXME: MixfixParser should handle this case already!
+            // If there are no names in the mixfix expression, we'll
+            // fail, but we can turn it into a call expression.
+            let mut ts = tokens.iter();
+            let tree: MixfixTree = match ts.next() {
+                Some(Token::Exp(tree)) => ts.fold(tree.clone(), |left, t|
+                    match t {
+                        Token::Exp(tree) => MixfixTree::Apply(Box::new(left.clone()), Box::new(tree.clone())),
+                        _ => unreachable!(),
+                    }
+                ),
+                _ => unreachable!(),
+            };
+
+            Ok(vec![tree])
+        }
+        else {
+            // Resolve the mixfix expression.
+
+            // NOTE: do not add the $ token to the input.. GLR will do that for us.
+            // tokens.push(Token::End);
+
+            let decls = tokens.iter().flat_map(|token| {
+                match token {
+                    Token::Name(_, decls) => {
+                        decls.iter().map(|decl|
+                            match decl {
+                                Decl::MixfixPart {
+                                    orig, ..
+                                } => *orig.clone(),
+                                decl => decl.clone(),
+                            }
+                        ).collect()
+                    },
+                    _ => vec![]
+                }
+            }).collect();
+
+            println!("parts {:?}", parts);
+            println!("tokens {:?}", tokens);
+            println!("decls {:?}", decls);
+
+            let mut parser = GLRAdapter::glr_from_decls(&decls);
+
+            Ok(parser.parse(tokens))
+        }
     }
 
-    #[trace(disable(driver, crumbs))]
-    fn lookup_in_root(&mut self, driver: &mut driver::Interpreter, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+
+    #[cfg_attr(debug_assertions, trace(disable(driver, crumbs)))]
+    fn lookup_in_root(&self, driver: &mut driver::Driver, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
         if crumbs.contains(&Scope::Global) {
             return Ok(vec![]);
         }
@@ -288,19 +399,10 @@ impl ScopeGraph {
         if ScopeGraph::all_mixfix(&results) {
             match self.load_bundle_by_name(driver, name) {
                 Ok(index) => {
-                    match driver.read_bundle(index) {
-                        Ok(_) => {
-                            match driver.name_bundle(index) {
-                                Ok(_) => {},
-                                Err(msg) => {
-                                    return Err(msg)
-                                },
-                            }
-                        },
+                    match driver.name_bundle(index) {
+                        Ok(_) => {},
                         Err(msg) => {
-                            // If we can't read the bundle, ignore it... it just means
-                            // the file doesn't exist.
-                            // If we can't name the bundle, after reading it, then error.
+                            return Err(msg)
                         },
                     }
 
@@ -317,11 +419,17 @@ impl ScopeGraph {
                                 let mut v = self.lookup_here_in_scope(driver, *scope, name, crumbs, &cache)?;
                                 results.append(&mut v);
                             }
+                            else {
+                                driver.error(Located::new(loc, "root scope of bundle not found".to_owned()))
+                            }
                         },
                         Some(Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
                             if let Some(scope) = scopes.get(&id) {
                                 let mut v = self.lookup_here_in_scope(driver, *scope, name, crumbs, &cache)?;
                                 results.append(&mut v);
+                            }
+                            else {
+                                driver.error(Located::new(loc, "root scope of bundle not found".to_owned()))
                             }
                         },
                         Some(Bundle::Core { root_scope, .. }) => {
@@ -333,7 +441,8 @@ impl ScopeGraph {
                     Ok(results)
                 },
                 Err(msg) => {
-                    // Err(msg)
+                    // There is no bundle with the given name, but ignore that since it's not
+                    // required to exist.
                     Ok(results)
                 },
             }
@@ -343,15 +452,14 @@ impl ScopeGraph {
         }
     }
 
-    #[trace(disable(driver))]
-    fn load_bundle_by_name(&mut self, driver: &mut driver::Interpreter, name: &Name) -> LookupResult<BundleIndex> {
+    #[cfg_attr(debug_assertions, trace(disable(driver)))]
+    fn load_bundle_by_name(&self, driver: &mut driver::Driver, name: &Name) -> LookupResult<BundleIndex> {
         driver.load_bundle_by_name(name)
     }
 
-    #[trace(disable(driver, crumbs))]
-    fn lookup_in_trees(&mut self, driver: &mut driver::Interpreter, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+    #[cfg_attr(debug_assertions, trace(disable(driver, crumbs)))]
+    fn lookup_in_trees(&self, driver: &mut driver::Driver, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
         let mut results = Vec::new();
-
         let mut to_name = Vec::new();
 
         // bring any loaded bundles up to the naming phase.
@@ -360,9 +468,6 @@ impl ScopeGraph {
         for (index, bundle) in driver.enumerate_bundles() {
             if Some(index) != driver.current_bundle {
                 match bundle {
-                    Bundle::New { .. } => {
-                        to_name.push(index);
-                    },
                     Bundle::Read { .. } => {
                         to_name.push(index);
                     },
@@ -376,6 +481,8 @@ impl ScopeGraph {
             }
         }
 
+        driver.stats.accum("lookup_in_trees", 1);
+
         for index in to_name {
             println!("naming bundle {:?} to find {:?}", index, name);
             match driver.name_bundle(index) {
@@ -386,42 +493,78 @@ impl ScopeGraph {
             }
         }
 
-        let cache = Cache {
-            lookup_here_cache: &HashMap::new(),
-            lookup_cache: &HashMap::new(),
-            mixfix_cache: &HashMap::new(),
-        };
+        // Assert that we named things?
+        for (index, bundle) in driver.enumerate_bundles() {
+            if Some(index) != driver.current_bundle {
+                match bundle {
+                    Bundle::Read { .. } => {
+                        assert!(false);
+                    },
+                    Bundle::Parsed { .. } => {
+                        assert!(false);
+                    },
+                    _ => {
+                        // already named
+                    },
+                }
+            }
+        }
 
-        // search all the named bundles
-        // OUCH: cloning the bundles is expensive.
-        // FIXME
-        for bundle in driver.bundles.clone() {
+        // HACK
+        // We want to call lookup_here_in_scope, but can't since we have to mutably borrow driver
+        // while we're looping over it.
+        // We pass in empty crumbs since crumbs are bundle specific.
+        let stats = &mut driver.stats;
+
+        for bundle in &driver.bundles {
             match bundle {
-                Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. } => {
+                Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
                     if let Some(scope) = scopes.get(&id) {
-                        let mut v = self.lookup_here_in_scope(driver, *scope, name, crumbs, &cache)?;
+                        let mut v = graph.lookup_here_in_env(stats, *scope, name, &HashTrieSet::new())?;
                         results.append(&mut v);
                     }
                 },
-                Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. } => {
+                Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
                     if let Some(scope) = scopes.get(&id) {
-                        let mut v = self.lookup_here_in_scope(driver, *scope, name, crumbs, &cache)?;
+                        let mut v = graph.lookup_here_in_env(stats, *scope, name, &HashTrieSet::new())?;
                         results.append(&mut v);
                     }
                 },
-                Bundle::Core { root_scope, .. } => {
-                    let mut v = self.lookup_here_in_scope(driver, root_scope, name, crumbs, &cache)?;
-                    results.append(&mut v);
-                },
+                // Bundle::Core { root_scope, graph, .. } => {
+                //     to_search.push(*root_scope);
+                // },
                 _ => {},
             }
         }
 
+        // let mut to_search = vec![];
+        //
+        // for bundle in &driver.bundles {
+        //     match bundle {
+        //         Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
+        //             if let Some(scope) = scopes.get(&id) {
+        //                 to_search.push((graph, scope));
+        //             }
+        //         },
+        //         Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
+        //             if let Some(scope) = scopes.get(&id) {
+        //                 to_search.push((graph, scope));
+        //             }
+        //         },
+        //         _ => {},
+        //     }
+        // }
+        //
+        // for (graph, scope) in to_search {
+        //     let mut v = graph.lookup_here_in_scope(driver, *scope, name, &HashTrieSet::new(), &Cache { lookup_here_cache: &HashMap::new(), lookup_cache: &HashMap::new(), mixfix_cache: &HashMap::new() })?;
+        //     results.append(&mut v);
+        // }
+
         Ok(results)
     }
 
-    #[trace(disable(driver, cache))]
-    fn lookup_in_imports(&mut self, driver: &mut driver::Interpreter, imports: &Vec<Located<Import>>, x: &Name, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
+    #[cfg_attr(debug_assertions, cfg_attr(debug_assertions, trace(disable(driver, cache))))]
+    fn lookup_in_imports(&self, driver: &mut driver::Driver, imports: &Vec<Located<Import>>, x: &Name, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
         let exclude_all: Vec<(Scope, Name)> = imports.iter().filter_map(|import| {
             match import {
                 Located { loc, value: Import::None { path: scope } } =>
@@ -508,8 +651,8 @@ impl ScopeGraph {
         false
     }
 
-    #[trace(disable(driver, cache))]
-    fn get_inner_decls_here(&mut self, driver: &mut driver::Interpreter, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache, decls: &Vec<Located<Decl>>) -> LookupResult<Vec<Located<Decl>>> {
+    #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
+    fn get_inner_decls_here(&self, driver: &mut driver::Driver, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache, decls: &Vec<Located<Decl>>) -> LookupResult<Vec<Located<Decl>>> {
         let frames = decls.iter().flat_map(|d| {
             match d {
                 Located { loc, value: Decl::Trait { body, .. } } => body.to_vec(),
@@ -524,8 +667,8 @@ impl ScopeGraph {
         Ok(inner_decls)
     }
 
-    #[trace(disable(driver, cache))]
-    fn get_inner_decls(&mut self, driver: &mut driver::Interpreter, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache, decls: &Vec<Located<Decl>>) -> LookupResult<Vec<Located<Decl>>> {
+    #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
+    fn get_inner_decls(&self, driver: &mut driver::Driver, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache, decls: &Vec<Located<Decl>>) -> LookupResult<Vec<Located<Decl>>> {
         let frames = decls.iter().flat_map(|d| {
             match d {
                 Located { loc, value: Decl::Trait { body, .. } } => body.to_vec(),
@@ -540,18 +683,21 @@ impl ScopeGraph {
         Ok(inner_decls)
     }
 
-    #[trace(disable(driver, cache))]
-    fn lookup_here_in_scope(&mut self, driver: &mut driver::Interpreter, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
+    #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
+    fn lookup_here_in_scope(&self, driver: &mut driver::Driver, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
         if crumbs.contains(&scope) {
+            driver.stats.accum("lookup_here cycle", 1);
             return Ok(vec![]);
         }
 
         match cache.lookup_here_cache.get(&LookupHereRef { scope, name: name.clone() }) {
             Some(decls) => {
                 println!("lookup_here cache hit");
+                driver.stats.accum("lookup_here hit", 1);
                 return Ok(decls.clone())
             },
             None => {
+                driver.stats.accum("lookup_here miss", 1);
                 println!("lookup_here cache miss");
             },
         }
@@ -572,7 +718,7 @@ impl ScopeGraph {
             Scope::Mixfix(MixfixIndex(index)) => {
                 let r = self.mixfixes.get(index).unwrap();
                 let trees = self.do_mixfix(driver, r.clone(), &crumbs.insert(scope), &cache)?;
-                let decls = trees.iter().flat_map(|Located { ref loc, value: ref t }| ScopeGraph::mixfix_tree_to_decls(t)).collect();
+                let decls = trees.iter().flat_map(|t| ScopeGraph::mixfix_tree_to_decls(t)).collect();
                 self.get_inner_decls_here(driver, scope, &name, &crumbs, &cache, &decls)
             },
             Scope::Env(EnvIndex(index)) => {
@@ -596,18 +742,59 @@ impl ScopeGraph {
         }
     }
 
-    #[trace(disable(driver, cache))]
-    fn lookup_in_scope(&mut self, driver: &mut driver::Interpreter, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
+    // HACK
+    // Version of lookup_here_in_scope that only works on Env environments.
+    // Called from lookup_in_trees. Avoids loading other bundles which requires
+    // borrowing the driver mutably. The assumption is that the root scope of a bundle
+    // is always a simple Env.
+    #[cfg_attr(debug_assertions, trace(disable(stats)))]
+    fn lookup_here_in_env(&self, stats: &mut driver::stats::Stats, scope: Scope, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
         if crumbs.contains(&scope) {
+            stats.accum("lookup_here cycle", 1);
+            return Ok(vec![]);
+        }
+
+        match scope {
+            Scope::Empty => Ok(vec![]),
+            Scope::Env(EnvIndex(index)) => {
+                let env = self.envs.get(index).unwrap();
+                // need to clone the includes
+                // before we borrow self mutably.
+                let includes = env.includes.clone();
+                let found_here: Vec<Located<Decl>> = env.decls.iter().cloned().filter(|decl| decl.name() == *name).collect();
+
+                let mut results = found_here;
+
+                for include in includes {
+                    if include != scope {
+                        let v = self.lookup_here_in_env(stats, include, name, &crumbs.insert(scope))?;
+                        results.extend(v.iter().cloned());
+                    }
+                }
+
+                Ok(results)
+            },
+            _ => {
+                Ok(vec![])
+            }
+        }
+    }
+
+    #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
+    fn lookup_in_scope(&self, driver: &mut driver::Driver, scope: Scope, name: &Name, crumbs: &Crumbs, cache: &Cache) -> LookupResult<Vec<Located<Decl>>> {
+        if crumbs.contains(&scope) {
+            driver.stats.accum("lookup cycle", 1);
             return Ok(vec![]);
         }
 
         match cache.lookup_cache.get(&LookupRef { scope, name: name.clone() }) {
             Some(decls) => {
                 println!("lookup cache hit");
+                driver.stats.accum("lookup hit", 1);
                 return Ok(decls.clone())
             },
             None => {
+                driver.stats.accum("lookup miss", 1);
                 println!("lookup cache miss");
             },
         }
@@ -628,7 +815,7 @@ impl ScopeGraph {
             Scope::Mixfix(MixfixIndex(index)) => {
                 let r = self.mixfixes.get(index).unwrap();
                 let trees = self.do_mixfix(driver, r.clone(), &crumbs.insert(scope), &cache)?;
-                let decls = trees.iter().flat_map(|Located { ref loc, value: ref t }| ScopeGraph::mixfix_tree_to_decls(t)).collect();
+                let decls = trees.iter().flat_map(|t| ScopeGraph::mixfix_tree_to_decls(t)).collect();
                 self.get_inner_decls(driver, scope, &name, &crumbs, &cache, &decls)
             },
             Scope::Env(EnvIndex(index)) => {
@@ -671,7 +858,7 @@ impl ScopeGraph {
         }
     }
 
-    fn all_mixfix(decls: &Vec<Located<Decl>>) -> bool {
+    pub fn all_mixfix(decls: &Vec<Located<Decl>>) -> bool {
         decls.iter().all(|d| {
             match d {
                 Located { loc: _, value: Decl::MixfixPart { .. } } => true,
@@ -693,5 +880,217 @@ impl ScopeGraph {
                 _ => true,
             }
         }).cloned().collect()
+    }
+}
+
+
+use crate::namer::glr::*;
+use crate::syntax::trees::NodeId;
+
+struct GLRAdapter;
+
+impl GLRAdapter {
+
+    fn make_rhs_from_name(x: &Name, assoc: Option<usize>, prio: Prio, id: NodeId) -> Vec<Symbol> {
+        let lowest = Symbol::Nonterm(Nonterm::E);
+        let current = Symbol::Nonterm(Nonterm::M(id, prio.0));
+        let next = Symbol::Nonterm(Nonterm::M(id, prio.0 + 1));
+        let highest = Symbol::Nonterm(Nonterm::Br);
+
+        match x {
+            Name::Op(x) => {
+                vec![Symbol::Term(Term::Name(Part::Op(x.clone())))]
+            },
+            Name::Id(x) => {
+                vec![Symbol::Term(Term::Name(Part::Id(x.clone())))]
+            },
+            Name::Mixfix(parts) => {
+                match parts.as_slice() {
+                    [] => vec![],
+                    [Part::Op(x), Part::Placeholder] => {
+                        // Unary prefix operators are right associative.
+                        vec![Symbol::Term(Term::Name(Part::Op(x.clone()))), current]
+                    },
+                    [Part::Placeholder, Part::Op(x)] => {
+                        // Unary postfix operators are left associative.
+                        vec![current, Symbol::Term(Term::Name(Part::Op(x.clone())))]
+                    },
+                    parts => {
+                        println!("parts {:?}", parts);
+
+                        // map all expressions to the highest precedence nonterminal.
+                        let mut rhs: Vec<Symbol> = parts.iter().map(|part|
+                            match part {
+                                Part::Placeholder => highest.clone(),
+                                x => Symbol::Term(Term::Name(x.clone())),
+                            }).collect();
+
+                        let n = rhs.len();
+
+                        // Handle the associativity annotations on the first and last tokens.
+                        if n > 2 {
+                            match (&rhs[0], &rhs[1]) {
+                                // _ + ...
+                                (Symbol::Nonterm(_), Symbol::Term(_)) => {
+                                    if assoc == Some(0) || assoc == None {
+                                        rhs[0] = current.clone();
+                                    }
+                                    else {
+                                        rhs[0] = next.clone();
+                                    }
+                                }
+                                _ => {},
+                            }
+
+                            match (&rhs[n-2], &rhs[n-1]) {
+                                // ... + _
+                                (Symbol::Term(_), Symbol::Nonterm(_)) => {
+                                    if assoc == Some(n-1) {
+                                        rhs[n-1] = current.clone();
+                                    }
+                                    else {
+                                        rhs[n-1] = next.clone();
+                                    }
+                                }
+                                _ => {},
+                            }
+                        }
+
+                        for i in 0..n {
+                            if 1 <= i && i+1 < n {
+                                match (&rhs[i-1], &rhs[i], &rhs[i+1]) {
+                                    // Hole: a nonterminal surrounded by terminals has lowest priority.
+                                    // if _ then _ else
+                                    // | _ |
+                                    (Symbol::Term(_), Symbol::Nonterm(_), Symbol::Term(_)) => {
+                                        rhs[i] = lowest.clone();
+                                    },
+                                    _ => {},
+                                }
+
+                                match (&rhs[i-1], &rhs[i], &rhs[i+1]) {
+                                    // _ _ x --> use lowest priority before x
+                                    (Symbol::Nonterm(Nonterm::Br), Symbol::Nonterm(_), Symbol::Term(_)) => {
+                                        rhs[i] = lowest.clone();
+                                    },
+                                    _ => {},
+                                }
+                            }
+                        }
+
+                        if n > 2 {
+                            match (&rhs[n-2], &rhs[n-1]) {
+                                (Symbol::Nonterm(Nonterm::Br), Symbol::Nonterm(_)) => {
+                                    rhs[n-1] = lowest.clone();
+                                }
+                                _ => {},
+                            }
+                        }
+
+                        println!("rhs {:?}", rhs);
+                        rhs
+                    },
+                }
+            },
+        }
+    }
+
+    fn make_rhs_from_decl(decl: &Decl) -> Rule {
+        let name = decl.name();
+        let assoc = decl.assoc();
+        let prio = Prio(0);
+        let id = NodeId(0);
+        let rhs = GLRAdapter::make_rhs_from_name(&name, assoc, prio, id);
+        Rule { lhs: Nonterm::M(id, prio.0), rhs: rhs }
+    }
+
+    fn glr_from_decls(decls: &Vec<Decl>) -> glr::GLR {
+        // S -> E $
+        let start_rule = Rule { lhs: Nonterm::S, rhs: vec![Symbol::Nonterm(Nonterm::E), Symbol::Term(Term::End)] };
+        // Pr -> Br
+        let pr_br = Rule { lhs: Nonterm::Pr, rhs: vec![Symbol::Nonterm(Nonterm::Br)] };
+        // Br -> p
+        let br_p = Rule { lhs: Nonterm::Br, rhs: vec![Symbol::Term(Term::Primary)] };
+        // E -> Pr
+        let e_pr = Rule { lhs: Nonterm::E, rhs: vec![Symbol::Nonterm(Nonterm::Pr)] };
+        // Pr -> Pr Br
+        let pr_pr_br = Rule { lhs: Nonterm::Pr, rhs: vec![Symbol::Nonterm(Nonterm::Pr), Symbol::Nonterm(Nonterm::Br)] };
+
+        let mut rules = vec![
+            start_rule.clone(),
+            pr_br,
+            br_p,
+            pr_pr_br,
+        ];
+
+        let decl_rules = decls.iter().map(|decl| GLRAdapter::make_rhs_from_decl(decl));
+        rules.extend(decl_rules);
+
+        let mut min_prio = HashMap::new();
+        let mut max_prio = HashMap::new();
+        let mut keys = HashSet::new();
+
+        for rule in &rules {
+            match rule.lhs {
+                Nonterm::M(id, prio) => {
+                    keys.insert(id);
+                    match min_prio.get(&id) {
+                        Some(i) if prio < *i => { min_prio.insert(id, prio); },
+                        None => { min_prio.insert(id, prio); },
+                        _ => {},
+                    }
+                    match max_prio.get(&id) {
+                        Some(i) if prio > *i => { max_prio.insert(id, prio); },
+                        None => { max_prio.insert(id, prio); },
+                        _ => {},
+                    }
+                }
+                _ => {},
+            }
+        }
+
+        // Add E -> Pr if there are no other rules.
+        if keys.is_empty() {
+            rules.push(e_pr);
+        }
+
+        for id in keys {
+            match (min_prio.get(&id), max_prio.get(&id)) {
+                (Some(min), Some(max)) => {
+                    // Mmin -> Mn -> M{n+1} -> ... -> Mmax
+                    for k in *min .. *max {
+                        rules.push(
+                            Rule {
+                                lhs: Nonterm::M(id, k),
+                                rhs: vec![Symbol::Nonterm(Nonterm::M(id, k+1))],
+                            }
+                        );
+                    }
+
+                    // E -> Mmin
+                    rules.push(
+                        Rule {
+                            lhs: Nonterm::E,
+                            rhs: vec![Symbol::Nonterm(Nonterm::M(id, *min))],
+                        }
+                    );
+
+                    // Mmax -> Br
+                    rules.push(
+                        Rule {
+                            lhs: Nonterm::M(id, *max),
+                            rhs: vec![Symbol::Nonterm(Nonterm::Pr)],
+                        }
+                    );
+                },
+                _ => {},
+            }
+        }
+
+        println!("rules {:#?}", &rules);
+
+        let mut lr = LR::new(rules);
+        let state = lr.add_state(lr.closure(vec![Item { dot: 0, rule: start_rule }])).unwrap();
+        GLR::new(lr, state)
     }
 }

@@ -7,6 +7,7 @@ use syntax::names::*;
 
 use parser::tokens::*;
 use parser::lex::Lexer;
+use parser::lex::LexError;
 
 // TODO: parse groups of definitions directly rather than building a dummy trait.
 // TODO: rename Trait to Record and add a tag, generate by the parser.
@@ -18,9 +19,12 @@ use parser::lex::Lexer;
 macro_rules! located_ok {
     ($parser: expr, $body: expr) => {
         {
-            let first_token = $parser.lookahead();
+            let first_token = $parser.lookahead()?;
             let v = $body?;
             let last_token = &$parser.last_token;
+            // println!("first token {:?} {:?}", first_token.loc, first_token.value);
+            // println!("last token {:?} {:?}", last_token.loc, last_token.value);
+
             Ok(Located::new(
                 Loc::span_from(&first_token, &last_token),
                 v
@@ -33,7 +37,7 @@ macro_rules! located_ok {
 macro_rules! located {
     ($parser: expr, $body: expr) => {
         {
-            let first_token = $parser.lookahead();
+            let first_token = $parser.lookahead()?;
             let v = $body;
             let last_token = &$parser.last_token;
             Located::new(
@@ -46,7 +50,7 @@ macro_rules! located {
 
 macro_rules! consume_or_else {
     ($parser: expr, $expected: pat, $body: expr, $otherwise: expr) => {
-        match *$parser.lookahead() {
+        match *$parser.lookahead()? {
             $expected => {
                 $parser.eat();
                 $body
@@ -60,7 +64,7 @@ macro_rules! consume_or_else {
 
 macro_rules! consume {
     ($parser: expr, $expected: expr) => {
-        match *$parser.lookahead() {
+        match *$parser.lookahead()? {
             // $expected is a expr, not a pattern so we have to compare using ==
             ref t if *t == $expected => {
                 $parser.eat();
@@ -75,7 +79,7 @@ macro_rules! consume {
 
 macro_rules! consume_without_check {
     ($parser: expr, $expected: expr) => {
-        assert_eq!(*$parser.lookahead(), $expected);
+        assert_eq!(*$parser.lookahead()?, $expected);
         $parser.eat();
     }
 }
@@ -134,8 +138,30 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn lookahead(&mut self) -> Located<Token> {
-        self.lex.peek_token()
+    fn lookahead(&mut self) -> PResult<Located<Token>> {
+        match self.lex.peek_token() {
+            Err(Located { loc, value: LexError::BadInt }) => {
+                self.error(loc, "bad integer literal")
+            },
+            Err(Located { loc, value: LexError::BadChar }) => {
+                self.error(loc, "bad character literal")
+            },
+            Err(Located { loc, value: LexError::BadString }) => {
+                self.error(loc, "bad string literal")
+            },
+            Err(Located { loc, value: LexError::BadRat }) => {
+                self.error(loc, "bad rational literal")
+            },
+            Err(Located { loc, value: LexError::BadComment }) => {
+                self.error(loc, "bad comment")
+            },
+            Err(Located { loc, value: LexError::UnexpectedChar(ch) }) => {
+                self.error(loc, &format!("unexpected character '{}'", ch))
+            },
+            Ok(t) => {
+                Ok(t)
+            },
+        }
     }
 
     fn error_unexpected<T>(&mut self, expected: Vec<Token>, got: Token) -> PResult<T> {
@@ -154,7 +180,7 @@ impl<'a> Parser<'a> {
     }
 
     fn error_here<T>(&mut self, msg: &str) -> PResult<T> {
-        let t = self.lookahead();
+        let t = self.lookahead()?;
         let loc = t.loc.clone();
         self.error(loc, msg)
     }
@@ -162,14 +188,14 @@ impl<'a> Parser<'a> {
     fn error<T>(&mut self, loc: Loc, msg: &str) -> PResult<T> {
         let lmsg = Located { loc: loc, value: String::from(msg) };
         self.errors.push(lmsg.clone());
-        panic!("{:?}", lmsg);
+        // panic!("{:?}", lmsg);
         Err(lmsg)
     }
 
     fn error_void(&mut self, loc: Loc, msg: &str) {
         let lmsg = Located { loc: loc, value: String::from(msg) };
         self.errors.push(lmsg.clone());
-        panic!("{:?}", lmsg);
+        // panic!("{:?}", lmsg);
     }
 
     fn error_string<T>(&mut self, lmsg: Located<String>) -> PResult<T> {
@@ -179,30 +205,27 @@ impl<'a> Parser<'a> {
     }
 
     fn eat(&mut self) {
-        let t = self.lookahead();
-        let loc = t.loc.clone();
-        match *t {
-            Token::BadInt => {
+        match self.lex.next_token() {
+            Err(Located { loc, value: LexError::BadInt }) => {
                 self.error_void(loc, "bad integer literal");
             },
-            Token::BadChar => {
+            Err(Located { loc, value: LexError::BadChar }) => {
                 self.error_void(loc, "bad character literal");
             },
-            Token::BadString => {
+            Err(Located { loc, value: LexError::BadString }) => {
                 self.error_void(loc, "bad string literal");
             },
-            Token::BadRat => {
+            Err(Located { loc, value: LexError::BadRat }) => {
                 self.error_void(loc, "bad rational literal");
             },
-            Token::BadComment => {
+            Err(Located { loc, value: LexError::BadComment }) => {
                 self.error_void(loc, "bad comment");
             },
-            Token::UnexpectedChar(ch) => {
+            Err(Located { loc, value: LexError::UnexpectedChar(ch) }) => {
                 self.error_void(loc, "unexpected character");
             },
-            _ => {
-                self.last_token = self.lex.next_token();
-                // println!("token {} {:?}", self.last_token.loc, self.last_token.value);
+            Ok(t) => {
+                self.last_token = t;
             },
         }
     }
@@ -226,7 +249,7 @@ impl<'a> Parser<'a> {
         let mut cmds = Vec::new();
 
         loop {
-            match *self.lookahead() {
+            match *self.lookahead()? {
                 Token::EOF => {
                     break;
                 },
@@ -245,7 +268,7 @@ impl<'a> Parser<'a> {
                             }
 
                             // A command should be followed by a ; or } or EOF.
-                            match *self.lookahead() {
+                            match *self.lookahead()? {
                                 Token::Semi => {},
                                 Token::Rc => {},
                                 Token::EOF => {},
@@ -257,7 +280,7 @@ impl<'a> Parser<'a> {
                         Err(msg) => {
                             // Skip to the next ; or } or EOF
                             loop {
-                                match *self.lookahead() {
+                                match *self.lookahead()? {
                                     Token::Semi => break,
                                     Token::Rc => break,
                                     Token::EOF => break,
@@ -278,7 +301,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_cmd(&mut self) -> PResult<Vec<Located<Cmd>>> {
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::Fun => {
                 let cmd = self.parse_fun_cmd()?;
                 Ok(vec![cmd])
@@ -301,7 +324,7 @@ impl<'a> Parser<'a> {
             },
             /*
             Token::Lc => {
-                let start = self.lookahead();
+                let start = self.lookahead()?;
 
                 // We have a nested block.
                 // We need to pass the priority down.
@@ -365,10 +388,10 @@ impl<'a> Parser<'a> {
 
     fn parse_mixfix_return(&mut self) -> PResult<Located<Param>> {
         located_ok!(self, {
-            match *self.lookahead() {
+            match *self.lookahead()? {
                 Token::Lp => {
                     self.eat();
-                    match *self.lookahead() {
+                    match *self.lookahead()? {
                         Token::Question => {
                             self.eat();
                             let e = self.parse_tuple()?;
@@ -394,7 +417,7 @@ impl<'a> Parser<'a> {
                 },
                 Token::Lc => {
                     self.eat();
-                    match *self.lookahead() {
+                    match *self.lookahead()? {
                         Token::Question => {
                             self.eat();
                             let e = self.parse_tuple()?;
@@ -436,7 +459,7 @@ impl<'a> Parser<'a> {
         consume_or_else!(self,
             Token::Where,
             {
-                let e = self.parse_exp()?;
+                let e = self.parse_exp0()?;
                 Ok(Some(e))
             },
             {
@@ -449,7 +472,7 @@ impl<'a> Parser<'a> {
         let mut elements = Vec::new();
 
         loop {
-            match *self.lookahead() {
+            match *self.lookahead()? {
                 Token::Id(ref s) => {
                     self.eat();
                     let e = MixfixParam::Name(Part::Id(s.clone()));
@@ -473,10 +496,10 @@ impl<'a> Parser<'a> {
                 Token::Lp => {
                     let p = located!(self, {
                         self.eat();
-                        match *self.lookahead() {
+                        match *self.lookahead()? {
                             Token::Lp => {
                                 self.eat();
-                                match *self.lookahead() {
+                                match *self.lookahead()? {
                                     Token::Bang => {
                                         self.eat();
                                         let e = self.parse_tuple()?;
@@ -553,10 +576,10 @@ impl<'a> Parser<'a> {
                 Token::Lc => {
                     let p = located!(self, {
                         self.eat();
-                        match *self.lookahead() {
+                        match *self.lookahead()? {
                             Token::Lc => {
                                 self.eat();
-                                match *self.lookahead() {
+                                match *self.lookahead()? {
                                     Token::Bang => {
                                         self.eat();
                                         let e = self.parse_tuple()?;
@@ -675,7 +698,7 @@ impl<'a> Parser<'a> {
                         Param { pat: ref exp, .. } => {
                             // copy the location from the Param.
                             let unboxed: Located<Exp> = *exp.clone();
-                            lambda_params.push(unboxed.with_loc(&param.loc));
+                            lambda_params.push(unboxed.with_loc(param.loc));
                         },
                     }
                 }
@@ -701,7 +724,7 @@ impl<'a> Parser<'a> {
 
                 let id = self.alloc_node_id();
 
-                match *self.lookahead() {
+                match *self.lookahead()? {
                     Token::Eq => {
                         self.eat();
                         let e = self.parse_exp()?;
@@ -746,11 +769,11 @@ impl<'a> Parser<'a> {
                         // Just the function signature (without return).
                         // We add a () guard to make sure the function cannot be
                         // invoked.
-                        let nothing = located!(self, {
-                            Exp::Lit {
-                                lit: Lit::Nothing
-                            }
-                        });
+
+                        let nothing = Located {
+                            loc: Loc::from(&self.last_token),
+                            value: Exp::Lit { lit: Lit::Nothing },
+                        };
 
                         let opt_guard2 = match opt_guard {
                             Some(g) => Some(g),
@@ -773,7 +796,7 @@ impl<'a> Parser<'a> {
 
     fn parse_val_def(&mut self) -> PResult<Located<Def>> {
         located_ok!(self, {
-            assert_eq!(*self.lookahead(), Token::Val);
+            assert_eq!(*self.lookahead()?, Token::Val);
             self.eat();
             let e = self.parse_exp()?;
             Ok(Def::FormulaDef {
@@ -785,7 +808,7 @@ impl<'a> Parser<'a> {
 
     fn parse_var_def(&mut self) -> PResult<Located<Def>> {
         located_ok!(self, {
-            assert_eq!(*self.lookahead(), Token::Var);
+            assert_eq!(*self.lookahead()?, Token::Var);
             self.eat();
             let e = self.parse_exp()?;
             Ok(Def::FormulaDef {
@@ -797,7 +820,7 @@ impl<'a> Parser<'a> {
 
     fn parse_import_def(&mut self) -> PResult<Located<Def>> {
         located_ok!(self, {
-            assert_eq!(*self.lookahead(), Token::Import);
+            assert_eq!(*self.lookahead()?, Token::Import);
             self.eat();
 
             let namespace = self.parse_exp()?;
@@ -835,7 +858,7 @@ impl<'a> Parser<'a> {
 
                 let id = self.alloc_node_id();
 
-                match *self.lookahead() {
+                match *self.lookahead()? {
                     Token::Eq => {
                         self.eat();
                         let e = self.parse_exp()?;
@@ -879,12 +902,14 @@ impl<'a> Parser<'a> {
                     _ => {
                         // trait T (a)
                         // trait T (a) = { }
-                        let tr = located!(self, {
-                            Exp::Record {
-                                id: self.alloc_node_id(),
-                                defs: vec!(),
-                            }
-                        });
+                        let tr = Located {
+                            loc: Loc::from(&self.last_token),
+                            value:
+                                Exp::Record {
+                                    id: self.alloc_node_id(),
+                                    defs: vec!(),
+                                }
+                        };
 
                         Ok(Def::MixfixDef {
                             id,
@@ -901,7 +926,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_exp(&mut self) -> PResult<Located<Exp>> {
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::Native =>
                 located_ok!(self, {
                     self.eat();
@@ -911,7 +936,7 @@ impl<'a> Parser<'a> {
                 located_ok!(self, {
                     let left = self.parse_exp0()?;
 
-                    match *self.lookahead() {
+                    match *self.lookahead()? {
                         Token::Assign => {
                             self.eat();
                             let right = self.parse_exp()?;
@@ -949,7 +974,7 @@ impl<'a> Parser<'a> {
         located_ok!(self, {
             let left = self.parse_mixfix_exp()?;
 
-            match *self.lookahead() {
+            match *self.lookahead()? {
                 Token::At => {
                     self.eat();
                     let right = self.parse_exp()?;
@@ -977,7 +1002,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_mixfix_exp(&mut self) -> PResult<Located<Exp>> {
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::For => {
                 located_ok!(self, {
                     self.eat();
@@ -1000,7 +1025,7 @@ impl<'a> Parser<'a> {
                     let id = self.alloc_node_id();
                     let mut params = Vec::new();
 
-                    while *self.lookahead() == Token::Lp {
+                    while *self.lookahead()? == Token::Lp {
                         let arg = located_ok!(self, self.parse_tuple_exp())?;
                         params.push(arg);
                     }
@@ -1021,23 +1046,23 @@ impl<'a> Parser<'a> {
                 located_ok!(self, {
                     let first = self.parse_select()?;
 
-                    match *self.lookahead() {
+                    match *self.lookahead()? {
                         // If the lookahead can start a primary expression,
                         // parse recursively.
                         Token::Lc | Token::Lp | Token::Lb | Token::Id(_) | Token::Op(_) | Token::Tick | Token::Int(_, _) | Token::Rat(_, _) | Token::String(_) | Token::Char(_) | Token::Bang | Token::Question | Token::Underscore => {
                             let rest = self.parse_mixfix_exp()?;
 
                             match *rest.clone() {
-                                Exp::MixfixApply { id, ref es } => {
+                                Exp::MixfixApply { id, ref es, .. } => {
                                     let mut more = Vec::new();
                                     more.push(first);
                                     more.append(&mut es.clone());
-                                    Ok(Exp::MixfixApply { id, es: more })
+                                    Ok(Exp::MixfixApply { id, es: more, lookup: None })
                                 },
                                 _ => {
                                     let id = self.alloc_node_id();
                                     let more = vec!(first, rest);
-                                    Ok(Exp::MixfixApply { id, es: more })
+                                    Ok(Exp::MixfixApply { id, es: more, lookup: None })
                                 },
                             }
                         },
@@ -1054,7 +1079,7 @@ impl<'a> Parser<'a> {
     fn parse_select(&mut self) -> PResult<Located<Exp>> {
         let exp = self.parse_primary()?;
 
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::Dot =>
                 self.parse_selectors(exp),
             _ =>
@@ -1065,7 +1090,7 @@ impl<'a> Parser<'a> {
     fn parse_selectors(&mut self, left: Located<Exp>) -> PResult<Located<Exp>> {
         consume_without_check!(self, Token::Dot);
 
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::Id(_) | Token::Op(_) | Token::Tick | Token::Bang | Token::Question => {
                 // In this case we have e.x, e.+, e.`foo _`.
                 // Here we should just do a normal select.
@@ -1075,7 +1100,7 @@ impl<'a> Parser<'a> {
                 let loc = Loc::span_from(&left, &right);
 
                 let sel = match *right {
-                    Exp::Name { ref name, id } =>
+                    Exp::Name { ref name, .. } =>
                         Ok(Located::new(
                             loc,
                             Exp::Select {
@@ -1086,7 +1111,7 @@ impl<'a> Parser<'a> {
                         self.error(loc, "invalid selection")
                 }?;
 
-                match *self.lookahead() {
+                match *self.lookahead()? {
                     Token::Dot => self.parse_selectors(sel),
                     _ => Ok(sel)
                 }
@@ -1105,7 +1130,7 @@ impl<'a> Parser<'a> {
                         e2: Box::new(right),
                     });
 
-                match *self.lookahead() {
+                match *self.lookahead()? {
                     Token::Dot => self.parse_selectors(lsel),
                     _ => Ok(lsel)
                 }
@@ -1121,7 +1146,7 @@ impl<'a> Parser<'a> {
         let mut parts = Vec::new();
 
         loop {
-            match *self.lookahead() {
+            match *self.lookahead()? {
                 Token::Id(ref s) => {
                     self.eat();
                     parts.push(Part::Id(s.clone()))
@@ -1164,7 +1189,7 @@ impl<'a> Parser<'a> {
     fn parse_tuple_exp(&mut self) -> PResult<Exp> {
         consume_without_check!(self, Token::Lp);
 
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::Rp => {
                 // () is nothing
                 self.eat();
@@ -1173,7 +1198,7 @@ impl<'a> Parser<'a> {
             _ => {
                 let first = self.parse_exp()?;
 
-                match *self.lookahead() {
+                match *self.lookahead()? {
                     Token::Rp => {
                         // (e) is just e
                         self.eat();
@@ -1187,14 +1212,14 @@ impl<'a> Parser<'a> {
                         es.push(first);
 
                         loop {
-                            if *self.lookahead() == Token::Rp {
+                            if *self.lookahead()? == Token::Rp {
                                 break;
                             }
 
                             let e = self.parse_exp()?;
                             es.push(e);
 
-                            if *self.lookahead() == Token::Comma {
+                            if *self.lookahead()? == Token::Comma {
                                 self.eat();
                             }
                             else {
@@ -1219,14 +1244,14 @@ impl<'a> Parser<'a> {
     // (e1, e2) is a tuple
     fn parse_tuple(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
-            match *self.lookahead() {
+            match *self.lookahead()? {
                 Token::Rp | Token::Rb | Token::Rc => {
                     Ok(Exp::Lit { lit: Lit::Nothing })
                 },
                 _ => {
                     let first = self.parse_exp()?;
 
-                    match *self.lookahead() {
+                    match *self.lookahead()? {
                         Token::Comma => {
                             // (e1, e2)
                             self.eat();
@@ -1238,7 +1263,7 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_exp()?;
                                 es.push(e);
 
-                                if *self.lookahead() == Token::Comma {
+                                if *self.lookahead()? == Token::Comma {
                                     self.eat();
                                 }
                                 else {
@@ -1262,22 +1287,22 @@ impl<'a> Parser<'a> {
 
         let mut es = Vec::new();
 
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::Rb => {
             },
             _ => {
                 let first = self.parse_exp()?;
 
-                match *self.lookahead() {
+                match *self.lookahead()? {
                     Token::Comma => {
                         self.eat();
                         es.push(first);
 
                         loop {
-                            match *self.lookahead() {
+                            match *self.lookahead()? {
                                 Token::Comma => {
                                     self.eat();
-                                    if *self.lookahead() != Token::Rb {
+                                    if *self.lookahead()? != Token::Rb {
                                         let e = self.parse_exp()?;
                                         es.push(e);
                                     }
@@ -1301,7 +1326,7 @@ impl<'a> Parser<'a> {
 
     fn parse_primary(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
-            match *self.lookahead() {
+            match *self.lookahead()? {
                 Token::Underscore => {
                     // _ is the any value
                     self.eat();
@@ -1379,10 +1404,10 @@ impl<'a> Parser<'a> {
                 Token::Id(_) | Token::Op(_) | Token::Bang | Token::Question | Token::Tick => {
                     let id = self.alloc_node_id();
                     let name = self.parse_name()?;
-                    Ok(Exp::Name { name, id })
+                    Ok(Exp::Name { name, id, lookup: None })
                 },
                 ref t => {
-                    panic!("unexpected token {}", t.clone());
+                    // panic!("unexpected token {}", t.clone());
                     self.error_here("unexpected token")
                 },
             }
@@ -1390,7 +1415,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_name(&mut self) -> PResult<Name> {
-        match *self.lookahead() {
+        match *self.lookahead()? {
             Token::Id(ref s) => {
                 self.eat();
                 Ok(Name::Id(s.clone()))
@@ -1425,12 +1450,15 @@ impl<'a> Parser<'a> {
 
 fn make_mixfix_name(elements: &Vec<MixfixParam>) -> Name {
     let mut parts = Vec::new();
+
     for element in elements {
         match element {
             MixfixParam::Name(p) => {
                 parts.push(p.clone());
             },
-            _ => {},
+            _ => {
+                parts.push(Part::Placeholder);
+            },
         }
     }
 
@@ -1476,178 +1504,212 @@ mod tests {
     use syntax::trees::*;
     use syntax::names::*;
     use syntax::loc::*;
+    use std::path::PathBuf;
 
     macro_rules! test_parse_ok {
         ($input: expr, $ast: expr) => {
-            let mut p = Parser::new("foo.ivo", $input);
+            let source = Source::FileSource(PathBuf::from("foo.ivo"));
+            let mut p = Parser::new(&source, $input);
             match p.parse_bundle() {
-                Ok(t) =>
-                    assert_eq!(*t, $ast),
-                Err(msg) =>
-                    assert_eq!(*msg, String::from("no error")),
+                Ok(t) => {
+                    assert_eq!(*t, $ast);
+                },
+                Err(msg) => {
+                    assert_eq!(Err(msg), Ok($ast));
+                }
             }
         };
     }
 
     #[test]
     fn test_empty_bundle_1() {
-        let mut p = Parser::new("foo.ivo", "");
-        match p.parse_bundle() {
-            Ok(t) =>
-                assert_eq!(*t, Root::Bundle { id: NodeId(0), cmds: vec!() }),
-            Err(msg) => {
-                println!("{:?}", msg);
-                assert!(false)
-            }
-        }
+        test_parse_ok!("", Root::Bundle { id: NodeId(0), cmds: vec!() });
     }
 
     #[test]
     fn test_empty_bundle_2() {
-        let mut p = Parser::new("foo.ivo", ";;;;");
-        match p.parse_bundle() {
-            Ok(t) =>
-                assert_eq!(*t, Root::Bundle { id: NodeId(0), cmds: vec!() }),
-            Err(msg) => {
-                println!("{:?}", msg);
-                assert!(false)
-            }
-        }
+        test_parse_ok!(";;;;", Root::Bundle { id: NodeId(0), cmds: vec!() });
     }
 
     #[test]
     fn test_lambda() {
-        let mut p = Parser::new("foo.ivo", "fun (x) -> x");
-        match p.parse_bundle() {
-            Ok(t) =>
-                assert_eq!(*t, Root::Bundle {
-                    scope_id: NodeId(0),
-                    cmds: vec![
-                        Located {
-                            loc: Loc { start: Pos { offset: 0, line: 1, column: 1 }, end: Pos { offset: 11, line: 1, column: 12 }, source: Some(String::from("foo.ivo")) },
-                            value: Cmd::Exp(Exp::Lambda {
-                                scope_id: NodeId(1),
-                                opt_guard: None,
-                                params: vec![
-                                    Located {
-                                        loc: Loc { start: Pos { offset: 4, line: 1, column: 5 }, end: Pos { offset: 6, line: 1, column: 7 }, source: Some(String::from("foo.ivo")) },
-                                        value: Exp::Name { name: Name::Id(String::from("x")), id: 0 }
-                                    }],
-                                ret: Box::new(Located {
-                                    loc: Loc { start: Pos { offset: 11, line: 1, column: 12 }, end: Pos { offset: 11, line: 1, column: 12 }, source: Some(String::from("foo.ivo")) },
-                                    value: Exp::Name { name: Name::Id(String::from("x")), id: 1 }
-                                })
+        test_parse_ok!("fun (x) -> x",
+            Root::Bundle {
+                id: NodeId(0),
+                cmds: vec![
+                    Located {
+                        loc: Loc::new(0, 11),
+                        value: Cmd::Exp(Exp::Lambda {
+                            id: NodeId(3),
+                            opt_guard: None,
+                            params: vec![
+                                Located {
+                                    loc: Loc::new(4, 6),
+                                    value: Exp::Name { name: Name::Id(String::from("x")), id: NodeId(1), lookup: None }
+                                }],
+                            ret: Box::new(Located {
+                                loc: Loc::new(11, 11),
+                                value: Exp::Name { name: Name::Id(String::from("x")), id: NodeId(2), lookup: None }
                             })
-                        }
-                    ]
-                }),
-            Err(msg) => {
-                println!("{:?}", msg);
-                assert!(false)
+                        })
+                    }
+                ]
             }
-        }
+        );
     }
 
     #[test]
     fn test_trait_without_body() {
-        let mut p = Parser::new("foo.ivo", r#"
-            trait T
-        "#);
-        match p.parse_bundle() {
-            Ok(t) =>
-                assert_eq!(*t, Root::Bundle {
-                    scope_id: NodeId(0),
-                    cmds: vec!()
-                }),
-            Err(msg) => {
-                println!("{:?}", msg);
-                assert!(false)
+        test_parse_ok!("trait T",
+            Root::Bundle {
+                id: NodeId(0),
+                cmds: vec![
+                    Located {
+                        loc: Loc::new(0, 6),
+                        value: Cmd::Def(
+                            Def::MixfixDef {
+                                id: NodeId(1),
+                                flag: MixfixFlag::Trait,
+                                name: Name::Id("T".to_string()),
+                                opt_guard: None,
+                                params: vec![],
+                                ret: Located {
+                                    loc: Loc::new(6, 6),
+                                    value: Param {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                        pat: Box::new(Located {
+                                            loc: Loc::new(6, 6),
+                                            value: Exp::Record { id: NodeId(2), defs: vec![] }
+                                        })
+                                    }
+                                }
+                            }
+                        )
+                    }
+                ]
             }
-        }
+        );
     }
 
     #[test]
     fn test_trait_with_empty_body() {
-        let mut p = Parser::new("foo.ivo", r#"
-            trait T = { }
-        "#);
-        match p.parse_bundle() {
-            Ok(t) =>
-                assert_eq!(*t, Root::Bundle {
-                    scope_id: NodeId(0),
-                    cmds: vec!()
-                }),
-            Err(msg) => {
-                println!("{:?}", msg);
-                assert!(false)
+        test_parse_ok!("trait T = {}",
+            Root::Bundle {
+                id: NodeId(0),
+                cmds: vec![
+                   Located {
+                       loc: Loc::new(0, 11),
+                       value: Cmd::Def(
+                           Def::MixfixDef {
+                               id: NodeId(1),
+                               flag: MixfixFlag::Trait,
+                               name: Name::Id("T".to_string()),
+                               opt_guard: None,
+                               params: vec![],
+                               ret: Located {
+                                   loc: Loc::new(10, 11),
+                                   value: Param {
+                                       assoc: Assoc::NonAssoc,
+                                       by_name: CallingConv::ByValue,
+                                       mode: CallingMode::Output,
+                                       pat: Box::new(Located {
+                                           loc: Loc::new(10, 11),
+                                           value: Exp::Lit { lit: Lit::Nothing }
+                                       })
+                                   }
+                               }
+                           }
+                       )
+                   }
+               ]
             }
-        }
+        );
     }
 
     #[test]
     fn test_trait_with_union() {
         test_parse_ok!("trait T = A with B",
             Root::Bundle {
-                scope_id: NodeId(0),
-                cmds: vec!()
-            });
+                id: NodeId(0),
+                cmds: vec![
+                   Located {
+                       loc: Loc::new(0, 17),
+                       value: Cmd::Def(
+                           Def::MixfixDef {
+                               id: NodeId(1),
+                               flag: MixfixFlag::Trait,
+                               name: Name::Id("T".to_string()),
+                               opt_guard: None,
+                               params: vec![],
+                               ret: Located {
+                                   loc: Loc::new(10, 17),
+                                   value: Param {
+                                       assoc: Assoc::NonAssoc,
+                                       by_name: CallingConv::ByValue,
+                                       mode: CallingMode::Output,
+                                       pat: Box::new(Located {
+                                           loc: Loc::new(10, 17),
+                                           value: Exp::Union {
+                                               es: vec![
+                                                   Located {
+                                                       loc: Loc::new(10, 10),
+                                                       value: Exp::Name {
+                                                           name: Name::Id("A".to_string()),
+                                                           id: NodeId(2),
+                                                           lookup: None
+                                                       }
+                                                   },
+                                                   Located {
+                                                       loc: Loc::new(17, 17),
+                                                       value: Exp::Name {
+                                                           name: Name::Id("B".to_string()),
+                                                           id: NodeId(3),
+                                                           lookup: None
+                                                       }
+                                                   }
+                                               ]
+                                           }
+                                       })
+                                   }
+                               }
+                           }
+                       )
+                   }
+               ]
+            }
+        );
     }
 
     #[test]
     fn test_trait_with_param() {
         test_parse_ok!("trait T (x)",
             Root::Bundle {
-                scope_id: NodeId(0),
-                cmds: vec!()
-            });
-    }
-
-    #[test]
-    fn test_trait_with_union_with_empty() {
-        test_parse_ok!("trait T = A with {}",
-            Root::Bundle {
-                scope_id: NodeId(0),
-                cmds: vec!()
-            });
-    }
-
-    #[test]
-    fn test_trait_with_guard() {
-        test_parse_ok!("trait T (x) for x = {}",
-            Root::Bundle {
-                scope_id: NodeId(0),
+                id: NodeId(0),
                 cmds: vec!(
                     Located::new(
-                        NO_LOC,
+                        Loc::new(0, 10),
                         Cmd::Def(
                             Def::MixfixDef {
-                                scope_id: NodeId(1),
+                                id: NodeId(2),
                                 flag: MixfixFlag::Trait,
-                                name: Name::Id(String::from("T")),
-                                opt_guard: Some(
-                                    Box::new(
-                                        Located::new(
-                                            NO_LOC,
-                                            Exp::Name {
-                                                name: Name::Id(String::from("x")),
-                                                id: 0
-                                            }
-                                        )
-                                    )
-                                ),
+                                name: Name::Mixfix(vec![Part::Id(String::from("T")), Part::Placeholder]),
+                                opt_guard: None,
                                 params: vec!(
                                     Located::new(
-                                        NO_LOC,
+                                        Loc::new(8, 10),
                                         Param {
                                             assoc: Assoc::NonAssoc,
                                             by_name: CallingConv::ByValue,
                                             mode: CallingMode::Input,
                                             pat: Box::new(
                                                 Located::new(
-                                                    NO_LOC,
+                                                    Loc::new(9, 9),
                                                     Exp::Name {
                                                         name: Name::Id(String::from("x")),
-                                                        id: 0
+                                                        id: NodeId(1),
+                                                        lookup: None
                                                     }
                                                 )
                                             )
@@ -1655,18 +1717,132 @@ mod tests {
                                     )
                                 ),
                                 ret: Located::new(
-                                    NO_LOC,
+                                    Loc::new(10,10),
                                     Param {
                                         assoc: Assoc::NonAssoc,
                                         by_name: CallingConv::ByValue,
-                                        mode: CallingMode::Input,
+                                        mode: CallingMode::Output,
                                         pat: Box::new(
                                             Located::new(
-                                                NO_LOC,
-                                                Exp::Record {
-                                                    scope_id: NodeId(2),
-                                                    defs: vec!()
-                                                }
+                                                Loc::new(10,10),
+                                                Exp::Record { id: NodeId(3), defs: vec![] }
+                                            )
+                                        )
+                                    }
+                                ),
+                            }
+                        )
+                    )
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn test_trait_with_union_with_empty() {
+        test_parse_ok!("trait T = A with {}",
+            Root::Bundle {
+                id: NodeId(0),
+                cmds: vec![
+                   Located {
+                       loc: Loc::new(0, 18),
+                       value: Cmd::Def(
+                           Def::MixfixDef {
+                               id: NodeId(1),
+                               flag: MixfixFlag::Trait,
+                               name: Name::Id("T".to_string()),
+                               opt_guard: None,
+                               params: vec![],
+                               ret: Located {
+                                   loc: Loc::new(10, 18),
+                                   value: Param {
+                                       assoc: Assoc::NonAssoc,
+                                       by_name: CallingConv::ByValue,
+                                       mode: CallingMode::Output,
+                                       pat: Box::new(Located {
+                                           loc: Loc::new(10, 18),
+                                           value: Exp::Union {
+                                               es: vec![
+                                                   Located {
+                                                       loc: Loc::new(10, 10),
+                                                       value: Exp::Name {
+                                                           name: Name::Id("A".to_string()),
+                                                           id: NodeId(2),
+                                                           lookup: None
+                                                       }
+                                                   },
+                                                   Located {
+                                                       loc: Loc::new(17, 18),
+                                                       value: Exp::Lit { lit: Lit::Nothing }
+                                                   }
+                                               ]
+                                           }
+                                       })
+                                   }
+                               }
+                           }
+                       )
+                   }
+               ]
+            }
+        );
+    }
+
+    #[test]
+    fn test_trait_with_guard() {
+        test_parse_ok!("trait T (x) where x = {}",
+            Root::Bundle {
+                id: NodeId(0),
+                cmds: vec!(
+                    Located::new(
+                        Loc::new(0, 23),
+                        Cmd::Def(
+                            Def::MixfixDef {
+                                id: NodeId(3),
+                                flag: MixfixFlag::Trait,
+                                name: Name::Mixfix(vec![Part::Id(String::from("T")), Part::Placeholder]),
+                                opt_guard: Some(
+                                    Box::new(
+                                        Located::new(
+                                            Loc::new(18,18),
+                                            Exp::Name {
+                                                name: Name::Id(String::from("x")),
+                                                id: NodeId(2),
+                                                lookup: None
+                                            }
+                                        )
+                                    )
+                                ),
+                                params: vec!(
+                                    Located::new(
+                                        Loc::new(8, 10),
+                                        Param {
+                                            assoc: Assoc::NonAssoc,
+                                            by_name: CallingConv::ByValue,
+                                            mode: CallingMode::Input,
+                                            pat: Box::new(
+                                                Located::new(
+                                                    Loc::new(9, 9),
+                                                    Exp::Name {
+                                                        name: Name::Id(String::from("x")),
+                                                        id: NodeId(1),
+                                                        lookup: None
+                                                    }
+                                                )
+                                            )
+                                        }
+                                    )
+                                ),
+                                ret: Located::new(
+                                    Loc::new(22,23),
+                                    Param {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                        pat: Box::new(
+                                            Located::new(
+                                                Loc::new(22,23),
+                                                Exp::Lit { lit: Lit::Nothing }
                                             )
                                         )
                                     }
@@ -1680,19 +1856,12 @@ mod tests {
     }
 
     fn test_names() {
-        let mut p = Parser::new("foo.ivo", r#"
+        test_parse_ok!(r#"
             x y z `foo` `_ + _`
-        "#);
-        match p.parse_bundle() {
-            Ok(t) =>
-                assert_eq!(*t, Root::Bundle {
-                    scope_id: NodeId(0),
+        "#,
+        Root::Bundle {
+                    id: NodeId(0),
                     cmds: vec!()
-                }),
-            Err(msg) => {
-                println!("{:?}", msg);
-                assert!(false)
-            }
-        }
+        });
     }
 }

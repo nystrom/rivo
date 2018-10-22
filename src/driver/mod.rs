@@ -8,6 +8,15 @@ use namer::graph::EnvIndex;
 use namer::symbols::Scope;
 use namer::symbols::Env;
 
+use self::bundle::*;
+use self::loader::*;
+use self::stats::*;
+
+pub mod bundle;
+pub mod errors;
+pub mod loader;
+pub mod stats;
+
 // The interpreter states consists of the states of the bundles.
 // One of the bundles is the current bundle being processed.
 // The others are to-be-processed.
@@ -15,74 +24,71 @@ use namer::symbols::Env;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct BundleIndex(usize);
 
-#[derive(Clone, Debug)]
-pub struct Interpreter {
+#[derive(Debug)]
+pub struct Driver {
     pub current_bundle: Option<BundleIndex>,
     pub bundles: Vec<Bundle>,
+    pub loader: Loader,
+    pub stats: Stats,
+    pub errors: Vec<Vec<Located<String>>>,
 }
 
-impl Interpreter {
-    pub fn new() -> Interpreter {
-        Interpreter {
+impl Driver {
+    pub fn new() -> Driver {
+        Driver {
             current_bundle: None,
             bundles: vec![],
+            loader: Loader::new(),
+            stats: Stats::new(),
+            errors: vec![],
         }
     }
 
-    pub fn new_bundle(&mut self, source: Source) -> BundleIndex {
-        let index = self.bundles.len();
-        self.bundles.push(Bundle::New { source });
-        BundleIndex(index)
+    pub fn dump_stats(&self) {
+        self.stats.dump()
     }
 
+    // Report an error. It is required that there be a current bundle with which to associate the errors.
+    pub fn error(&mut self, msg: Located<String>) {
+        match self.current_bundle {
+            Some(BundleIndex(index)) => {
+                if index < self.errors.len() {
+                    self.errors[index].push(msg.clone());
+                }
+                else {
+                    self.errors.resize(index+1, vec![]);
+                    self.errors[index].push(msg.clone());
+                }
+            }
+            None => {
+                unreachable!();
+            },
+        }
+    }
+
+    fn dump_errors_for_bundle(&self, index: usize, bundle: &Bundle) {
+        if index < self.errors.len() {
+            let mut errors = self.errors[index].clone();
+            errors.sort_unstable_by(|a, b| a.loc.cmp(&b.loc));
+
+            for Located { loc, value: msg } in errors {
+                let decoded = bundle.decode_loc(loc);
+                println!("{}:{}", decoded, msg);
+            }
+        }
+    }
+
+    pub fn dump_errors(&self) {
+        for (i, b) in self.bundles.iter().enumerate() {
+            self.dump_errors_for_bundle(i, b);
+        }
+        println!("Compilation complete.")
+    }
+
+    #[cfg_attr(debug_assertions, trace)]
     pub fn set_bundle(&mut self, index: BundleIndex, bundle: Bundle) {
-        println!("set_bundle {:?} {:?}", index, &bundle);
+        // println!("set_bundle {:?} {:?}", index, &bundle);
         self.bundles[index.0] = bundle;
-    }
-
-    pub fn read_bundle(&mut self, index: BundleIndex) -> Result<(), Located<String>> {
-        use std::fs::File;
-        use std::io::Read;
-        use std::io::BufReader;
-
-        let bundle = &self.bundles[index.0];
-
-        match bundle {
-            Bundle::New { source } => {
-                let old_bundle = self.current_bundle;
-                self.current_bundle = Some(index);
-
-                let input = match source {
-                    Source::NoSource => {
-                        Err(Located::new(NO_LOC, "no source to parse".to_string()))
-                    },
-                    Source::FileSource(file) => {
-                        match File::open(file) {
-                            Ok(file) => {
-                                let mut buf_reader = BufReader::new(file);
-                                let mut input = String::new();
-                                match buf_reader.read_to_string(&mut input) {
-                                    Ok(_) => Ok(input),
-                                    Err(msg) => Err(Located::new(NO_LOC, msg.to_string())),
-                                }
-                            },
-                            Err(msg) => Err(Located::new(NO_LOC, msg.to_string())),
-                        }
-                    },
-                    Source::StringSource(input) => {
-                        Ok(input.clone())
-                    },
-                }?;
-
-                self.set_bundle(index, Bundle::Read { source: source.clone(), input: input.clone() });
-
-                self.current_bundle = old_bundle;
-                Ok(())
-            }
-            _ => {
-                Err(Located::new(NO_LOC, "already read".to_string()))
-            }
-        }
     }
 
     pub fn parse_bundle(&mut self, index: BundleIndex) -> Result<(), Located<String>> {
@@ -91,25 +97,65 @@ impl Interpreter {
         let bundle = &self.bundles[index.0];
 
         match bundle {
-            Bundle::New { source } => {
-                self.read_bundle(index)?;
-                self.parse_bundle(index)?;
-                Ok(())
-            },
             Bundle::Read { source, input } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
+                let timer = self.stats.start_timer();
+
                 let mut parser = Parser::new(&source, input.as_str());
-                let t = parser.parse_bundle()?;
-                self.set_bundle(index, Bundle::Parsed { tree: t });
 
-                self.current_bundle = old_bundle;
+                match parser.parse_bundle() {
+                    Ok(t) => {
+                        let line_map = self.compute_line_map(&input);
 
-                Ok(())
-            }
-            _ => Err(Located::new(NO_LOC, "already parsed".to_string()))
+                        self.stats.end_timer(&format!("parse_bundle({})", &source), timer);
+                        self.stats.end_timer("parse_bundle", timer);
+                        self.stats.accum("parse success", 1);
+
+                        self.set_bundle(index, Bundle::Parsed { source: source.clone(), line_map, tree: t });
+                        self.current_bundle = old_bundle;
+
+                        Ok(())
+                    },
+                    Err(msg) => {
+                        self.stats.end_timer(&format!("parse_bundle({})", &source), timer);
+                        self.stats.end_timer("parse_bundle", timer);
+                        self.stats.accum("parse failure", 1);
+
+                        self.current_bundle = old_bundle;
+
+                        Err(msg)
+                    },
+                }
+            },
+            _ => {
+                Err(Located::new(NO_LOC, "already parsed".to_string()))
+            },
         }
+    }
+
+    pub fn compute_line_map(&self, input: &String) -> LineMap {
+        let mut v = vec![0];
+        let mut cr = false;
+        for (i, ch) in input.char_indices() {
+            match ch {
+                '\r' => {
+                    cr = true;
+                },
+                '\n' => {
+                    cr = false;
+                    v.push((i+1) as u32);
+                },
+                _ => {
+                    if cr {
+                        v.push(i as u32);
+                        cr = false;
+                    }
+                }
+            }
+        }
+        LineMap { line_offsets: v }
     }
 
     pub fn debug_lex_bundle(&mut self, index: BundleIndex) -> Result<(), Located<String>> {
@@ -118,32 +164,35 @@ impl Interpreter {
         let bundle = &self.bundles[index.0];
 
         match bundle {
-            Bundle::New { source } => {
-                self.read_bundle(index)?;
-                self.debug_lex_bundle(index)?;
-                Ok(())
-            },
             Bundle::Read { source, input } => {
                 use parser::lex::Lexer;
                 use parser::tokens::Token;
                 use syntax::loc::Located;
 
+                let line_map = self.compute_line_map(&input);
+
                 let mut lex = Lexer::new(source, input.as_str());
 
                 loop {
                     match lex.next_token() {
-                        Located { loc: _, value: Token::EOF } => {
+                        Ok(Located { loc: _, value: Token::EOF }) => {
                             break;
                         },
-                        Located { loc, value } => {
-                            println!("{}:{:?}", loc, value);
+                        Ok(Located { loc, value }) => {
+                            let decoded = line_map.decode(source.clone(), loc);
+                            println!("{}:{:?}", decoded, value);
+                        }
+                        Err(Located { loc, value }) => {
+                            return Err(Located { loc, value: "lexical error".to_string() })
                         }
                     }
                 }
 
                 Ok(())
-            }
-            _ => Err(Located::new(NO_LOC, "already parsed".to_string()))
+            },
+            _ => {
+                Err(Located::new(NO_LOC, "already parsed".to_string()))
+            },
         }
     }
 
@@ -156,29 +205,27 @@ impl Interpreter {
     }
 
     pub fn load_bundle_by_name(&mut self, name: &Name) -> Result<BundleIndex, Located<String>> {
-        let path = self.locate_bundle(name)?;
-        self.load_from_path(path)
-    }
-
-    pub fn locate_bundle(&mut self, name: &Name) -> Result<String, Located<String>> {
-        match name {
-            Name::Id(x) => {
-                let path = format!("{}.ivo", x);
-                Ok(path)
-
-                // FIXME: should search source path
-                // FIXME: should mangle the identifier
+        match self.loader.locate_bundle(name) {
+            Ok(source) => {
+                self.load_bundle_from_source(&source)
             },
-            _ => {
-                Err(Located::new(NO_LOC, "not found".to_string()))
+            Err(msg) => {
+                Err(Located { loc: NO_LOC, value: msg.to_string() })
             },
         }
     }
 
-    pub fn load_from_path(&mut self, path: String) -> Result<BundleIndex, Located<String>> {
-        let index = self.new_bundle(Source::FileSource(path));
-        self.read_bundle(index)?;
-        Ok(index)
+    pub fn load_bundle_from_source(&mut self, source: &Source) -> Result<BundleIndex, Located<String>> {
+        match self.loader.load_source(source) {
+            Ok(input) => {
+                let index = self.bundles.len();
+                self.bundles.push(Bundle::Read { source: source.clone(), input });
+                Ok(BundleIndex(index))
+            },
+            Err(msg) => {
+                Err(Located { loc: NO_LOC, value: msg.to_string() })
+            },
+        }
     }
 
     pub fn prename_bundle(&mut self, index: BundleIndex) -> Result<(), Located<String>> {
@@ -189,17 +236,12 @@ impl Interpreter {
         let bundle = &self.bundles[index.0];
 
         match bundle {
-            Bundle::New { source } => {
-                self.parse_bundle(index)?;
-                self.prename_bundle(index)?;
-                Ok(())
-            },
             Bundle::Read { source, input } => {
                 self.parse_bundle(index)?;
                 self.prename_bundle(index)?;
                 Ok(())
             },
-            Bundle::Parsed { tree } => {
+            Bundle::Parsed { source, line_map, tree } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
@@ -207,6 +249,8 @@ impl Interpreter {
                 // need to clone the tree here so that we're no longer borrowing self
                 // so we can borrow it mutably in the prenamer.
                 let tree1 = tree.clone();
+                let source1 = source.clone();
+                let line_map1 = line_map.clone();
 
                 {
                     let mut scopes = HashMap::new();
@@ -226,7 +270,7 @@ impl Interpreter {
                     };
                     prenamer.visit_root(&tree1.value, &PrenameContext::new(), &tree1.loc);
 
-                    let new_bundle = Bundle::Prenamed { tree: tree1, graph: graph.clone(), scopes: scopes.clone() };
+                    let new_bundle = Bundle::Prenamed { source: source1, line_map: line_map1, tree: tree1, graph: graph.clone(), scopes: scopes.clone() };
                     self.set_bundle(index, new_bundle);
                 }
 
@@ -245,40 +289,37 @@ impl Interpreter {
         let bundle = &self.bundles[index.0];
 
         match bundle {
-            Bundle::New { source } => {
-                self.prename_bundle(index)?;
-                self.name_bundle(index)?;
-                Ok(())
-            },
             Bundle::Read { source, input } => {
                 self.prename_bundle(index)?;
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Parsed { tree } => {
+            Bundle::Parsed { source, line_map, tree } => {
                 self.prename_bundle(index)?;
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Prenamed { tree, graph: g, scopes } => {
+            Bundle::Prenamed { source, line_map, tree, graph: g, scopes } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
                 let tree1 = tree.clone();
                 let scopes1 = scopes.clone();
+                let source1 = source.clone();
+                let line_map1 = line_map.clone();
 
                 {
-                    let mut graph = g.clone();
+                    let graph = g.clone();
+                    let result = graph.solve(self)?;
 
                     let mut renamer = Renamer {
-                        graph: &mut graph,
+                        cache: &result,
                         driver: self
                     };
 
                     renamer.visit_root(&tree1.value, &scopes1, &tree1.loc);
-                    graph.solve(self)?;
 
-                    let new_bundle = Bundle::Named { tree: tree1, envs: graph.get_envs(), scopes: scopes1 };
+                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, tree: tree1, graph: graph, scopes: scopes1 };
                     self.set_bundle(index, new_bundle);
                 }
 
@@ -288,34 +329,6 @@ impl Interpreter {
                 Ok(())
             },
             _ => Err(Located::new(NO_LOC, "already named".to_string()))
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum Bundle {
-    New { source: Source },
-    Read { source: Source, input: String },
-    Parsed { tree: Located<Root> },
-    Prenamed { tree: Located<Root>, graph: ScopeGraph, scopes: HashMap<NodeId, Scope> },
-    Named { tree: Located<Root>, envs: Vec<Env>, scopes: HashMap<NodeId, Scope> },
-    Core { envs: Vec<Env>, root_scope: Scope }
-}
-
-impl Bundle {
-    pub fn new_env(&mut self) -> EnvIndex {
-        match *self {
-            Bundle::Named { ref mut tree, ref mut envs, ref mut scopes } => {
-                let index = envs.len();
-                envs.push(Env {
-                    decls: Vec::new(),
-                    imports: Vec::new(),
-                    parents: Vec::new(),
-                    includes: Vec::new(),
-                });
-                EnvIndex(index)
-            },
-            _ => unimplemented!(),
         }
     }
 }

@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Name {
     Id(String),
@@ -12,29 +14,61 @@ pub enum Part {
     Placeholder,
 }
 
+
+impl fmt::Display for Part {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Part::Id(x) => write!(f, "{}", x),
+            Part::Op(x) => write!(f, "{}", x),
+            Part::Placeholder => write!(f, "_"),
+        }
+    }
+}
+
+impl fmt::Display for Name {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Name::Id(x) => write!(f, "{}", x),
+            Name::Op(x) => write!(f, "{}", x),
+            Name::Mixfix(parts) => {
+                write!(f, "`")?;
+                for (i, part) in parts.iter().enumerate() {
+                    if i == 0 {
+                        write!(f, "{}", part)?;
+                    }
+                    else {
+                        write!(f, " {}", part)?;
+                    }
+                }
+                write!(f, "`")
+            },
+        }
+    }
+}
+
 impl Part {
     pub fn to_name(&self) -> Name {
-        match *self {
-            Part::Id(ref x) => Name::Id(x.clone()),
-            Part::Op(ref x) => Name::Op(x.clone()),
+        match self {
+            Part::Id(x) => Name::Id(x.clone()),
+            Part::Op(x) => Name::Op(x.clone()),
             Part::Placeholder => Name::Op("_".to_string())
         }
     }
 
     pub fn is_id(&self) -> bool {
-        match *self {
+        match self {
             Part::Id(_) => true,
             _ => false,
         }
     }
     pub fn is_op(&self) -> bool {
-        match *self {
+        match self {
             Part::Op(_) => true,
             _ => false,
         }
     }
     pub fn is_placeholder(&self) -> bool {
-        match *self {
+        match self {
             Part::Placeholder => true,
             _ => false,
         }
@@ -44,14 +78,14 @@ impl Part {
 
 impl Name {
     pub fn is_bundle_name(&self) -> bool {
-        match *self {
-            Name::Id(ref x) => match x.chars().next() {
+        match self {
+            Name::Id(x) => match x.chars().next() {
                 None => false,
-                Some(ref c) => c.is_uppercase(),
+                Some(c) => c.is_uppercase(),
             }
             Name::Op(_) => false,
-            Name::Mixfix(ref parts) => false,
-            // Name::Mixfix(ref parts) => {
+            Name::Mixfix(_) => false,
+            // Name::Mixfix(parts) => {
             //     self.is_prefix_name() && parts.first().unwrap().to_name().is_bundle_name()
             // },
         }

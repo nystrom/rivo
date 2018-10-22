@@ -19,18 +19,19 @@ opt-level = 3
 lto = true
 
 [dependencies]
-ansi_term = "*"
 clap = "*"
 term = "*"
 num = "*"
 unicode_categories = "*"
-lazy_static = "*"
 lazycell = "*"
-typed-arena = "*"
 pretty = "*"
 rpds = "*"
-trace = { git = "https://github.com/nystrom/trace.git" }
+failure = "*"
+trace = "*"
 # menhir = "*"
+
+[patch.crates-io]
+trace = { git = "https://github.com/nystrom/trace.git" }
 
 [dev-dependencies]
 pretty_assertions = "0.3.4"

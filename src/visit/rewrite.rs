@@ -144,11 +144,11 @@ pub trait Rewriter<'a, Ctx>: Sized {
             Exp::Frame { id } =>
                 Exp::Frame { id },
 
-            Exp::Name { ref name, id } =>
-                Exp::Name { name: name.clone(), id },
+            Exp::Name { ref name, id, lookup } =>
+                Exp::Name { name: name.clone(), id, lookup },
 
-            Exp::MixfixApply { ref es, id } =>
-                Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es, ctx), id },
+            Exp::MixfixApply { ref es, id, lookup } =>
+                Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es, ctx), id, lookup },
         }
     }
 

@@ -43,7 +43,7 @@ fn main() {
     let opt_input = {
         match matches.value_of("file.ivo") {
             Some(file) => {
-                Some(Source::FileSource(String::from(file)))
+                Some(Source::FileSource(std::path::PathBuf::from(file)))
             },
             None => {
                 matches.value_of("expression").map(|input|
@@ -53,43 +53,60 @@ fn main() {
     };
 
     use ivo::driver::*;
-    let mut int = Interpreter::new();
+    use ivo::driver::bundle::Bundle;
+    let mut driver = Driver::new();
+
+    let timer = driver.stats.start_timer();
 
     if let Some(source) = opt_input {
-        let bundle = int.new_bundle(source.clone());
-
-        if matches.is_present("lex") {
-            match int.debug_lex_bundle(bundle) {
-                Ok(_) => {
-                },
-                Err(msg) => {
-                    println!("{}: lex error {}", msg.loc, *msg);
-                }
-            }
-        }
-        else {
-            use ivo::syntax::pretty::*;
-
-            match int.name_bundle(bundle) {
-                Ok(_) => {
-                    let t = int.get_bundle(bundle);
-                    match t {
-                        Some(Bundle::Prenamed { tree: t, .. }) => {
-                            println!("{}", t.pretty(80));
+        match driver.load_bundle_from_source(&source) {
+            Ok(bundle) => {
+                if matches.is_present("lex") {
+                    match driver.debug_lex_bundle(bundle) {
+                        Ok(_) => {
                         },
-                        Some(Bundle::Named { tree: t, .. }) => {
-                            println!("{}", t.pretty(80));
-                        },
-                        _ => {},
+                        Err(msg) => {
+                            let b = driver.get_bundle(bundle).unwrap();
+                            let loc = b.decode_loc(msg.loc);
+                            println!("{}: lex error {}", loc, *msg);
+                        }
                     }
-                },
-                Err(msg) => {
-                    println!("{}: parse error {}", msg.loc, *msg);
-                },
-            }
+                }
+                else {
+                    use ivo::syntax::pretty::*;
+
+                    match driver.name_bundle(bundle) {
+                        Ok(_) => {
+                            let t = driver.get_bundle(bundle);
+                            match t {
+                                Some(Bundle::Prenamed { tree: t, .. }) => {
+                                    println!("{}", t.pretty(80));
+                                },
+                                Some(Bundle::Named { tree: t, .. }) => {
+                                    println!("{}", t.pretty(80));
+                                },
+                                _ => {},
+                            }
+                        },
+                        Err(msg) => {
+                            let b = driver.get_bundle(bundle).unwrap();
+                            let loc = b.decode_loc(msg.loc);
+                            println!("{}: parse error {}", loc, *msg);
+                        },
+                    }
+                }
+            },
+            Err(msg) => {
+                println!("{}: {}", source, *msg);
+            },
         }
     }
     else {
         println!("missing input expression or file");
     }
+
+    driver.stats.end_timer("total time", timer);
+
+    driver.dump_errors();
+    driver.dump_stats();
 }

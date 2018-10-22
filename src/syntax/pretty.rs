@@ -252,10 +252,10 @@ impl ToDoc for Exp {
             Exp::Frame { id } =>
                 Doc::text("self"),
 
-            Exp::Name { ref name, id } =>
+            Exp::Name { ref name, .. } =>
                 name.to_doc(),
 
-            Exp::MixfixApply { ref es, id } =>
+            Exp::MixfixApply { ref es, .. } =>
                 Doc::text("(")
                     .append(show_located_vec!(es, Doc::space()))
                     .append(Doc::text(")")),

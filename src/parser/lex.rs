@@ -18,11 +18,24 @@ use std::collections::VecDeque;
 // Strings we can't.
 // They could contain offsets into the input buffer, however.
 
+
+pub type LexResult<A> = Result<A, Located<LexError>>;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum LexError {
+    BadChar,
+    BadString,
+    BadInt,
+    BadRat,
+    BadComment,
+    UnexpectedChar(char),
+}
+
 pub struct Lexer<'a> {
     // position of the lexer
-    offset: usize,
-    line: usize,
-    column: usize,
+    offset: u32,
+    line: u32,
+    column: u32,
     source: &'a Source,
 
     // stack of brackets used for deciding when to insert a virtual ;
@@ -30,6 +43,17 @@ pub struct Lexer<'a> {
     token_buffer: VecDeque<Located<Token>>,
     prev_token_can_end_statement: bool,
     input: Peekable<Chars<'a>>,
+}
+
+impl<'input> Iterator for Lexer<'input> {
+    type Item = LexResult<Located<Token>>;
+
+    fn next(&mut self) -> Option<LexResult<Located<Token>>> {
+        match self.next_token() {
+            Ok(Located { value: Token::EOF, .. }) => None,
+            t => Some(t)
+        }
+    }
 }
 
 impl<'a> Lexer<'a> {
@@ -68,39 +92,43 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn locate(&mut self, token: Token, len: usize) -> Located<Token> {
+    fn locate(&mut self, token: Token, len: u32) -> LexResult<Located<Token>> {
+        // println!("locate offset={} len={}", self.offset, len);
+        use std::cmp::{min, max};
+
+        let start = self.offset - min(len, self.offset);
+        let end = max(start, self.offset - min(1, self.offset));
+
+        Ok(
+            Located {
+                loc: Loc::new(start, end),
+                value: token
+            }
+        )
+    }
+
+    fn locate_error<A>(&mut self, err: LexError, len: u32) -> LexResult<A> {
         // println!("locate offset={} len={}", self.offset, len);
         use std::cmp::min;
 
-        Located {
-            loc: Loc {
-                start: Pos {
-                    offset: self.offset - min(len, self.offset),
-                    line: self.line,
-                    column: self.column - min(len, self.offset),
-                },
-                end: Pos {
-                    offset: self.offset - min(1, self.offset),
-                    line: self.line,
-                    column: self.column - min(1, self.offset),
-                },
-                source: self.source.clone(),
-            },
-            value: token
-        }
+        Err(
+            Located {
+                loc: Loc::new(
+                    self.offset - min(len, self.offset),
+                    self.offset - min(1, self.offset),
+                ),
+                value: err
+            }
+        )
     }
 
-    pub fn virtual_semi(&mut self) -> Located<Token> {
-        let pos = Pos {
-            offset: self.offset,
-            line: self.line,
-            column: self.column,
-        };
+    pub fn virtual_semi(&mut self) -> LexResult<Located<Token>> {
+        let pos = self.offset;
 
         self.newline();
 
         let prev_can_end = self.prev_token_can_end_statement;
-        let next_token = self.next_token();
+        let next_token = self.next_token()?;
 
         // println!("prev_can_end={:?} next={:?}", prev_can_end, next_token);
 
@@ -110,41 +138,41 @@ impl<'a> Lexer<'a> {
             insert_semi = true;
         }
 
-        if insert_semi && prev_can_end && can_start_statement(&next_token.value) {
+        if insert_semi && prev_can_end && Lexer::can_start_statement(&next_token.value) {
             self.token_buffer.push_back(next_token);
             let semi = Located {
-                loc: Loc { start: pos, end: pos, source: self.source.clone() },
+                loc: Loc::new(pos, pos),
                 value: Token::Semi
             };
             self.prev_token_can_end_statement = false;
-            semi
+            Ok(semi)
         }
         else {
-            next_token
+            Ok(next_token)
         }
     }
 
-    pub fn peek_token(&mut self) -> Located<Token> {
+    pub fn peek_token(&mut self) -> LexResult<Located<Token>> {
         if let Some(t) = self.token_buffer.front() {
-            return t.clone()
+            return Ok(t.clone())
         }
 
-        let t = self.next_token();
+        let t = self.next_token()?;
         self.token_buffer.insert(0, t.clone());
-        t
+        Ok(t)
     }
 
-    pub fn peek_token_value(&mut self) -> Token {
-        self.peek_token().value
+    pub fn peek_token_value(&mut self) -> LexResult<Token> {
+        Ok(self.peek_token()?.value)
     }
 
-    pub fn next_token(&mut self) -> Located<Token> {
+    pub fn next_token(&mut self) -> LexResult<Located<Token>> {
         if let Some(t) = self.token_buffer.pop_front() {
-            self.prev_token_can_end_statement = can_end_statement(&t.value);
-            return t
+            self.prev_token_can_end_statement = Lexer::can_end_statement(&t.value);
+            return Ok(t)
         }
 
-        let x = match self.peek_char() {
+        let t = match self.peek_char() {
             Some('\r') => {
                 self.read_char();
                 if self.peek_char_eq('\n') {
@@ -165,7 +193,7 @@ impl<'a> Lexer<'a> {
                 }
                 else if self.peek_char_eq('*') {
                     self.read_char();
-                    self.skip_to_comment_end();
+                    self.skip_to_comment_end()?;
                     self.next_token()
                 }
                 else {
@@ -185,12 +213,11 @@ impl<'a> Lexer<'a> {
                 self.next_token()
             },
             Some(&ch) => {
-                let t = self.read_token();
+                let t = self.read_token()?;
 
                 match t.value {
                     Token::Lb | Token::Lp | Token::Lc => {
                         self.stack.push(t.value.clone());
-                        t
                     },
                     Token::Rb | Token::Rp | Token::Rc => {
                         // Pop the stack to the next matching delimiter, if any.
@@ -201,24 +228,25 @@ impl<'a> Lexer<'a> {
                                 (Token::Lb, Token::Rb) => { break; },
                                 (Token::Lc, Token::Rc) => { break; },
                                 (Token::Lp, Token::Rp) => { break; },
-                                _ => { },
+                                _ => {},
                             }
                         }
-                        t
                     },
-                    _ => t
+                    _ => {},
                 }
+
+                Ok(t)
             },
             None => {
                 self.locate(Token::EOF, 0)
             },
-        };
+        }?;
 
-        self.prev_token_can_end_statement = can_end_statement(&x.value);
-        x
+        self.prev_token_can_end_statement = Lexer::can_end_statement(&t.value);
+        Ok(t)
     }
 
-    fn read_token(&mut self) -> Located<Token> {
+    fn read_token(&mut self) -> LexResult<Located<Token>> {
         match self.peek_char() {
             Some(';') => {
                 self.read_char();
@@ -268,7 +296,7 @@ impl<'a> Lexer<'a> {
                     self.locate(Token::Assign, 2)
                 }
                 else if let Some(&ch) = self.peek_char() {
-                    if is_op_char(ch) {
+                    if Lexer::is_op_char(ch) {
                         self.read_operator(':')
                     }
                     else {
@@ -282,7 +310,7 @@ impl<'a> Lexer<'a> {
             Some('!') => {
                 self.read_char();
                 if let Some(&ch) = self.peek_char() {
-                    if is_op_char(ch) {
+                    if Lexer::is_op_char(ch) {
                         self.read_operator('!')
                     }
                     else {
@@ -296,7 +324,7 @@ impl<'a> Lexer<'a> {
             Some('?') => {
                 self.read_char();
                 if let Some(&ch) = self.peek_char() {
-                    if is_op_char(ch) {
+                    if Lexer::is_op_char(ch) {
                         self.read_operator('?')
                     }
                     else {
@@ -310,7 +338,7 @@ impl<'a> Lexer<'a> {
             Some('=') => {
                 self.read_char();
                 if let Some(&ch) = self.peek_char() {
-                    if is_op_char(ch) {
+                    if Lexer::is_op_char(ch) {
                         self.read_operator('=')
                     }
                     else {
@@ -372,17 +400,17 @@ impl<'a> Lexer<'a> {
             Some(&ch) if ch.is_digit(10) => {
                 self.read_dec()
             },
-            Some(&ch) if is_id_start(ch) => {
+            Some(&ch) if Lexer::is_id_start(ch) => {
                 self.read_char();
                 self.read_identifier(ch)
             },
-            Some(&ch) if is_op_char(ch) => {
+            Some(&ch) if Lexer::is_op_char(ch) => {
                 self.read_char();
                 self.read_operator(ch)
             },
             Some(&ch) => {
                 self.read_char();
-                self.locate(Token::UnexpectedChar(ch), 1)
+                self.locate_error(LexError::UnexpectedChar(ch), 1)
             },
             None => {
                 self.locate(Token::EOF, 0)
@@ -390,12 +418,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_identifier(&mut self, first: char) -> Located<Token> {
+    fn read_identifier(&mut self, first: char) -> LexResult<Located<Token>> {
         let mut text = String::new();
         text.push(first);
 
         while let Some(&ch) = self.peek_char() {
-            if is_id_part(ch) {
+            if Lexer::is_id_part(ch) {
                 text.push(ch);
                 self.read_char();
             }
@@ -405,26 +433,26 @@ impl<'a> Lexer<'a> {
         }
 
         match text.as_str() {
-            "_"      => self.locate(Token::Underscore, text.len()),
-            "fun"    => self.locate(Token::Fun, text.len()),
-            "trait"  => self.locate(Token::Trait, text.len()),
-            "val"    => self.locate(Token::Val, text.len()),
-            "var"    => self.locate(Token::Var, text.len()),
-            "native" => self.locate(Token::Native, text.len()),
-            "for"    => self.locate(Token::For, text.len()),
-            "with"   => self.locate(Token::With, text.len()),
-            "where"  => self.locate(Token::Where, text.len()),
-            "import" => self.locate(Token::Import, text.len()),
-            text     => self.locate(Token::Id(text.to_string()), text.len())
+            "_"      => self.locate(Token::Underscore, text.len() as u32),
+            "fun"    => self.locate(Token::Fun, text.len() as u32),
+            "trait"  => self.locate(Token::Trait, text.len() as u32),
+            "val"    => self.locate(Token::Val, text.len() as u32),
+            "var"    => self.locate(Token::Var, text.len() as u32),
+            "native" => self.locate(Token::Native, text.len() as u32),
+            "for"    => self.locate(Token::For, text.len() as u32),
+            "with"   => self.locate(Token::With, text.len() as u32),
+            "where"  => self.locate(Token::Where, text.len() as u32),
+            "import" => self.locate(Token::Import, text.len() as u32),
+            text     => self.locate(Token::Id(text.to_string()), text.len() as u32)
         }
     }
 
-    fn read_operator(&mut self, first: char) -> Located<Token> {
+    fn read_operator(&mut self, first: char) -> LexResult<Located<Token>> {
         let mut text = String::new();
         text.push(first);
 
         while let Some(&ch) = self.peek_char() {
-            if is_op_char(ch) {
+            if Lexer::is_op_char(ch) {
                 text.push(ch);
                 self.read_char();
             }
@@ -433,10 +461,10 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        self.locate(Token::Op(text.to_string()), text.len())
+        self.locate(Token::Op(text.to_string()), text.len() as u32)
     }
 
-    fn read_zero(&mut self) -> Located<Token> {
+    fn read_zero(&mut self) -> LexResult<Located<Token>> {
         match self.peek_char() {
             Some('x') | Some('X') => {
                 self.read_char();
@@ -458,7 +486,7 @@ impl<'a> Lexer<'a> {
 
     fn skip_digits(&mut self) {
         while let Some(&ch) = self.peek_char() {
-            match from_digit(ch) {
+            match Lexer::from_digit(ch) {
                 Some(n) if n < 10 => {
                     self.read_char();
                 },
@@ -469,10 +497,11 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_number(&mut self, radix: u32) -> Located<Token> {
+    fn read_number(&mut self, radix: u32) -> LexResult<Located<Token>> {
         let mut text = String::new();
 
         text.push('0');
+
         match radix {
             2 => text.push('b'),
             8 => text.push('o'),
@@ -483,7 +512,7 @@ impl<'a> Lexer<'a> {
         let mut value = BigInt::from(0);
 
         while let Some(&ch) = self.peek_char() {
-            match from_digit(ch) {
+            match Lexer::from_digit(ch) {
                 Some(n) if n < radix => {
                     text.push(ch);
                     value *= radix;
@@ -492,28 +521,28 @@ impl<'a> Lexer<'a> {
                 },
                 Some(n) if n < 10 => {
                     self.skip_digits();
-                    return self.locate(Token::BadInt, text.len())
+                    return self.locate_error(LexError::BadInt, text.len() as u32)
                 }
                 _ => {
                     if text.len() == 2 {
                         // just saw 0b with no more digits
-                        return self.locate(Token::BadInt, text.len())
+                        return self.locate_error(LexError::BadInt, text.len() as u32)
                     }
                     break;
                 }
             }
         }
 
-        self.locate(Token::Int(value, text.to_string()), text.len())
+        self.locate(Token::Int(value, text.to_string()), text.len() as u32)
     }
 
-    fn read_dec(&mut self) -> Located<Token> {
+    fn read_dec(&mut self) -> LexResult<Located<Token>> {
         let mut text = String::new();
 
         let mut value = BigInt::from(0);
 
         while let Some(&ch) = self.peek_char() {
-            match from_digit(ch) {
+            match Lexer::from_digit(ch) {
                 Some(n) if n < 10 => {
                     text.push(ch);
                     value *= 10;
@@ -522,7 +551,7 @@ impl<'a> Lexer<'a> {
                 },
                 _ => {
                     if text.len() == 0 {
-                        return self.locate(Token::BadInt, text.len())
+                        return self.locate_error(LexError::BadInt, text.len() as u32)
                     }
                     break;
                 }
@@ -541,17 +570,17 @@ impl<'a> Lexer<'a> {
                 self.read_frac(value, &mut text)
             },
             _ => {
-                self.locate(Token::Int(value, text.to_string()), text.len())
+                self.locate(Token::Int(value, text.to_string()), text.len() as u32)
             },
         }
     }
 
-    fn read_frac(&mut self, int_part: BigInt, text: &mut String) -> Located<Token> {
+    fn read_frac(&mut self, int_part: BigInt, text: &mut String) -> LexResult<Located<Token>> {
         let mut num = BigInt::from(0);
         let mut denom = 1;
 
         while let Some(&ch) = self.peek_char() {
-            match from_digit(ch) {
+            match Lexer::from_digit(ch) {
                 Some(n) if n < 10 => {
                     text.push(ch);
                     num *= 10;
@@ -573,12 +602,12 @@ impl<'a> Lexer<'a> {
                 self.read_exponent(int_part, frac_part, text)
             },
             _ => {
-                self.locate(Token::Rat(mk_rat(int_part, frac_part, 0), text.to_string()), text.len())
+                self.locate(Token::Rat(Lexer::mk_rat(int_part, frac_part, 0), text.to_string()), text.len() as u32)
             },
         }
     }
 
-    fn read_exponent(&mut self, integer: BigInt, frac: BigRational, text: &mut String) -> Located<Token> {
+    fn read_exponent(&mut self, integer: BigInt, frac: BigRational, text: &mut String) -> LexResult<Located<Token>> {
         let mut value = 0;
         let mut sign = 1;
 
@@ -599,7 +628,7 @@ impl<'a> Lexer<'a> {
         }
 
         while let Some(&ch) = self.peek_char() {
-            match from_digit(ch) {
+            match Lexer::from_digit(ch) {
                 Some(n) if n < 8 => {
                     text.push(ch);
                     value *= 10;
@@ -612,7 +641,7 @@ impl<'a> Lexer<'a> {
 
         match self.peek_char() {
             _ => {
-                self.locate(Token::Rat(mk_rat(integer, frac, sign * (value as i32)), text.to_string()), text.len())
+                self.locate(Token::Rat(Lexer::mk_rat(integer, frac, sign * (value as i32)), text.to_string()), text.len() as u32)
             },
         }
     }
@@ -628,57 +657,67 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn skip_to_comment_end(&mut self) {
+    fn skip_to_comment_end(&mut self) -> LexResult<()> {
         while let Some(&ch) = self.peek_char() {
             self.read_char();
             if ch == '*' {
                 if let Some(&ch) = self.peek_char() {
                     if ch == '/' {
                         self.read_char();
-                        return;
+                        return Ok(());
                     }
                 }
             }
         }
 
-        self.locate(Token::BadComment, 1);
-
-        return;
+        self.locate_error::<()>(LexError::BadComment, 1)
     }
 
-    fn read_char_literal(&mut self) -> Located<Token> {
+    fn read_char_literal(&mut self) -> LexResult<Located<Token>> {
         let start_offset = self.offset;
 
         // Read the open '
         self.read_char();
 
-        let t = match self.peek_char() {
+        match self.peek_char() {
             Some('\\') => {
                 match self.read_char_escape() {
-                    Some(ch) => self.read_char_close(ch),
+                    Some(ch) => {
+                        match self.read_char_close(ch) {
+                            Some(t) => {
+                                self.locate(t, self.offset - start_offset)
+                            },
+                            None => {
+                                self.locate_error(LexError::BadChar, self.offset - start_offset)
+                            },
+                        }
+                    },
                     None => {
                         self.skip_to_char_close();
-                        Token::BadChar
+                        self.locate_error(LexError::BadChar, self.offset - start_offset)
                     },
                 }
             },
             Some('\'') => {
                 self.read_char();
-                Token::BadChar
+                self.locate_error(LexError::BadChar, self.offset - start_offset)
             }
             Some(&ch) => {
                 self.read_char();
-                self.read_char_close(ch)
+                match self.read_char_close(ch) {
+                    Some(t) => {
+                        self.locate(t, self.offset - start_offset)
+                    },
+                    None => {
+                        self.locate_error(LexError::BadChar, self.offset - start_offset)
+                    },
+                }
             },
             _ => {
                 self.skip_to_char_close();
-                Token::BadChar
+                self.locate_error(LexError::BadChar, self.offset - start_offset)
             }
-        };
-
-        let end_offset = self.offset;
-
-        self.locate(t, end_offset - start_offset)
+        }
     }
 
     fn skip_to_char_close(&mut self) {
@@ -727,18 +766,18 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_char_close(&mut self, ch: char) -> Token {
+    fn read_char_close(&mut self, ch: char) -> Option<Token> {
         match self.peek_char() {
             Some('\'') => {
                 self.read_char();
-                Token::Char(ch)
+                Some(Token::Char(ch))
             },
             Some(&ch) => {
                 self.skip_to_char_close();
-                Token::BadChar
+                None
             }
             None => {
-                Token::BadChar
+                None
             }
         }
     }
@@ -803,7 +842,7 @@ impl<'a> Lexer<'a> {
         for i in 0..len {
             match self.read_char() {
                 Some(ch) =>
-                    match from_digit(ch) {
+                    match Lexer::from_digit(ch) {
                         Some(v) if v < radix => {
                             n *= radix;
                             n += v;
@@ -820,7 +859,7 @@ impl<'a> Lexer<'a> {
         char::from_u32(n)
     }
 
-    fn read_string_literal(&mut self) -> Located<Token> {
+    fn read_string_literal(&mut self) -> LexResult<Located<Token>> {
         let mut text = String::new();
         let mut fail = false;
 
@@ -869,7 +908,7 @@ impl<'a> Lexer<'a> {
         let end_offset = self.offset;
 
         if fail {
-            self.locate(Token::BadString, end_offset - start_offset)
+            self.locate_error(LexError::BadString, end_offset - start_offset)
         }
         else {
             self.locate(Token::String(text.clone()), end_offset - start_offset)
@@ -881,7 +920,7 @@ impl<'a> Lexer<'a> {
         // FIXME: handle raw strings """...""" (the number of " allows one fewer inside the string)
     }
 
-    fn read_raw_string_literal(&mut self) -> Located<Token> {
+    fn read_raw_string_literal(&mut self) -> LexResult<Located<Token>> {
         let mut text = String::new();
         let mut fail = false;
 
@@ -924,7 +963,7 @@ impl<'a> Lexer<'a> {
         let end_offset = self.offset;
 
         if fail {
-            self.locate(Token::BadString, end_offset - start_offset)
+            self.locate_error(LexError::BadString, end_offset - start_offset)
         }
         else {
             self.locate(Token::String(text.clone()), end_offset - start_offset)
@@ -935,118 +974,120 @@ impl<'a> Lexer<'a> {
         // FIXME: handle string interpolation (as {expression})
         // FIXME: handle raw strings """...""" (the number of " allows one fewer inside the string)
     }
-}
 
-// Utility functions that don't depend on the Lexer state.
 
-fn from_digit(ch: char) -> Option<u32> {
-    if '0' <= ch && ch <= '9' {
-        return Some( (ch as u32) - ('0' as u32) )
-    }
-    else if 'a' <= ch && ch <= 'f' {
-        return Some( (ch as u32) - ('a' as u32) + 10 )
-    }
-    else if 'A' <= ch && ch <= 'F' {
-        return Some( (ch as u32) - ('A' as u32) + 10 )
-    }
-    None
-}
+    // Utility functions that don't depend on the Lexer state.
 
-fn is_id_start(ch: char) -> bool {
-    ch == '⊤' ||
-    ch == '⊥' ||
-    ch == '_' ||
-    ch.is_letter_titlecase() ||
-    ch.is_letter_uppercase() ||
-    ch.is_letter_lowercase() ||
-    ch.is_letter_other()
-}
-
-fn is_id_part(ch: char) -> bool {
-    ch.is_number() ||
-    ch.is_letter_modifier() ||
-    is_id_start(ch) ||
-    ch == '\''
-}
-
-fn is_op_char(ch: char) -> bool {
-    (
-        ch.is_symbol_currency() ||
-        ch.is_symbol_math() ||
-        ch.is_symbol_other() ||
-        ch.is_punctuation() ||
-        ch == '^'
-    ) && ! (
-        ch == '(' || ch == ')' ||
-        ch == '{' || ch == '}' ||
-        ch == '[' || ch == ']' ||
-        ch == ';' ||
-        ch == ',' ||
-        ch.is_punctuation_open() ||
-        ch.is_punctuation_close() ||
-        is_id_part(ch)
-    )
-}
-
-fn mk_rat(i: BigInt, f: BigRational, e: i32) -> BigRational {
-    let ten = BigRational::from_integer(BigInt::from(10));
-
-    if e > 0 {
-        let r = mk_rat(i, f, e-1);
-        let v = r * ten;
-        return v
-    }
-    else if e < 0 {
-        let r = mk_rat(i, f, e+1);
-        let v = r / ten;
-        return v
+    fn from_digit(ch: char) -> Option<u32> {
+        if '0' <= ch && ch <= '9' {
+            return Some( (ch as u32) - ('0' as u32) )
+        }
+        else if 'a' <= ch && ch <= 'f' {
+            return Some( (ch as u32) - ('a' as u32) + 10 )
+        }
+        else if 'A' <= ch && ch <= 'F' {
+            return Some( (ch as u32) - ('A' as u32) + 10 )
+        }
+        None
     }
 
-    BigRational::from(i) + f
-}
+    fn is_id_start(ch: char) -> bool {
+        ch == '⊤' ||
+        ch == '⊥' ||
+        ch == '_' ||
+        ch.is_letter_titlecase() ||
+        ch.is_letter_uppercase() ||
+        ch.is_letter_lowercase() ||
+        ch.is_letter_other()
+    }
 
-fn can_start_statement(t: &Token) -> bool {
-    match t {
-        Token::EOF => false,
-        Token::Rb => false,
-        Token::Rc => false,
-        Token::Rp => false,
-        _ => ! is_infix(t),
+    fn is_id_part(ch: char) -> bool {
+        ch.is_number() ||
+        ch.is_letter_modifier() ||
+        Lexer::is_id_start(ch) ||
+        ch == '\''
+    }
+
+    fn is_op_char(ch: char) -> bool {
+        (
+            ch.is_symbol_currency() ||
+            ch.is_symbol_math() ||
+            ch.is_symbol_other() ||
+            ch.is_punctuation() ||
+            ch == '^'
+        ) && ! (
+            ch == '(' || ch == ')' ||
+            ch == '{' || ch == '}' ||
+            ch == '[' || ch == ']' ||
+            ch == ';' ||
+            ch == ',' ||
+            ch.is_punctuation_open() ||
+            ch.is_punctuation_close() ||
+            Lexer::is_id_part(ch)
+        )
+    }
+
+    fn mk_rat(i: BigInt, f: BigRational, e: i32) -> BigRational {
+        let ten = BigRational::from_integer(BigInt::from(10));
+
+        if e > 0 {
+            let r = Lexer::mk_rat(i, f, e-1);
+            let v = r * ten;
+            return v
+        }
+        else if e < 0 {
+            let r = Lexer::mk_rat(i, f, e+1);
+            let v = r / ten;
+            return v
+        }
+
+        BigRational::from(i) + f
+    }
+
+    fn can_start_statement(t: &Token) -> bool {
+        match t {
+            Token::EOF => false,
+            Token::Rb => false,
+            Token::Rc => false,
+            Token::Rp => false,
+            _ => ! Lexer::is_infix(t),
+        }
+    }
+
+    fn can_end_statement(t: &Token) -> bool {
+        match t {
+            Token::EOF => false,
+            Token::Lc => false,
+            Token::Lp => false,
+            Token::Lb => false,
+            Token::Val => false,
+            Token::Var => false,
+            Token::Fun => false,
+            Token::Trait => false,
+            Token::Import => false,
+            Token::For => false,
+            _ => ! Lexer::is_infix(t),
+        }
+    }
+
+    fn is_infix(t: &Token) -> bool {
+        match t {
+            Token::Arrow => true,
+            Token::Assign => true,
+            Token::At => true,
+            Token::BackArrow => true,
+            Token::Colon => true,
+            Token::Comma => true,
+            Token::Dot => true,
+            Token::Eq => true,
+            Token::Semi => true,
+            Token::With => true,
+            Token::Where => true,
+            _ => false,
+        }
     }
 }
 
-fn can_end_statement(t: &Token) -> bool {
-    match t {
-        Token::EOF => false,
-        Token::Lc => false,
-        Token::Lp => false,
-        Token::Lb => false,
-        Token::Val => false,
-        Token::Var => false,
-        Token::Fun => false,
-        Token::Trait => false,
-        Token::Import => false,
-        Token::For => false,
-        _ => ! is_infix(t),
-    }
-}
-
-fn is_infix(t: &Token) -> bool {
-    match t {
-        Token::Arrow => true,
-        Token::Assign => true,
-        Token::At => true,
-        Token::BackArrow => true,
-        Token::Colon => true,
-        Token::Comma => true,
-        Token::Dot => true,
-        Token::Eq => true,
-        Token::Semi => true,
-        Token::With => true,
-        Token::Where => true,
-        _ => false,
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -1055,21 +1096,32 @@ mod tests {
     use num::rational::BigRational;
     use syntax::loc::*;
     use parser::tokens::Token;
+    use parser::lex::LexError;
     use parser::lex::Lexer;
+    use std::path::PathBuf;
 
     macro_rules! assert_tokens {
         ($s: expr, $($tokens: expr),+) => {
-            let mut lex = Lexer::new("foo.ivo", $s);
+            let source = Source::FileSource(PathBuf::from("foo.ivo"));
+            let mut lex = Lexer::new(&source, $s);
             assert_tokens_with_lex!(lex, $($tokens),+);
         };
     }
 
     macro_rules! assert_tokens_with_lex {
         ($lex: expr, $token: expr) => {
-            assert_eq!($lex.next_token().value, $token);
+            let e = match $lex.next_token() {
+                Ok(Located { loc: _, value: t }) => Ok(t),
+                Err(Located { loc: _, value: err }) => Err(err),
+            };
+            assert_eq!(e, $token);
         };
         ($lex: expr, $token: expr, $($tokens: expr),+) => {
-            assert_eq!($lex.next_token().value, $token);
+            let e = match $lex.next_token() {
+                Ok(Located { loc: _, value: t }) => Ok(t),
+                Err(Located { loc: _, value: err }) => Err(err),
+            };
+            assert_eq!(e, $token);
             assert_tokens_with_lex!($lex, $($tokens),+);
         };
     }
@@ -1078,25 +1130,25 @@ mod tests {
     fn test_builtin_operators() {
         assert_tokens!(
             "-> := @ <- ! : , . = ? ; ` [] {} ()"
-            , Token::Arrow
-            , Token::Assign
-            , Token::At
-            , Token::BackArrow
-            , Token::Bang
-            , Token::Colon
-            , Token::Comma
-            , Token::Dot
-            , Token::Eq
-            , Token::Question
-            , Token::Semi
-            , Token::Tick
-            , Token::Lb
-            , Token::Rb
-            , Token::Lc
-            , Token::Rc
-            , Token::Lp
-            , Token::Rp
-            , Token::EOF
+            , Ok(Token::Arrow)
+            , Ok(Token::Assign)
+            , Ok(Token::At)
+            , Ok(Token::BackArrow)
+            , Ok(Token::Bang)
+            , Ok(Token::Colon)
+            , Ok(Token::Comma)
+            , Ok(Token::Dot)
+            , Ok(Token::Eq)
+            , Ok(Token::Question)
+            , Ok(Token::Semi)
+            , Ok(Token::Tick)
+            , Ok(Token::Lb)
+            , Ok(Token::Rb)
+            , Ok(Token::Lc)
+            , Ok(Token::Rc)
+            , Ok(Token::Lp)
+            , Ok(Token::Rp)
+            , Ok(Token::EOF)
         );
     }
 
@@ -1104,20 +1156,20 @@ mod tests {
     fn test_operators() {
         assert_tokens!(
             "= := += == *= === : := < << <= <<< <-"
-            , Token::Eq
-            , Token::Assign
-            , Token::Op(String::from("+="))
-            , Token::Op(String::from("=="))
-            , Token::Op(String::from("*="))
-            , Token::Op(String::from("==="))
-            , Token::Colon
-            , Token::Assign
-            , Token::Op(String::from("<"))
-            , Token::Op(String::from("<<"))
-            , Token::Op(String::from("<="))
-            , Token::Op(String::from("<<<"))
-            , Token::BackArrow
-            , Token::EOF
+            , Ok(Token::Eq)
+            , Ok(Token::Assign)
+            , Ok(Token::Op(String::from("+=")))
+            , Ok(Token::Op(String::from("==")))
+            , Ok(Token::Op(String::from("*=")))
+            , Ok(Token::Op(String::from("===")))
+            , Ok(Token::Colon)
+            , Ok(Token::Assign)
+            , Ok(Token::Op(String::from("<")))
+            , Ok(Token::Op(String::from("<<")))
+            , Ok(Token::Op(String::from("<=")))
+            , Ok(Token::Op(String::from("<<<")))
+            , Ok(Token::BackArrow)
+            , Ok(Token::EOF)
         );
     }
 
@@ -1125,17 +1177,17 @@ mod tests {
     fn test_keywords() {
         assert_tokens!(
             "_ for fun import native val var trait with where"
-            , Token::Underscore
-            , Token::For
-            , Token::Fun
-            , Token::Import
-            , Token::Native
-            , Token::Val
-            , Token::Var
-            , Token::Trait
-            , Token::With
-            , Token::Where
-            , Token::EOF
+            , Ok(Token::Underscore)
+            , Ok(Token::For)
+            , Ok(Token::Fun)
+            , Ok(Token::Import)
+            , Ok(Token::Native)
+            , Ok(Token::Val)
+            , Ok(Token::Var)
+            , Ok(Token::Trait)
+            , Ok(Token::With)
+            , Ok(Token::Where)
+            , Ok(Token::EOF)
         );
     }
 
@@ -1143,23 +1195,23 @@ mod tests {
     fn test_identifiers_and_keywords() {
         assert_tokens!(
             "xyzzy foo _1 _ for fun import native val var x x0 ⊥ ⊤ trait with"
-            , Token::Id(String::from("xyzzy"))
-            , Token::Id(String::from("foo"))
-            , Token::Id(String::from("_1"))
-            , Token::Underscore
-            , Token::For
-            , Token::Fun
-            , Token::Import
-            , Token::Native
-            , Token::Val
-            , Token::Var
-            , Token::Id(String::from("x"))
-            , Token::Id(String::from("x0"))
-            , Token::Id(String::from("⊥"))
-            , Token::Id(String::from("⊤"))
-            , Token::Trait
-            , Token::With
-            , Token::EOF
+            , Ok(Token::Id(String::from("xyzzy")))
+            , Ok(Token::Id(String::from("foo")))
+            , Ok(Token::Id(String::from("_1")))
+            , Ok(Token::Underscore)
+            , Ok(Token::For)
+            , Ok(Token::Fun)
+            , Ok(Token::Import)
+            , Ok(Token::Native)
+            , Ok(Token::Val)
+            , Ok(Token::Var)
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Id(String::from("x0")))
+            , Ok(Token::Id(String::from("⊥")))
+            , Ok(Token::Id(String::from("⊤")))
+            , Ok(Token::Trait)
+            , Ok(Token::With)
+            , Ok(Token::EOF)
         );
     }
 
@@ -1167,10 +1219,10 @@ mod tests {
     fn test_arith_1() {
         assert_tokens!(
             "1+2"
-            , Token::Int(BigInt::from(1), String::from("1"))
-            , Token::Op(String::from("+"))
-            , Token::Int(BigInt::from(2), String::from("2"))
-            , Token::EOF
+            , Ok(Token::Int(BigInt::from(1), String::from("1")))
+            , Ok(Token::Op(String::from("+")))
+            , Ok(Token::Int(BigInt::from(2), String::from("2")))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1178,20 +1230,20 @@ mod tests {
     fn test_lambda_1() {
         assert_tokens!(
             "fun (x) (y) -> 2*x+y"
-            , Token::Fun
-            , Token::Lp
-            , Token::Id(String::from("x"))
-            , Token::Rp
-            , Token::Lp
-            , Token::Id(String::from("y"))
-            , Token::Rp
-            , Token::Arrow
-            , Token::Int(BigInt::from(2), String::from("2"))
-            , Token::Op(String::from("*"))
-            , Token::Id(String::from("x"))
-            , Token::Op(String::from("+"))
-            , Token::Id(String::from("y"))
-            , Token::EOF
+            , Ok(Token::Fun)
+            , Ok(Token::Lp)
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Rp)
+            , Ok(Token::Lp)
+            , Ok(Token::Id(String::from("y")))
+            , Ok(Token::Rp)
+            , Ok(Token::Arrow)
+            , Ok(Token::Int(BigInt::from(2), String::from("2")))
+            , Ok(Token::Op(String::from("*")))
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Op(String::from("+")))
+            , Ok(Token::Id(String::from("y")))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1199,22 +1251,22 @@ mod tests {
     fn test_dec() {
         assert_tokens!(
             "0 1 2 3 4 5 6 7 8 9 10 100 1001 10191 123456789012345678901234567890"
-            , Token::Int(BigInt::from(0), String::from("0"))
-            , Token::Int(BigInt::from(1), String::from("1"))
-            , Token::Int(BigInt::from(2), String::from("2"))
-            , Token::Int(BigInt::from(3), String::from("3"))
-            , Token::Int(BigInt::from(4), String::from("4"))
-            , Token::Int(BigInt::from(5), String::from("5"))
-            , Token::Int(BigInt::from(6), String::from("6"))
-            , Token::Int(BigInt::from(7), String::from("7"))
-            , Token::Int(BigInt::from(8), String::from("8"))
-            , Token::Int(BigInt::from(9), String::from("9"))
-            , Token::Int(BigInt::from(10), String::from("10"))
-            , Token::Int(BigInt::from(100), String::from("100"))
-            , Token::Int(BigInt::from(1001), String::from("1001"))
-            , Token::Int(BigInt::from(10191), String::from("10191"))
-            , Token::Int(Num::from_str_radix("123456789012345678901234567890", 10).unwrap(), String::from("123456789012345678901234567890"))
-            , Token::EOF
+            , Ok(Token::Int(BigInt::from(0), String::from("0")))
+            , Ok(Token::Int(BigInt::from(1), String::from("1")))
+            , Ok(Token::Int(BigInt::from(2), String::from("2")))
+            , Ok(Token::Int(BigInt::from(3), String::from("3")))
+            , Ok(Token::Int(BigInt::from(4), String::from("4")))
+            , Ok(Token::Int(BigInt::from(5), String::from("5")))
+            , Ok(Token::Int(BigInt::from(6), String::from("6")))
+            , Ok(Token::Int(BigInt::from(7), String::from("7")))
+            , Ok(Token::Int(BigInt::from(8), String::from("8")))
+            , Ok(Token::Int(BigInt::from(9), String::from("9")))
+            , Ok(Token::Int(BigInt::from(10), String::from("10")))
+            , Ok(Token::Int(BigInt::from(100), String::from("100")))
+            , Ok(Token::Int(BigInt::from(1001), String::from("1001")))
+            , Ok(Token::Int(BigInt::from(10191), String::from("10191")))
+            , Ok(Token::Int(Num::from_str_radix("123456789012345678901234567890", 10).unwrap(), String::from("123456789012345678901234567890")))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1222,15 +1274,15 @@ mod tests {
     fn test_oct() {
         assert_tokens!(
             "0 0o0 0o1 0o2 0o7 0o8 0o377"
-            , Token::Int(BigInt::from(0), String::from("0"))
-            , Token::Int(BigInt::from(0), String::from("0o0"))
-            , Token::Int(BigInt::from(1), String::from("0o1"))
-            , Token::Int(BigInt::from(2), String::from("0o2"))
-            , Token::Int(BigInt::from(7), String::from("0o7"))
+            , Ok(Token::Int(BigInt::from(0), String::from("0")))
+            , Ok(Token::Int(BigInt::from(0), String::from("0o0")))
+            , Ok(Token::Int(BigInt::from(1), String::from("0o1")))
+            , Ok(Token::Int(BigInt::from(2), String::from("0o2")))
+            , Ok(Token::Int(BigInt::from(7), String::from("0o7")))
         // will fail at 0o8
-            , Token::BadInt
-            , Token::Int(BigInt::from(255), String::from("0o377"))
-            , Token::EOF
+            , Err(LexError::BadInt)
+            , Ok(Token::Int(BigInt::from(255), String::from("0o377")))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1238,14 +1290,14 @@ mod tests {
     fn test_bin() {
         assert_tokens!(
             "0 0b0 0b1 0b1001 0b1010101010101010 0b123"
-            , Token::Int(BigInt::from(0), String::from("0"))
-            , Token::Int(BigInt::from(0), String::from("0b0"))
-            , Token::Int(BigInt::from(1), String::from("0b1"))
-            , Token::Int(BigInt::from(9), String::from("0b1001"))
-            , Token::Int(BigInt::from(0xaaaau32), String::from("0b1010101010101010"))
+            , Ok(Token::Int(BigInt::from(0), String::from("0")))
+            , Ok(Token::Int(BigInt::from(0), String::from("0b0")))
+            , Ok(Token::Int(BigInt::from(1), String::from("0b1")))
+            , Ok(Token::Int(BigInt::from(9), String::from("0b1001")))
+            , Ok(Token::Int(BigInt::from(0xaaaau32), String::from("0b1010101010101010")))
         // will fail at 0b123
-            , Token::BadInt
-            , Token::EOF
+            , Err(LexError::BadInt)
+            , Ok(Token::EOF)
         );
     }
 
@@ -1253,14 +1305,14 @@ mod tests {
     fn test_hex() {
         assert_tokens!(
             "0 0x0 0xf 0xff 0x1 0x 0x123456789abcdef0"
-            , Token::Int(BigInt::from(0), String::from("0"))
-            , Token::Int(BigInt::from(0), String::from("0x0"))
-            , Token::Int(BigInt::from(0xf), String::from("0xf"))
-            , Token::Int(BigInt::from(0xff), String::from("0xff"))
-            , Token::Int(BigInt::from(1), String::from("0x1"))
-            , Token::BadInt
-            , Token::Int(BigInt::from(0x123456789abcdef0u64), String::from("0x123456789abcdef0"))
-            , Token::EOF
+            , Ok(Token::Int(BigInt::from(0), String::from("0")))
+            , Ok(Token::Int(BigInt::from(0), String::from("0x0")))
+            , Ok(Token::Int(BigInt::from(0xf), String::from("0xf")))
+            , Ok(Token::Int(BigInt::from(0xff), String::from("0xff")))
+            , Ok(Token::Int(BigInt::from(1), String::from("0x1")))
+            , Err(LexError::BadInt)
+            , Ok(Token::Int(BigInt::from(0x123456789abcdef0u64), String::from("0x123456789abcdef0")))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1268,23 +1320,23 @@ mod tests {
     fn test_rats() {
         assert_tokens!(
             "0 1 2 3.14 1e0 1e1 1e6 1.0e6 1.e6 1.e+6 1e+6 1e-6 12. 12.0"
-            , Token::Int(BigInt::from(0), String::from("0"))
-            , Token::Int(BigInt::from(1), String::from("1"))
-            , Token::Int(BigInt::from(2), String::from("2"))
-            , Token::Rat(BigRational::new(BigInt::from(314), BigInt::from(100)), String::from("3.14"))
+            , Ok(Token::Int(BigInt::from(0), String::from("0")))
+            , Ok(Token::Int(BigInt::from(1), String::from("1")))
+            , Ok(Token::Int(BigInt::from(2), String::from("2")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(314), BigInt::from(100)), String::from("3.14")))
 
-            , Token::Rat(BigRational::new(BigInt::from(1), BigInt::from(1)), String::from("1e0"))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(1), BigInt::from(1)), String::from("1e0")))
 
-            , Token::Rat(BigRational::new(BigInt::from(10), BigInt::from(1)), String::from("1e1"))
-            , Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1e6"))
-            , Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1.0e6"))
-            , Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1.e6"))
-            , Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1.e+6"))
-            , Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1e+6"))
-            , Token::Rat(BigRational::new(BigInt::from(1), BigInt::from(1000000)), String::from("1e-6"))
-            , Token::Rat(BigRational::new(BigInt::from(12), BigInt::from(1)), String::from("12."))
-            , Token::Rat(BigRational::new(BigInt::from(12), BigInt::from(1)), String::from("12.0"))
-            , Token::EOF
+            , Ok(Token::Rat(BigRational::new(BigInt::from(10), BigInt::from(1)), String::from("1e1")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1e6")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1.0e6")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1.e6")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1.e+6")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(1000000), BigInt::from(1)), String::from("1e+6")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(1), BigInt::from(1000000)), String::from("1e-6")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(12), BigInt::from(1)), String::from("12.")))
+            , Ok(Token::Rat(BigRational::new(BigInt::from(12), BigInt::from(1)), String::from("12.0")))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1292,16 +1344,16 @@ mod tests {
     fn test_chars() {
         assert_tokens!(
             r#"'a' 'b' 'c' '' 'foo' '\n' '\x00' '\u0000' ' '"#
-            , Token::Char('a')
-            , Token::Char('b')
-            , Token::Char('c')
-            , Token::BadChar
-            , Token::BadChar
-            , Token::Char('\n')
-            , Token::Char('\u{0000}')
-            , Token::Char('\u{0000}')
-            , Token::Char(' ')
-            , Token::EOF
+            , Ok(Token::Char('a'))
+            , Ok(Token::Char('b'))
+            , Ok(Token::Char('c'))
+            , Err(LexError::BadChar)
+            , Err(LexError::BadChar)
+            , Ok(Token::Char('\n'))
+            , Ok(Token::Char('\u{0000}'))
+            , Ok(Token::Char('\u{0000}'))
+            , Ok(Token::Char(' '))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1311,15 +1363,15 @@ mod tests {
             r#" "hello" "" "\n" "\x00" "\u0000\u00000000" " " r"hello world\n" r"one line \"
             another line
             " "#
-            , Token::String(String::from("hello"))
-            , Token::String(String::from(""))
-            , Token::String(String::from("\n"))
-            , Token::String(String::from("\u{0000}"))
-            , Token::String(String::from("\u{0000}\u{0000}0000"))
-            , Token::String(String::from(" "))
-            , Token::String(String::from("hello world\\n"))
-            , Token::String(String::from("one line \"\n            another line\n            "))
-            , Token::EOF
+            , Ok(Token::String(String::from("hello")))
+            , Ok(Token::String(String::from("")))
+            , Ok(Token::String(String::from("\n")))
+            , Ok(Token::String(String::from("\u{0000}")))
+            , Ok(Token::String(String::from("\u{0000}\u{0000}0000")))
+            , Ok(Token::String(String::from(" ")))
+            , Ok(Token::String(String::from("hello world\\n")))
+            , Ok(Token::String(String::from("one line \"\n            another line\n            ")))
+            , Ok(Token::EOF)
         );
     }
 
@@ -1336,38 +1388,38 @@ mod tests {
                     }
                 }
             "#
-            , Token::Trait
-            , Token::Id(String::from("Foo"))
-            , Token::Lc
-            , Token::Fun
-            , Token::Id(String::from("f"))
-            , Token::Lp
-            , Token::Id(String::from("x"))
-            , Token::Rp
-            , Token::Arrow
-            , Token::Id(String::from("x"))
-            , Token::Semi
-            , Token::Fun
-            , Token::Id(String::from("g"))
-            , Token::Lp
-            , Token::Id(String::from("x"))
-            , Token::Rp
-            , Token::Arrow
-            , Token::Lp
-            , Token::Id(String::from("x"))
-            , Token::Rp
-            , Token::Semi
-            , Token::Trait
-            , Token::Id(String::from("Bar"))
-            , Token::Lc
-            , Token::Val
-            , Token::Id(String::from("x"))
-            , Token::Semi
-            , Token::Val
-            , Token::Id(String::from("y"))
-            , Token::Rc
-            , Token::Rc
-            , Token::EOF
+            , Ok(Token::Trait)
+            , Ok(Token::Id(String::from("Foo")))
+            , Ok(Token::Lc)
+            , Ok(Token::Fun)
+            , Ok(Token::Id(String::from("f")))
+            , Ok(Token::Lp)
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Rp)
+            , Ok(Token::Arrow)
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Semi)
+            , Ok(Token::Fun)
+            , Ok(Token::Id(String::from("g")))
+            , Ok(Token::Lp)
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Rp)
+            , Ok(Token::Arrow)
+            , Ok(Token::Lp)
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Rp)
+            , Ok(Token::Semi)
+            , Ok(Token::Trait)
+            , Ok(Token::Id(String::from("Bar")))
+            , Ok(Token::Lc)
+            , Ok(Token::Val)
+            , Ok(Token::Id(String::from("x")))
+            , Ok(Token::Semi)
+            , Ok(Token::Val)
+            , Ok(Token::Id(String::from("y")))
+            , Ok(Token::Rc)
+            , Ok(Token::Rc)
+            , Ok(Token::EOF)
         );
     }
 

@@ -100,13 +100,35 @@ pub enum Decl {
 
 impl Decl {
     pub fn name(&self) -> Name {
-        match *self {
-            Decl::Trait { ref name, .. } => name.clone(),
-            Decl::Fun { ref name, .. } => name.clone(),
-            Decl::Val { ref name, .. } => name.clone(),
-            Decl::Var { ref name, .. } => name.clone(),
-            Decl::MixfixPart { ref name, .. } => name.clone(),
+        match self {
+            Decl::Trait { name, .. } => name.clone(),
+            Decl::Fun { name, .. } => name.clone(),
+            Decl::Val { name, .. } => name.clone(),
+            Decl::Var { name, .. } => name.clone(),
+            Decl::MixfixPart { name, .. } => name.clone(),
         }
+    }
+
+    pub fn assoc(&self) -> Option<usize> {
+        match self {
+            Decl::Trait { param_assocs, .. } => {
+                for (i, p) in param_assocs.iter().enumerate() {
+                    if *p == Assoc::Assoc {
+                        return Some(i)
+                    }
+                }
+            },
+            Decl::Fun { param_assocs, .. } => {
+                for (i, p) in param_assocs.iter().enumerate() {
+                    if *p == Assoc::Assoc {
+                        return Some(i)
+                    }
+                }
+            },
+            _ => {},
+        }
+
+        None
     }
 }
 

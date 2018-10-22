@@ -17,8 +17,6 @@
 // implemented in Java in 2005-6 by the author. This, in turn, was based on the Elkhound
 // parser generator by Scott McPeak and George Necula (CC'2004).
 
-use typed_arena::Arena;
-
 use std::collections::VecDeque;
 
 use syntax::loc::*;
@@ -26,8 +24,7 @@ use syntax::names::*;
 use syntax::trees::NodeId;
 use namer::symbols::MixfixTree;
 use namer::symbols::Decl;
-
-type Prio = u32;
+use namer::symbols::Prio;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
@@ -44,7 +41,7 @@ pub enum Symbol {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Nonterm {
-    S, E, M(NodeId, Prio), Pr, Br,
+    S, E, M(NodeId, usize), Pr, Br,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -66,14 +63,14 @@ impl Term {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Rule {
-    lhs: Nonterm,
-    rhs: Vec<Symbol>,
+    pub lhs: Nonterm,
+    pub rhs: Vec<Symbol>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Item {
-    dot: usize,
-    rule: Rule,
+    pub dot: usize,
+    pub rule: Rule,
 }
 
 #[derive(Debug, PartialEq)]
@@ -132,7 +129,7 @@ impl LR {
         return items1.len() == items2.len()
     }
 
-    fn add_state(&mut self, items: Vec<Item>) -> Option<State> {
+    pub fn add_state(&mut self, items: Vec<Item>) -> Option<State> {
         if items.is_empty() {
             return None
         }
@@ -143,13 +140,13 @@ impl LR {
             }
         }
 
-        println!("add_state {:#?} --> {:#?}", State(self.states.len()), &items);
+        // println!("add_state {:#?} --> {:#?}", State(self.states.len()), &items);
         self.states.push(items);
         Some(State(self.states.len()-1))
     }
 
     fn reductions(&self, state: &State) -> Vec<Rule> {
-        println!("reductions: items of {:?} --> {:#?}", state, self.get_items(state));
+        // println!("reductions: items of {:?} --> {:#?}", state, self.get_items(state));
 
         let rules = self.get_items(state).iter().flat_map(
             |Item { ref dot, ref rule }| {
@@ -162,7 +159,7 @@ impl LR {
             }
         ).collect();
 
-        println!("reductions: reductions of {:?} --> {:#?}", state, rules);
+        // println!("reductions: reductions of {:?} --> {:#?}", state, rules);
 
         rules
     }
@@ -192,7 +189,7 @@ impl LR {
         self.shift_symbol(state, &Symbol::Nonterm(t.clone()))
     }
 
-    fn closure(&self, items: Vec<Item>) -> Vec<Item> {
+    pub fn closure(&self, items: Vec<Item>) -> Vec<Item> {
         let mut worklist = items;
         let mut new_items = Vec::new();
 
@@ -215,7 +212,7 @@ impl LR {
 }
 
 #[derive(Debug)]
-struct GLR {
+pub struct GLR {
     parser: LR,
     stacks: Vec<Stack>
 }
@@ -239,18 +236,18 @@ struct Stack {
 // should not hurt performance.
 
 impl GLR {
-    fn new(parser: LR, state: State) -> GLR {
+    pub fn new(parser: LR, state: State) -> GLR {
         GLR {
             parser,
             stacks: vec![Stack { top: state, stack: vec![] }]
         }
     }
 
-    fn parse(&mut self, input: Vec<Token>) -> Vec<MixfixTree> {
+    pub fn parse(&mut self, input: Vec<Token>) -> Vec<MixfixTree> {
         for t in input {
             println!("PARSER LOOP");
             println!("shifting t = {:?}", &t);
-            println!("self = {:#?}", &self);
+            // println!("self = {:#?}", &self);
             self.do_reductions(&t);
             self.do_shifts(&t);
         }
@@ -270,7 +267,7 @@ impl GLR {
     fn do_shifts(&mut self, t: &Token) {
         let mut i = 0;
 
-        println!("shift ${:?}", t);
+        // println!("shift ${:?}", t);
 
         while i < self.stacks.len() {
             if let Some(Stack { ref mut top, ref mut stack }) = self.stacks.get_mut(i) {
@@ -278,11 +275,11 @@ impl GLR {
                     let old_top = *top;
                     *top = dest;
                     stack.push(Node { token: t.clone(), state: old_top });
-                    println!("shift {:?} from {:?} to state {:?}", t, old_top, dest);
+                    // println!("shift {:?} from {:?} to state {:?}", t, old_top, dest);
                     i += 1;
                 }
                 else {
-                    println!("shift {:?} from {:?} failed", t, *top);
+                    // println!("shift {:?} from {:?} failed", t, *top);
                     // remove i and replace with last element of the vector, which we'll visit on the
                     // next iteration.
                     // swap_remove() reorders the list, but is O(1), while remove() is O(n)
@@ -319,8 +316,8 @@ impl GLR {
         {
             let stacks = &mut self.stacks;
 
-            println!("do_reductions: stacks before = {:#?}", stacks);
-            println!("do_reductions: new stacks    = {:#?}", new_stacks);
+            // println!("do_reductions: stacks before = {:#?}", stacks);
+            // println!("do_reductions: new stacks    = {:#?}", new_stacks);
 
             for new_stack in &new_stacks {
                 let mut j = 0;
@@ -385,6 +382,9 @@ impl GLR {
         let entries = new_stack.split_off(stack.len() - rule.rhs.len());
         assert_eq!(entries.len(), rule.rhs.len());
 
+        // Epsilon rules are not allowed.
+        assert!(! entries.is_empty());
+
         let Node { token: _, state: old_top } = entries.first().unwrap();
 
         // goto might modify parser (because it creates a new state and updates the states vec)
@@ -402,7 +402,6 @@ impl GLR {
 
         None
     }
-
 
     fn make_semantic_value(values: &Vec<Token>, rhs: &Vec<Symbol>) -> Option<Token> {
         let mut args = Vec::new();
@@ -469,12 +468,12 @@ impl GLR {
             (Token::End, Token::End) => Some(Token::End),
             (Token::Name(ref s1, ref decls1), Token::Name(ref s2, ref decls2)) if s1 == s2 => {
                 let mut decls = Vec::new();
-                for d in decls1 { decls.push(d.clone()); }
-                for d in decls2 { decls.push(d.clone()); }
+                decls.extend(decls1.iter().cloned());
+                decls.extend(decls2.iter().cloned());
                 Some(Token::Name(s1.clone(), decls))
             },
             (Token::Exp(ref e1), Token::Exp(ref e2)) if e1 == e2 => Some(t1.clone()),
-            _ => unimplemented!()
+            _ => None,
         }
     }
 

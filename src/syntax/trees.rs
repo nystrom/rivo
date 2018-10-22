@@ -3,6 +3,8 @@ use num::rational::BigRational;
 
 use syntax::loc::Located;
 use syntax::names::Name;
+use namer::graph::LookupIndex;
+use namer::graph::MixfixIndex;
 
 // FIXME: create two different syntaxes (HACK? use include!).
 // Or parameterize on the scopes somehow?
@@ -120,10 +122,10 @@ pub enum Exp {
 
     // ambiguous names -- might resolve to variable names or parts of function names
     // or _ or ? or = as part of a function name or partial application
-    Name { name: Name, id: NodeId },
+    Name { name: Name, id: NodeId, lookup: Option<LookupIndex> },
 
     // Parsed trees
-    MixfixApply { es: Vec<Located<Exp>>, id: NodeId },
+    MixfixApply { es: Vec<Located<Exp>>, id: NodeId, lookup: Option<MixfixIndex> },
 }
 
 #[derive(Clone, Debug, PartialEq)]
