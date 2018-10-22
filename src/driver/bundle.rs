@@ -4,7 +4,6 @@ use syntax::names::*;
 use std::collections::HashMap;
 
 use namer::graph::ScopeGraph;
-use namer::graph::SolverResult;
 use namer::graph::EnvIndex;
 use namer::symbols::Scope;
 use namer::symbols::Env;
@@ -28,16 +27,16 @@ impl Bundle {
                 line_map.decode(source.clone(), Loc::no_loc())
             },
             Bundle::Parsed { source, line_map, .. } => {
-                line_map.decode(source.clone(), Loc::no_loc())
+                line_map.decode(source.clone(), loc)
             },
             Bundle::Prenamed { source, line_map, .. } => {
-                line_map.decode(source.clone(), Loc::no_loc())
+                line_map.decode(source.clone(), loc)
             },
             Bundle::Named { source, line_map, .. } => {
-                line_map.decode(source.clone(), Loc::no_loc())
+                line_map.decode(source.clone(), loc)
             },
             Bundle::Core { source, line_map, .. } => {
-                line_map.decode(source.clone(), Loc::no_loc())
+                line_map.decode(source.clone(), loc)
             },
         }
     }

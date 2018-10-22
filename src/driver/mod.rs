@@ -17,6 +17,10 @@ pub mod errors;
 pub mod loader;
 pub mod stats;
 
+#[cfg(debug_assertions)]
+#[allow(non_upper_case_globals)]
+static mut depth: u32 = 0;
+
 // The interpreter states consists of the states of the bundles.
 // One of the bundles is the current bundle being processed.
 // The others are to-be-processed.
@@ -299,7 +303,7 @@ impl Driver {
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Prenamed { source, line_map, tree, graph: g, scopes } => {
+            Bundle::Prenamed { source, line_map, tree, graph, scopes } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
@@ -308,9 +312,25 @@ impl Driver {
                 let source1 = source.clone();
                 let line_map1 = line_map.clone();
 
+                use namer::namer::Namer;
+                use namer::namer::Cache;
+
+                let mut cache = Cache {
+                    lookup_here_cache: &mut HashMap::new(),
+                    lookup_cache: &mut HashMap::new(),
+                    mixfix_cache: &mut HashMap::new(),
+                };
+
+                let mut namer = Namer {
+                    graph: &mut graph.clone(),
+                    driver: self,
+                    cache: &mut cache,
+                };
+
                 {
-                    let graph = g.clone();
-                    let result = graph.solve(self)?;
+                    let result = namer.solve()?;
+
+                    let graph1 = namer.graph.clone();
 
                     let mut renamer = Renamer {
                         cache: &result,
@@ -319,7 +339,7 @@ impl Driver {
 
                     renamer.visit_root(&tree1.value, &scopes1, &tree1.loc);
 
-                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, tree: tree1, graph: graph, scopes: scopes1 };
+                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, tree: tree1, graph: graph1, scopes: scopes1 };
                     self.set_bundle(index, new_bundle);
                 }
 

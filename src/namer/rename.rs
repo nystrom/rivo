@@ -3,8 +3,10 @@ use syntax::loc::*;
 use syntax::names::*;
 
 use namer::symbols::*;
-use namer::graph::*;
 use namer::glr::*;
+use namer::graph::*;
+use namer::namer::Namer;
+use namer::namer::SolverResult;
 use driver;
 
 use visit::rewrite::*;
@@ -13,7 +15,7 @@ use std::collections::HashMap;
 
 // First pass:
 // Create the scopes and initialize in the AST.
-// Second pass: do the declarations, etc. Then call ScopeGraph.solve
+// Second pass: do the declarations, etc. Then call Namer.solve
 
 impl<'a> Renamer<'a> {
     pub fn apply_mixfix(&self, tree: MixfixTree, es: Vec<Located<Exp>>) -> Option<Exp> {
@@ -55,7 +57,7 @@ impl<'a> Renamer<'a> {
                 Exp::Name { name, id, lookup: Some(lookup) } => {
                     // return false if mixfix part
                     match self.cache.lookup_cache.get(&lookup) {
-                        Some(decls) if ScopeGraph::all_mixfix(decls) => false,
+                        Some(decls) if Namer::all_mixfix(decls) => false,
                         _ => true,
                     }
                 }
