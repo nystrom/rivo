@@ -1,11 +1,13 @@
 #!/bin/sh
 
-eval "$@"
+# Watch the given files and run the command anytime they change.
+watch="Cargo.toml src test"
 
+eval "$@"
 echo Waiting for changes...
 
-fswatch -o src Cargo.toml tests | while read f; do
+fswatch -o $watch | while read f; do
+  sleep 2  # add a little sleep to prevent too many recompilations
   eval "$@"
-
   echo Waiting for changes...
 done

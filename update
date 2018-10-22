@@ -1,0 +1,3 @@
+#!/bin/sh
+
+rustup update || (rustup uninstall nightly && rustup install nightly) && cargo update && cargo build && cargo build --release
