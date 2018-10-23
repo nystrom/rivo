@@ -186,7 +186,7 @@ impl GLRAdapter {
         for id in keys {
             match (min_prio.get(&id), max_prio.get(&id)) {
                 (Some(min), Some(max)) => {
-                    // Mmin -> Mn -> M{n+1} -> ... -> Mmax
+                    // M{min} -> Mn -> M{n+1} -> ... -> M{max}
                     for k in *min .. *max {
                         rules.push(
                             Rule {
@@ -196,7 +196,7 @@ impl GLRAdapter {
                         );
                     }
 
-                    // E -> Mmin
+                    // E -> M{min}
                     rules.push(
                         Rule {
                             lhs: Nonterm::E,
@@ -204,7 +204,7 @@ impl GLRAdapter {
                         }
                     );
 
-                    // Mmax -> Br
+                    // M{max} -> Br
                     rules.push(
                         Rule {
                             lhs: Nonterm::M(id, *max),
