@@ -70,7 +70,9 @@ impl Driver {
         }
     }
 
-    fn dump_errors_for_bundle(&self, index: usize, bundle: &Bundle) {
+    fn dump_errors_for_bundle(&self, index: usize, bundle: &Bundle) -> u32 {
+        let mut count = 0;
+
         if index < self.errors.len() {
             let mut errors = self.errors[index].clone();
             errors.sort_unstable_by(|a, b| a.loc.cmp(&b.loc));
@@ -78,15 +80,27 @@ impl Driver {
             for Located { loc, value: msg } in errors {
                 let decoded = bundle.decode_loc(loc);
                 println!("{}:{}", decoded, msg);
+                count += 1;
             }
         }
+
+        count
     }
 
     pub fn dump_errors(&self) {
+        let mut count = 0;
         for (i, b) in self.bundles.iter().enumerate() {
-            self.dump_errors_for_bundle(i, b);
+            count += self.dump_errors_for_bundle(i, b);
         }
-        println!("Compilation complete.")
+        if count == 1 {
+            println!("{} error.", count);
+        }
+        else if count > 1 {
+            println!("{} errors.", count);
+        }
+        else {
+            println!("Success.");
+        }
     }
 
     #[cfg_attr(debug_assertions, trace)]
