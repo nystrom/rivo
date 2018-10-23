@@ -186,7 +186,7 @@ impl GLRAdapter {
         for id in keys {
             match (min_prio.get(&id), max_prio.get(&id)) {
                 (Some(min), Some(max)) => {
-                    // M{min} -> Mn -> M{n+1} -> ... -> M{max}
+                    // M{min} -> M{n} -> M{n+1} -> ... -> M{max}
                     for k in *min .. *max {
                         rules.push(
                             Rule {
