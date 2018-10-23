@@ -69,11 +69,6 @@ impl ScopeGraph {
         Scope::Env(EnvIndex(index))
     }
 
-    // FIXME avoid the clone here
-    pub fn get_envs(&self) -> Vec<Env> {
-        self.envs.clone()
-    }
-
     pub fn get_scope_of_lookup_here(&self, r: LookupHereIndex) -> Scope {
         Scope::LookupHere(r)
     }
