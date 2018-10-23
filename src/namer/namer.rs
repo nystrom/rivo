@@ -250,12 +250,16 @@ impl<'a> Namer<'a> {
 
     #[cfg_attr(debug_assertions, trace(disable(driver, crumbs)))]
     fn lookup_in_root(&mut self, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+        self.driver.stats.accum("lookup_in_root", 1);
+
         if crumbs.contains(&Scope::Global) {
+            self.driver.stats.accum("lookup_in_root cycle", 1);
             return Ok(vec![]);
         }
 
         // we only search other bundles for legal bundle names
         if ! name.is_bundle_name() {
+            self.driver.stats.accum("lookup_in_root not bundle name", 1);
             return Ok(vec![]);
         }
 
@@ -321,6 +325,8 @@ impl<'a> Namer<'a> {
 
     #[cfg_attr(debug_assertions, trace(disable(driver, crumbs)))]
     fn lookup_in_trees(&mut self, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+        self.driver.stats.accum("lookup_in_trees", 1);
+
         let mut results = Vec::new();
         let mut to_name = Vec::new();
 
@@ -347,6 +353,9 @@ impl<'a> Namer<'a> {
 
         for index in to_name {
             println!("naming bundle {:?} to find {:?}", index, name);
+
+            self.driver.stats.accum("naming in lookup_in_trees", 1);
+
             match self.driver.name_bundle(index) {
                 Ok(_) => {},
                 Err(msg) => {
@@ -555,11 +564,11 @@ impl<'a> Namer<'a> {
         match self.cache.lookup_here_cache.get(&LookupHereRef { scope, name: name.clone() }) {
             Some(decls) => {
                 println!("lookup_here cache hit");
-                self.driver.stats.accum("lookup_here hit", 1);
+                self.driver.stats.accum("lookup_here cache hit", 1);
                 return Ok(decls.clone())
             },
             None => {
-                self.driver.stats.accum("lookup_here miss", 1);
+                self.driver.stats.accum("lookup_here cache miss", 1);
                 println!("lookup_here cache miss");
             },
         }
@@ -652,11 +661,11 @@ impl<'a> Namer<'a> {
         match self.cache.lookup_cache.get(&LookupRef { scope, name: name.clone() }) {
             Some(decls) => {
                 println!("lookup cache hit");
-                self.driver.stats.accum("lookup hit", 1);
+                self.driver.stats.accum("lookup cache hit", 1);
                 return Ok(decls.clone())
             },
             None => {
-                self.driver.stats.accum("lookup miss", 1);
+                self.driver.stats.accum("lookup cache miss", 1);
                 println!("lookup cache miss");
             },
         }
