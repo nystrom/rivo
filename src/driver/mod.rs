@@ -249,6 +249,8 @@ impl Driver {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
+                let timer = self.stats.start_timer();
+
                 // FIXME: we don't want to pay for the clone here.
                 // need to clone the tree here so that we're no longer borrowing self
                 // so we can borrow it mutably in the prenamer.
@@ -278,6 +280,8 @@ impl Driver {
                     self.set_bundle(index, new_bundle);
                 }
 
+                self.stats.end_timer("prename_bundle", timer);
+
                 self.current_bundle = old_bundle;
 
                 Ok(())
@@ -306,6 +310,8 @@ impl Driver {
             Bundle::Prenamed { source, line_map, tree, graph, scopes } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
+
+                let timer = self.stats.start_timer();
 
                 let tree1 = tree.clone();
                 let scopes1 = scopes.clone();
@@ -343,6 +349,7 @@ impl Driver {
                     self.set_bundle(index, new_bundle);
                 }
 
+                self.stats.end_timer("name_bundle", timer);
 
                 self.current_bundle = old_bundle;
 
