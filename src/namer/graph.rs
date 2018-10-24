@@ -48,6 +48,7 @@ pub struct ScopeGraph {
     pub(super) envs: Vec<Env>,
 }
 
+#[cfg_attr(debug_assertions, trace)]
 impl ScopeGraph {
     pub fn new() -> ScopeGraph {
         ScopeGraph {
@@ -61,6 +62,7 @@ impl ScopeGraph {
     pub fn new_env(&mut self) -> Scope {
         let index = self.envs.len();
         self.envs.push(Env {
+            index: EnvIndex(index),
             decls: Vec::new(),
             imports: Vec::new(),
             parents: Vec::new(),

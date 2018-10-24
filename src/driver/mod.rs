@@ -153,6 +153,8 @@ impl Driver {
         }
     }
 
+    // FIXME: the parser should compute this to avoid
+    // scanning the input more than once.
     pub fn compute_line_map(&self, input: &String) -> LineMap {
         let mut v = vec![0];
         let mut cr = false;
@@ -288,9 +290,12 @@ impl Driver {
                         mixfixes: &mut mixfixes,
                         driver: self
                     };
-                    prenamer.visit_root(&tree1.value, &PrenameContext::new(), &tree1.loc);
+                    let tree2 = prenamer.visit_root(&tree1.value, &PrenameContext::new(), &tree1.loc);
 
-                    let new_bundle = Bundle::Prenamed { source: source1, line_map: line_map1, tree: tree1, graph: graph.clone(), scopes: scopes.clone() };
+                    println!("scopes {:#?}", &scopes);
+                    println!("graph {:#?}", &graph);
+
+                    let new_bundle = Bundle::Prenamed { source: source1, line_map: line_map1, tree: Located::new(tree1.loc, tree2), graph: graph.clone(), scopes: scopes.clone() };
                     self.set_bundle(index, new_bundle);
                 }
 
@@ -327,6 +332,7 @@ impl Driver {
 
                 let timer = self.stats.start_timer();
 
+                // FIXME: avoid the cloning
                 let tree1 = tree.clone();
                 let scopes1 = scopes.clone();
                 let source1 = source.clone();
@@ -334,6 +340,7 @@ impl Driver {
 
                 use namer::namer::Namer;
                 use namer::namer::Cache;
+                use namer::rename::RenamerEnv;
 
                 let mut cache = Cache {
                     lookup_here_cache: &mut HashMap::new(),
@@ -354,12 +361,15 @@ impl Driver {
 
                     let mut renamer = Renamer {
                         cache: &result,
+                        scopes: &scopes1,
                         driver: self
                     };
 
-                    renamer.visit_root(&tree1.value, &scopes1, &tree1.loc);
+                    let env = RenamerEnv::new();
 
-                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, tree: tree1, graph: graph1, scopes: scopes1 };
+                    let tree2 = renamer.visit_root(&tree1.value, &env, &tree1.loc);
+
+                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, tree: Located::new(tree1.loc, tree2), graph: graph1, scopes: scopes1 };
                     self.set_bundle(index, new_bundle);
                 }
 

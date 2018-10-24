@@ -70,8 +70,8 @@ impl Stats {
         stats.sort_unstable();
         stats.dedup();
 
-        println!("{:<25} | {:<11} | {:<11} | {:<11} | {:<11} | {:<11}", "Stat", "Count", "Sum", "Min", "Max", "Mean");
-        println!("{:-<25} | {:-<11} | {:-<11} | {:-<11} | {:-<11} | {:-<11}", "", "", "", "", "", "");
+        println!("{:<40} | {:<11} | {:<11} | {:<11} | {:<11} | {:<11}", "Stat", "Count", "Sum", "Min", "Max", "Mean");
+        println!("{:-<40} | {:-<11} | {:-<11} | {:-<11} | {:-<11} | {:-<11}", "", "", "", "", "", "");
 
         for stat in stats {
             let cnt = self.map.get(&Aggregate::Count(stat.clone())).unwrap_or(&0);
@@ -84,11 +84,11 @@ impl Stats {
                 let max_time = (*max as f64) * 1e-9;
                 let min_time = (*min as f64) * 1e-9;
                 let mean_time = if *cnt != 0 { sum_time / (*cnt as f64) } else { 0 as f64 };
-                println!("{:<25} | {:>11} | {:>11.6} | {:>11.6} | {:>11.6} | {:>11.6} ", stat, cnt, sum_time, min_time, max_time, mean_time);
+                println!("{:<40} | {:>11} | {:>11.6} | {:>11.6} | {:>11.6} | {:>11.6} ", stat, cnt, sum_time, min_time, max_time, mean_time);
             }
             else {
                 let mean = if *cnt != 0 { (*sum as f64) / (*cnt as f64) } else { 0 as f64 };
-                println!("{:<25} | {:>11} | {:>11} | {:>11} | {:>11} | {:>11.2}", stat, cnt, sum, min, max, mean);
+                println!("{:<40} | {:>11} | {:>11} | {:>11} | {:>11} | {:>11.2}", stat, cnt, sum, min, max, mean);
             }
         }
     }

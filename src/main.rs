@@ -79,16 +79,17 @@ fn main() {
                         Ok(_) => {
                             let t = driver.get_bundle(bundle);
                             match t {
-                                Some(Bundle::Prenamed { tree: t, .. }) => {
-                                    println!("{}", t.pretty(80));
-                                },
                                 Some(Bundle::Named { tree: t, .. }) => {
+                                    driver.stats.accum("named", 1);
                                     println!("{}", t.pretty(80));
                                 },
-                                _ => {},
+                                _ => {
+                                    driver.stats.accum("not named", 1);
+                                },
                             }
                         },
                         Err(msg) => {
+                            driver.stats.accum("namer error", 1);
                             let b = driver.get_bundle(bundle).unwrap();
                             let loc = b.decode_loc(msg.loc);
                             println!("{}: parse error {}", loc, *msg);

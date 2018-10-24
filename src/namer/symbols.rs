@@ -25,6 +25,7 @@ pub enum Scope {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Env {
+    pub index: EnvIndex, // for easier debugging
     pub decls: Vec<Located<Decl>>,
     pub imports: Vec<Located<Import>>,
     pub parents: Vec<Scope>,
@@ -33,17 +34,6 @@ pub struct Env {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Prio(pub usize);
-
-impl Env {
-    pub fn new() -> Env {
-        Env {
-            decls: vec![],
-            imports: vec![],
-            parents: vec![],
-            includes: vec![],
-        }
-    }
-}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Import {

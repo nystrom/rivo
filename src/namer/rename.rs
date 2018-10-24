@@ -75,30 +75,73 @@ impl<'a> Renamer<'a> {
 pub struct Renamer<'a> {
     pub cache: &'a SolverResult,
     pub driver: &'a mut driver::Driver,
+    pub scopes: &'a HashMap<NodeId, Scope>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct RenamerEnv {
+    in_mixfix: bool,
+}
+
+impl RenamerEnv {
+    pub fn new() -> RenamerEnv {
+        RenamerEnv {
+            in_mixfix: false,
+        }
+    }
+}
+
+#[cfg(debug_assertions)]
+#[allow(non_upper_case_globals)]
+static mut depth: u32 = 0;
+
 // visit any node that has a node id.
-impl<'tables, 'a> Rewriter<'a, HashMap<NodeId, Scope>> for Renamer<'tables> {
-    fn visit_exp(&mut self, s: &'a Exp, scopes: &HashMap<NodeId, Scope>, loc: &Loc) -> Exp {
-        match s {
+impl<'tables, 'a> Rewriter<'a, RenamerEnv> for Renamer<'tables> {
+    #[cfg_attr(debug_assertions, trace)]
+    fn visit_exp(&mut self, e: &'a Exp, env: &RenamerEnv, loc: &Loc) -> Exp {
+        match e {
             Exp::Name { name, id, lookup: Some(lookup) } => {
-                let new_node = self.walk_exp(s, scopes, loc);
+                let new_node = self.walk_exp(e, env, loc);
+
+                println!("NAME {:?}", name);
+
                 match self.cache.lookup_cache.get(&lookup) {
-                    Some(trees) => new_node,
+                    Some(decls) => {
+                        if decls.is_empty() {
+                            self.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope.", name)));
+                        }
+                        else if Namer::all_mixfix(decls) && ! env.in_mixfix {
+                            self.driver.error(Located::new(loc.clone(), format!("Name {} is a mixfix part, not a name.", name)));
+                        }
+                        else {
+                            println!("{:#?}", decls);
+                        }
+                        new_node
+                    },
                     None => {
-                        self.driver.error(Located::new(loc.clone(), format!("name {} not found in scope", name)));
+                        self.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope (internal error too).", name)));
                         new_node
                     },
                 }
             },
 
             Exp::MixfixApply { es, id, lookup: Some(lookup) } => {
-                let new_node = self.walk_exp(s, scopes, &loc);
+                let env1 = RenamerEnv {
+                    in_mixfix: true,
+                };
+
+                self.driver.stats.accum("mixfix rename", 1);
+
+                let new_node = self.walk_exp(e, &env1, &loc);
+
                 match self.cache.mixfix_cache.get(&lookup) {
                     Some(trees) if trees.len() == 1 => {
                         match self.apply_mixfix(trees.first().unwrap().clone(), es.clone()) {
                             Some(e) => e,
-                            None => new_node,
+                            None => {
+                                self.driver.error(Located::new(loc.clone(), "cannot resolve mixfix expression (internal error too)".to_owned()));
+                                new_node
+                            },
                         }
                     },
                     Some(trees) => {
@@ -113,7 +156,7 @@ impl<'tables, 'a> Rewriter<'a, HashMap<NodeId, Scope>> for Renamer<'tables> {
             },
 
             _ => {
-                self.walk_exp(s, scopes, loc)
+                self.walk_exp(e, env, loc)
             },
         }
     }

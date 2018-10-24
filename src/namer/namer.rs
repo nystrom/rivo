@@ -135,12 +135,15 @@ impl<'a> Namer<'a> {
         match self.cache.mixfix_cache.get(&MixfixRef { parts: parts.clone() }) {
             Some(trees) => {
                 println!("mixfix cache hit");
+                self.driver.stats.accum("mixfix cache hit", 1);
                 return Ok(trees.clone())
             },
             None => {
                 println!("mixfix cache miss");
             },
         }
+
+        self.driver.stats.accum("mixfix expression size", parts.len() as u64);
 
         use crate::namer::glr::Token;
 
@@ -213,6 +216,8 @@ impl<'a> Namer<'a> {
                 _ => unreachable!(),
             };
 
+            self.driver.stats.accum("mixfix without name", 1);
+
             Ok(vec![tree])
         }
         else {
@@ -221,7 +226,7 @@ impl<'a> Namer<'a> {
             // NOTE: do not add the $ token to the input.. GLR will do that for us.
             // tokens.push(Token::End);
 
-            let decls = tokens.iter().flat_map(|token| {
+            let decls: Vec<Decl> = tokens.iter().flat_map(|token| {
                 match token {
                     Token::Name(_, decls) => {
                         decls.iter().map(|decl|
@@ -240,6 +245,8 @@ impl<'a> Namer<'a> {
             println!("parts {:?}", parts);
             println!("tokens {:?}", tokens);
             println!("decls {:?}", decls);
+
+            self.driver.stats.accum("mixfix decls size", decls.len() as u64);
 
             let mut parser = GLRAdapter::glr_from_decls(&decls);
 
@@ -431,6 +438,8 @@ impl<'a> Namer<'a> {
         //     results.append(&mut v);
         // }
 
+        self.driver.stats.accum("lookup_in_trees size", results.len() as u64);
+
         Ok(results)
     }
 
@@ -496,6 +505,8 @@ impl<'a> Namer<'a> {
             let r = self.lookup_here_in_scope(scope, &x, crumbs)?;
             results.append(&mut r.clone());
         }
+
+        self.driver.stats.accum("lookup_in_imports size", results.len() as u64);
 
         Ok(results)
     }
@@ -564,8 +575,8 @@ impl<'a> Namer<'a> {
         match self.cache.lookup_here_cache.get(&LookupHereRef { scope, name: name.clone() }) {
             Some(decls) => {
                 println!("lookup_here cache hit");
-                self.driver.stats.accum("lookup_here cache hit", 1);
-                return Ok(decls.clone())
+                self.driver.stats.accum("lookup_here cache hit", decls.len() as u64);
+                return Ok(decls.clone());
             },
             None => {
                 self.driver.stats.accum("lookup_here cache miss", 1);
@@ -573,7 +584,7 @@ impl<'a> Namer<'a> {
             },
         }
 
-        match scope {
+        let result = match scope {
             Scope::Empty => Ok(vec![]),
             Scope::Global => self.lookup_in_root(name, crumbs),
             Scope::Lookup(LookupIndex(index)) => {
@@ -610,7 +621,18 @@ impl<'a> Namer<'a> {
 
                 Ok(results)
             }
+        };
+
+        match &result {
+            Ok(decls) => {
+                self.driver.stats.accum("lookup_here result size", decls.len() as u64);
+            },
+            _ => {
+                self.driver.stats.accum("lookup_here error", 1);
+            },
         }
+
+        result
     }
 
     // HACK
@@ -661,8 +683,8 @@ impl<'a> Namer<'a> {
         match self.cache.lookup_cache.get(&LookupRef { scope, name: name.clone() }) {
             Some(decls) => {
                 println!("lookup cache hit");
-                self.driver.stats.accum("lookup cache hit", 1);
-                return Ok(decls.clone())
+                self.driver.stats.accum("lookup cache hit size", decls.len() as u64);
+                return Ok(decls.clone());
             },
             None => {
                 self.driver.stats.accum("lookup cache miss", 1);
@@ -670,7 +692,7 @@ impl<'a> Namer<'a> {
             },
         }
 
-        match scope {
+        let result = match scope {
             Scope::Empty => Ok(vec![]),
             Scope::Global => self.lookup_in_root(name, crumbs),
             Scope::Lookup(LookupIndex(index)) => {
@@ -726,7 +748,18 @@ impl<'a> Namer<'a> {
 
                 Ok(results)
             }
+        };
+
+        match &result {
+            Ok(decls) => {
+                self.driver.stats.accum("lookup result size", decls.len() as u64);
+            },
+            _ => {
+                self.driver.stats.accum("lookup error", 1);
+            },
         }
+
+        result
     }
 
     pub fn all_mixfix(decls: &Vec<Located<Decl>>) -> bool {

@@ -6,7 +6,7 @@ use syntax::loc::*;
 macro_rules! walk_located {
     ($visitor: expr, $method: ident, $located: expr, $ctx: expr) => {
         Located {
-            loc: $located.loc.clone(),
+            loc: $located.loc,
             value: $visitor.$method(&$located.value, $ctx, &$located.loc)
         }
     };

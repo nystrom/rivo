@@ -84,7 +84,7 @@ impl<'a> Prenamer<'a> {
             FormulaFlag::Var => Decl::Var { scope, name },
         };
 
-        decls.push(Located { loc: loc.clone(), value: decl });
+        decls.push(Located { loc: *loc, value: decl });
     }
 
     fn add_unknowns_for_exp(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, e: &Located<Exp>, defined_names: &Vec<Name>, scope: Scope) {
@@ -172,7 +172,7 @@ impl<'a> Prenamer<'a> {
         // FIXME cloning!
         let defs = cmds.iter().filter_map(|cmd|
             match cmd {
-                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: loc.clone(), value: d.clone() }),
+                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: *loc, value: d.clone() }),
                 _ => None,
             }
         );
@@ -183,7 +183,7 @@ impl<'a> Prenamer<'a> {
         // FIXME cloning!
         let defs = cmds.iter().filter_map(|cmd|
             match cmd {
-                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: loc.clone(), value: d.clone() }),
+                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: *loc, value: d.clone() }),
                 _ => None,
             }
         );
@@ -191,28 +191,28 @@ impl<'a> Prenamer<'a> {
     }
 
     fn add_imported_names(namespace: &Located<Exp>, names: &mut Vec<Name>) {
-        match namespace {
-            Located { loc: _, value: Exp::Name { id: _, name, lookup: _ } } => {
+        match &namespace.value {
+            Exp::Name { id: _, name, lookup: _ } => {
                 names.push(name.clone());
             },
-            Located { loc: _, value: Exp::Select { exp: _, name } } => {
+            Exp::Select { exp: _, name } => {
                 names.push(name.clone());
             },
-            Located { loc: _, value: Exp::Union { es } } => {
+            Exp::Union { es } => {
                 for e in es {
                     Prenamer::add_imported_names(e, names);
                 }
             },
-            Located { loc: _, value: Exp::Tuple { es } } => {
+            Exp::Tuple { es } => {
                 for e in es {
                     Prenamer::add_imported_names(e, names);
                 }
             },
-            Located { loc: _, value: Exp::Within { id: _, e1: _, e2 } } => {
-                Prenamer::add_imported_names(&**e2, names);
+            Exp::Within { id: _, e1: _, e2 } => {
+                Prenamer::add_imported_names(&*e2, names);
             },
-            Located { loc: _, value: Exp::Arrow { id: _, arg: _, ret } } => {
-                Prenamer::add_imported_names(&**ret, names);
+            Exp::Arrow { id: _, arg: _, ret } => {
+                Prenamer::add_imported_names(&*ret, names);
             },
             _ => {
                 // bad import!
@@ -257,27 +257,43 @@ impl<'a> Prenamer<'a> {
         names
     }
 
-    pub fn add_imports(&mut self, import_into_scope: Scope, lookup_scope: Scope, cmds: &Vec<Located<Cmd>>) {
+    pub fn add_imports(&mut self, import_into_scope: Scope, lookup_scope: Scope, cmds: &Vec<Located<Cmd>>, is_root: bool) {
         // FIXME cloning!
         let defs = cmds.iter().filter_map(|cmd|
             match cmd {
-                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: loc.clone(), value: d.clone() }),
+                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: *loc, value: d.clone() }),
                 _ => None,
             }
         );
-        self.add_imports_from_defs(import_into_scope, lookup_scope, defs);
+        self.add_imports_from_defs(import_into_scope, lookup_scope, defs, is_root);
     }
 
-    pub fn add_imports_from_defs<T>(&mut self, import_into_scope: Scope, lookup_scope: Scope, defs: T)
+    pub fn add_imports_from_defs<T>(&mut self, import_into_scope: Scope, lookup_scope: Scope, defs: T, is_root: bool)
         where T : Iterator<Item = Located<Def>>
     {
+        let mut imports_none = false;
+
         for def in defs {
             match def {
                 Located { loc, value: Def::ImportDef { import } } => {
+                    match import.value {
+                        Exp::Lit { lit: Lit::Nothing } => {
+                            imports_none = true;
+                        },
+                        _ => {},
+                    }
+
                     self.add_import(import_into_scope, lookup_scope, &*import);
                 },
                 _ => {},
             }
+        }
+
+        // If in the root scope and there is no import (), add import Prelude._.
+        if is_root && ! imports_none {
+            let lookup = self.graph.lookup_here(Scope::Global, Name::Id("Prelude".to_string()));
+            let scope = self.graph.get_scope_of_lookup_here(lookup);
+            self.graph.import(import_into_scope, &Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
         }
     }
 
@@ -288,17 +304,17 @@ impl<'a> Prenamer<'a> {
         // FIXME: add a check in ScopeGraph for stable paths.
         match namespace {
             Located { loc, value: Exp::Lit { lit: Lit::Wildcard } } => {
-                self.graph.import(import_into_scope, &Located { loc: loc.clone(), value: Import::All { path: lookup_scope.clone() } });
+                self.graph.import(import_into_scope, &Located { loc: *loc, value: Import::All { path: lookup_scope.clone() } });
             },
             Located { loc, value: Exp::Lit { lit: Lit::Nothing } } => {
-                self.graph.import(import_into_scope, &Located { loc: loc.clone(), value: Import::None { path: lookup_scope.clone() } });
+                self.graph.import(import_into_scope, &Located { loc: *loc, value: Import::None { path: lookup_scope.clone() } });
             },
             Located { loc, value: Exp::Select { exp, name } } => {
                 let scope = self.lookup_frame(lookup_scope, &*exp);
-                self.graph.import(import_into_scope, &Located { loc: loc.clone(), value: Import::Including { path: scope, name: name.clone() } });
+                self.graph.import(import_into_scope, &Located { loc: *loc, value: Import::Including { path: scope, name: name.clone() } });
             },
             Located { loc, value: Exp::Name { id: _, name, lookup: _ } } => {
-                self.graph.import(import_into_scope, &Located { loc: loc.clone(), value: Import::Including { path: lookup_scope.clone(), name: name.clone() } });
+                self.graph.import(import_into_scope, &Located { loc: *loc, value: Import::Including { path: lookup_scope.clone(), name: name.clone() } });
             },
             Located { loc, value: Exp::Union { es } } => {
                 for e in es {
@@ -319,10 +335,10 @@ impl<'a> Prenamer<'a> {
                     Located { loc: _, value: Exp::Name { id: _, name, lookup: _ } } => {
                         match &**ret {
                             Located { loc: _, value: Exp::Name { id: _, name: rename, lookup: _ } } => {
-                                self.graph.import(import_into_scope, &Located { loc: loc.clone(), value: Import::Renaming { path: lookup_scope.clone(), name: name.clone(), rename: rename.clone() } });
+                                self.graph.import(import_into_scope, &Located { loc: *loc, value: Import::Renaming { path: lookup_scope.clone(), name: name.clone(), rename: rename.clone() } });
                             },
                             Located { loc: _, value: Exp::Lit { lit: Lit::Nothing } } => {
-                                self.graph.import(import_into_scope, &Located { loc: loc.clone(), value: Import::Excluding { path: lookup_scope.clone(), name: name.clone() } });
+                                self.graph.import(import_into_scope, &Located { loc: *loc, value: Import::Excluding { path: lookup_scope.clone(), name: name.clone() } });
                             },
                             _ => {
                                 // bad import!
@@ -393,16 +409,16 @@ impl<'a> Prenamer<'a> {
                 *scope.unwrap_or(&Scope::Empty)
             }
             Exp::Name { name, id, lookup: None } => {
-                let lookup = self.lookup_here(*id, scope, name.clone());
-                self.graph.get_scope_of_lookup_here(lookup)
+                let lookup = self.lookup(*id, scope, name.clone());
+                self.graph.get_scope_of_lookup(lookup)
+            },
+            Exp::Name { name, id, lookup: Some(lookup) } => {
+                let lookup = self.lookup(*id, scope, name.clone());
+                self.graph.get_scope_of_lookup(lookup)
             },
             Exp::MixfixApply { es, id, lookup: None } => {
                 let lookup = self.parse_mixfix(*id, scope, es);
                 self.graph.get_scope_of_mixfix(lookup)
-            },
-            Exp::Name { name, id, lookup: Some(lookup) } => {
-                let lookup = self.lookup_here(*id, scope, name.clone());
-                self.graph.get_scope_of_lookup_here(lookup)
             },
             Exp::MixfixApply { es, id, lookup: Some(lookup) } => {
                 self.graph.get_scope_of_mixfix(*lookup)
@@ -412,10 +428,76 @@ impl<'a> Prenamer<'a> {
                 // `List _`. The `Int` will be substituted in at runtime.
                 self.lookup_frame(scope, &*fun)
             },
+            Exp::Record { id, .. } => {
+                let scope = self.scopes.get(&id);
+                *scope.unwrap_or(&Scope::Empty)
+            },
+            Exp::Within { id, e1, e2 } => {
+                let env = self.graph.new_env();
+                let scope = self.lookup_frame(scope, &*e1);
+                self.add_import(env, scope, &*e2);
+                env
+            }
             Exp::Union { es } => {
                 let env = self.graph.new_env();
                 for e in es {
                     let s = self.lookup_frame(scope, e);
+                    self.graph.include(env, s);
+                }
+                env
+            },
+            _ => {
+                Scope::Empty
+            },
+        }
+    }
+
+    pub fn lookup_frame_here(&mut self, scope: Scope, e: &Located<Exp>) -> Scope {
+        match &e.value {
+            Exp::Frame { id } => {
+                let scope = self.scopes.get(&id);
+                *scope.unwrap_or(&Scope::Empty)
+            }
+            Exp::Name { name, id, lookup: None } => {
+                let lookup = self.lookup_here(*id, scope, name.clone());
+                self.graph.get_scope_of_lookup_here(lookup)
+            },
+            Exp::Name { name, id, lookup: Some(lookup) } => {
+                let lookup = self.lookup_here(*id, scope, name.clone());
+                self.graph.get_scope_of_lookup_here(lookup)
+            },
+            Exp::MixfixApply { es, id, lookup: None } => {
+                let lookup = self.parse_mixfix(*id, scope, es);
+                self.graph.get_scope_of_mixfix(lookup)
+            },
+            Exp::MixfixApply { es, id, lookup: Some(lookup) } => {
+                self.graph.get_scope_of_mixfix(*lookup)
+            },
+            Exp::Apply { fun, arg } => {
+                // When looking up (`List _` Int) it's sufficient to just lookup
+                // `List _`. The `Int` will be substituted in at runtime.
+                self.lookup_frame_here(scope, &*fun)
+            },
+            Exp::Record { id, .. } => {
+                let scope = self.scopes.get(&id);
+                *scope.unwrap_or(&Scope::Empty)
+            },
+            Exp::Within { id, e1, e2 } => {
+                let env = self.graph.new_env();
+                let scope = self.lookup_frame(scope, &*e1);
+                self.add_import(env, scope, &*e2);
+                env
+            },
+            // Exp::Select { exp, name } => {
+            //     let env = self.graph.new_env();
+            //     let scope = self.lookup_frame(scope, &*exp);
+            //     self.add_import(env, scope, &*e2);
+            //     env
+            // },
+            Exp::Union { es } => {
+                let env = self.graph.new_env();
+                for e in es {
+                    let s = self.lookup_frame_here(scope, e);
                     self.graph.include(env, s);
                 }
                 env
@@ -439,7 +521,7 @@ pub struct Prenamer<'a> {
 impl<'a> Prenamer<'a> {
     fn walk_cmd_list(&mut self, body: &Vec<Located<Cmd>>, ctx: &PrenameContext) -> Vec<Located<Cmd>> {
         let mut result = Vec::new();
-        let prio = 0;
+        let mut prio = 0;
         let mut new_names = ctx.names.clone();
 
         for cmd in body {
@@ -460,20 +542,22 @@ impl<'a> Prenamer<'a> {
                     }
 
                     let cmd1 = self.visit_cmd(&cmd.value, &ctx1, &cmd.loc);
-                    result.push(Located { loc: cmd.loc.clone(), value: cmd1 });
+                    result.push(Located { loc: cmd.loc, value: cmd1 });
                 },
                 _ => {
                     let cmd1 = self.visit_cmd(&cmd.value, &ctx1, &cmd.loc);
-                    result.push(Located { loc: cmd.loc.clone(), value: cmd1 });
+                    result.push(Located { loc: cmd.loc, value: cmd1 });
                 },
             }
+
+            prio += 1;
         }
         result
     }
 
     fn walk_def_list(&mut self, body: &Vec<Located<Def>>, ctx: &PrenameContext) -> Vec<Located<Def>> {
         let mut result = Vec::new();
-        let prio = 0;
+        let mut prio = 0;
         let mut new_names = ctx.names.clone();
 
         for def in body {
@@ -494,13 +578,15 @@ impl<'a> Prenamer<'a> {
                     }
 
                     let def1 = self.visit_def(&def.value, &ctx1, &def.loc);
-                    result.push(Located { loc: def.loc.clone(), value: def1 });
+                    result.push(Located { loc: def.loc, value: def1 });
                 },
                 _ => {
                     let def1 = self.visit_def(&def.value, &ctx1, &def.loc);
-                    result.push(Located { loc: def.loc.clone(), value: def1 });
+                    result.push(Located { loc: def.loc, value: def1 });
                 },
             }
+
+            prio += 1;
         }
         result
     }
@@ -556,8 +642,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                                 _ => {},
                             }
                         }
+                    },
+                }
 
-                        self.add_imports(scope, import_scope, cmds);
+                // Add imports.
+                match new_node {
+                    Root::Bundle { ref cmds, .. } => {
+                        self.add_imports(scope, import_scope, cmds, true);
                     },
                 }
 
@@ -606,18 +697,18 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 let opt_guard1 = opt_guard.clone().map(|x|
                     match *x {
-                        Located { loc, value: e } => Box::new(Located { loc: loc.clone(), value: self.visit_exp(&e, &child_ctx, &loc) })
+                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &child_ctx, &loc) })
                     }
                 );
 
                 let ret1 = match ret {
                     Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Input } } => {
-                        Located { loc: ret.loc.clone(), value:
-                            Param { pat: Box::new(Located { loc: e.loc.clone(), value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Input } }
+                        Located { loc: ret.loc, value:
+                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Input } }
                     },
                     Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
-                        Located { loc: ret.loc.clone(), value:
-                            Param { pat: Box::new(Located { loc: e.loc.clone(), value: self.visit_exp(&e.value, &child_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Output } }
+                        Located { loc: ret.loc, value:
+                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &child_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Output } }
                     },
                 };
 
@@ -626,13 +717,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 for param in params {
                     match param {
                         Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Input } } => {
-                            let param1 = Located { loc: ret.loc.clone(), value:
-                                Param { pat: Box::new(Located { loc: e.loc.clone(), value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Input } };
+                            let param1 = Located { loc: ret.loc, value:
+                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Input } };
                             params1.push(param1);
                         },
                         Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
-                            let param1 = Located { loc: ret.loc.clone(), value:
-                                Param { pat: Box::new(Located { loc: e.loc.clone(), value: self.visit_exp(&e.value, &child_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Output } };
+                            let param1 = Located { loc: ret.loc, value:
+                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &child_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Output } };
                             params1.push(param1);
                         },
                     }
@@ -649,10 +740,28 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 };
                 let prio = ctx.prio;
 
+                let mut inner_frames = vec![];
+
+                for param in params {
+                    match param {
+                        Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
+                            inner_frames.push(self.lookup_frame(ctx.scope, e));
+                        },
+                        _ => {},
+                    }
+                }
+
+                match ret {
+                    Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
+                        inner_frames.push(self.lookup_frame(ctx.scope, e));
+                    },
+                    _ => {},
+                }
+
                 let decl = match flag {
-                    MixfixFlag::Fun =>
+                    MixfixFlag::Fun => {
                         Located {
-                            loc: loc.clone(),
+                            loc: *loc,
                             value: Decl::Fun {
                                 scope: ctx.scope,
                                 name: name.clone(),
@@ -663,10 +772,11 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                                 ret_conv: *ret_conv,
                                 prio,
                             }
-                        },
-                    MixfixFlag::Trait =>
+                        }
+                    },
+                    MixfixFlag::Trait => {
                         Located {
-                            loc: loc.clone(),
+                            loc: *loc,
                             value: Decl::Trait {
                                 scope: ctx.scope,
                                 name: name.clone(),
@@ -676,10 +786,10 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                                 ret_mode: *ret_mode,
                                 ret_conv: *ret_conv,
                                 prio,
-                                body: vec![]
+                                body: inner_frames,
                             }
-                        },
-
+                        }
+                    },
                 };
 
                 self.graph.declare(ctx.scope, &decl);
@@ -691,12 +801,12 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                         for (i, part) in parts.iter().enumerate() {
                             match part {
                                 Part::Id(x) => {
-                                    let mixfix_decl = Located { loc: loc.clone(), value: Decl::MixfixPart { name: Name::Id(x.clone()), index: i, full: name.clone(), orig: Box::new(decl.value.clone()) } };
+                                    let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Id(x.clone()), index: i, full: name.clone(), orig: Box::new(decl.value.clone()) } };
                                     self.graph.declare(ctx.scope, &mixfix_decl);
                                     self.graph.declare(ctx.import_scope, &mixfix_decl);
                                 },
                                 Part::Op(x) => {
-                                    let mixfix_decl = Located { loc: loc.clone(), value: Decl::MixfixPart { name: Name::Op(x.clone()), index: i, full: name.clone(), orig: Box::new(decl.value.clone()) } };
+                                    let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Op(x.clone()), index: i, full: name.clone(), orig: Box::new(decl.value.clone()) } };
                                     self.graph.declare(ctx.scope, &mixfix_decl);
                                     self.graph.declare(ctx.import_scope, &mixfix_decl);
                                 },
@@ -774,11 +884,16 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                             }
                         }
 
-                        self.add_imports(scope, import_scope, cmds);
                     },
-                    _ => {
-                        unimplemented!()
+                    _ => {},
+                }
+
+                // Add imports.
+                match new_node {
+                    Exp::Layout { ref cmds, .. } => {
+                        self.add_imports(scope, import_scope, cmds, false);
                     },
+                    _ => {},
                 }
 
                 new_node
@@ -810,6 +925,14 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 let new_node = self.walk_exp(s, &child_ctx, &loc);
 
+                // Add imports.
+                match new_node {
+                    Exp::Record { ref defs, .. } => {
+                        self.add_imports_from_defs(scope, import_scope, defs.iter().cloned(), false);
+                    },
+                    _ => {},
+                }
+
                 new_node
             },
             Exp::Union { .. } => {
@@ -829,7 +952,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                                         for (j, ej) in es.iter().enumerate() {
                                             if i != j {
                                                 let scope_j = self.lookup_frame(scope, ej);
-                                                self.graph.import(*scope_i, &Located::new(ej.loc.clone(), Import::All { path: scope_j }))
+                                                self.graph.import(*scope_i, &Located::new(ej.loc, Import::All { path: scope_j }))
                                             }
                                         }
                                     }
@@ -867,11 +990,11 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 let opt_guard1 = opt_guard.clone().map(|x|
                     match *x {
-                        Located { loc, value: e } => Box::new(Located { loc: loc.clone(), value: self.visit_exp(&e, &child_ctx, &loc) })
+                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &child_ctx, &loc) })
                     }
                 );
 
-                let ret1 = Box::new(Located { loc: ret.loc.clone(), value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
+                let ret1 = Box::new(Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
 
                 let params_ctx = PrenameContext {
                     unknowns,
@@ -879,7 +1002,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 };
 
                 let params1 = params.into_iter().map(
-                    |Located { loc, value: e }| Located { loc: loc.clone(), value: self.visit_exp(e, &params_ctx, &loc) }
+                    |Located { loc, value: e }| Located { loc: *loc, value: self.visit_exp(e, &params_ctx, &loc) }
                 ).collect();
 
                 Exp::Lambda { id: *id, opt_guard: opt_guard1, params: params1, ret: ret1 }
@@ -906,14 +1029,14 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                     ..ctx.clone()
                 };
 
-                let body1 = Box::new(Located { loc: body.loc.clone(), value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
+                let body1 = Box::new(Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
 
                 let params_ctx = PrenameContext {
                     unknowns,
                     ..child_ctx.clone()
                 };
 
-                let generator1 = Box::new(Located { loc: generator.loc.clone(), value: self.visit_exp(&generator.value, &params_ctx, &generator.loc) });
+                let generator1 = Box::new(Located { loc: generator.loc, value: self.visit_exp(&generator.value, &params_ctx, &generator.loc) });
 
                 Exp::For { id: *id, generator: generator1, body: body1 }
             },
@@ -939,20 +1062,20 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                     ..ctx.clone()
                 };
 
-                let ret1 = Box::new(Located { loc: ret.loc.clone(), value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
+                let ret1 = Box::new(Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
 
                 let params_ctx = PrenameContext {
                     unknowns,
                     ..child_ctx.clone()
                 };
 
-                let arg1 = Box::new(Located { loc: arg.loc.clone(), value: self.visit_exp(&arg.value, &params_ctx, &arg.loc) });
+                let arg1 = Box::new(Located { loc: arg.loc, value: self.visit_exp(&arg.value, &params_ctx, &arg.loc) });
 
                 Exp::Arrow { id: *id, arg: arg1, ret: ret1 }
             },
             Exp::Within { id, e1, e2 } => {
                 let e1_1 = self.visit_exp(&e1.value, &ctx, &e1.loc);
-                let e1_2 = Located { loc: e1.loc.clone(), value: e1_1 };
+                let e1_2 = Located { loc: e1.loc, value: e1_1 };
 
                 let scope = self.graph.new_env();
                 self.scopes.insert(*id, scope);
@@ -964,14 +1087,14 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 };
 
                 let e1_scope = self.lookup_frame(ctx.scope, &e1_2);
-                self.graph.import(scope, &Located { loc: e1.loc.clone(), value: Import::All { path: e1_scope } });
+                self.graph.import(scope, &Located { loc: e1.loc, value: Import::All { path: e1_scope } });
 
                 let e2_1 = self.visit_exp(&e2.value, &child_ctx, &e2.loc);
 
                 Exp::Within {
                     id: *id,
                     e1: Box::new(e1_2),
-                    e2: Box::new(Located { loc: e2.loc.clone(), value: e2_1 })
+                    e2: Box::new(Located { loc: e2.loc, value: e2_1 })
                 }
             },
 

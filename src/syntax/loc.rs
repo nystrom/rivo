@@ -46,14 +46,14 @@ impl LineMap {
     fn get_line(&self, offset: u32) -> usize {
         assert_eq!(self.line_offsets[0], 0);
         match self.line_offsets.binary_search(&offset) {
-            Ok(n) => n,
-            Err(n) => n - 1,
+            Ok(n) => n + 1,
+            Err(n) => n,
         }
     }
 
     fn get_column(&self, line: usize, offset: u32) -> usize {
         let line = self.get_line(offset);
-        let line_offset = self.line_offsets[line];
+        let line_offset = self.line_offsets[line-1];
         1 + (offset as usize) - (line_offset as usize)
     }
 
@@ -127,7 +127,7 @@ impl fmt::Display for DecodedLoc {
 impl fmt::Display for Source {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Source::FileSource(ref path) => write!(f, "{}", path.to_string_lossy()),
+            Source::FileSource(ref path) => write!(f, "{}", path.file_name().unwrap_or_default().to_string_lossy()),
             Source::StringSource(_) => write!(f, "(input)"),
             Source::NoSource => write!(f, "(unknown)"),
         }
