@@ -141,8 +141,6 @@ pub trait Rewriter<'a, Ctx>: Sized {
 
             Exp::Native =>
                 Exp::Native,
-            Exp::Frame { id } =>
-                Exp::Frame { id },
 
             Exp::Name { ref name, id, lookup } =>
                 Exp::Name { name: name.clone(), id, lookup },

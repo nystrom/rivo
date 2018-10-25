@@ -117,9 +117,6 @@ pub enum Exp {
 
     Native,
 
-    // Resolves to CurrentFrame or GlobalFrame.
-    Frame { id: NodeId },
-
     // ambiguous names -- might resolve to variable names or parts of function names
     // or _ or ? or = as part of a function name or partial application
     Name { name: Name, id: NodeId, lookup: Option<LookupIndex> },

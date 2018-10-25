@@ -10,7 +10,7 @@ use syntax::trees::CallingMode;
 // vector indices. This simplifies the memory management considerably.
 // We wrap the indexes some structs to improve type safety.
 
-use namer::graph::{LookupIndex, LookupHereIndex, MixfixIndex, EnvIndex};
+use namer::graph::{LookupIndex, MixfixIndex, EnvIndex};
 
 // need to implement hash for breadcrumbs to work.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -18,7 +18,6 @@ pub enum Scope {
     Empty,
     Global,
     Lookup(LookupIndex),
-    LookupHere(LookupHereIndex),
     Mixfix(MixfixIndex),
     Env(EnvIndex),
 }
@@ -39,6 +38,7 @@ pub struct Prio(pub usize);
 pub enum Import {
     All { path: Scope },
     None { path: Scope },
+    Here { path: Scope },
     Including { path: Scope, name: Name },
     Excluding { path: Scope, name: Name },
     Renaming { path: Scope, name: Name, rename: Name },
@@ -126,12 +126,28 @@ impl Decl {
 pub struct LookupRef {
     pub scope: Scope,
     pub name: Name,
+    pub follow_imports: bool,
+    pub follow_parents: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct LookupHereRef {
-    pub scope: Scope,
-    pub name: Name,
+impl LookupRef {
+    pub fn new(scope: Scope, name: Name) -> LookupRef {
+        LookupRef {
+            scope, name, follow_imports: true, follow_parents: true
+        }
+    }
+
+    pub fn new_here(scope: Scope, name: Name) -> LookupRef {
+        LookupRef {
+            scope, name, follow_imports: false, follow_parents: false
+        }
+    }
+
+    pub fn new_for_import(scope: Scope, name: Name) -> LookupRef {
+        LookupRef {
+            scope, name, follow_imports: false, follow_parents: true
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

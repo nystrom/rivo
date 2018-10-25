@@ -276,18 +276,11 @@ impl Driver {
 
                 {
                     let mut scopes = HashMap::new();
-                    let mut lookups = HashMap::new();
-                    let mut lookups_here = HashMap::new();
-                    let mut mixfixes = HashMap::new();
-
                     let mut graph = ScopeGraph::new();
 
                     let mut prenamer = Prenamer {
                         graph: &mut graph,
                         scopes: &mut scopes,
-                        lookups: &mut lookups,
-                        lookups_here: &mut lookups_here,
-                        mixfixes: &mut mixfixes,
                         driver: self
                     };
                     let tree2 = prenamer.visit_root(&tree1.value, &PrenameContext::new(), &tree1.loc);
@@ -343,7 +336,6 @@ impl Driver {
                 use namer::rename::RenamerEnv;
 
                 let mut cache = Cache {
-                    lookup_here_cache: &mut HashMap::new(),
                     lookup_cache: &mut HashMap::new(),
                     mixfix_cache: &mut HashMap::new(),
                 };
@@ -355,14 +347,10 @@ impl Driver {
                 };
 
                 {
-                    let result = namer.solve()?;
-
                     let graph1 = namer.graph.clone();
 
                     let mut renamer = Renamer {
-                        cache: &result,
-                        scopes: &scopes1,
-                        driver: self
+                        namer: &mut namer,
                     };
 
                     let env = RenamerEnv::new();

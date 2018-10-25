@@ -249,8 +249,6 @@ impl ToDoc for Exp {
 
             Exp::Native =>
                 Doc::text("native"),
-            Exp::Frame { id } =>
-                Doc::text("self"),
 
             Exp::Name { ref name, .. } =>
                 name.to_doc(),
