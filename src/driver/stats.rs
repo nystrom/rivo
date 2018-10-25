@@ -70,6 +70,9 @@ impl Stats {
         stats.sort_unstable();
         stats.dedup();
 
+        println!();
+        println!("Statistics");
+        println!("----------");
         println!("{:<40} | {:<11} | {:<11} | {:<11} | {:<11} | {:<11}", "Stat", "Count", "Sum", "Min", "Max", "Mean");
         println!("{:-<40} | {:-<11} | {:-<11} | {:-<11} | {:-<11} | {:-<11}", "", "", "", "", "", "");
 
