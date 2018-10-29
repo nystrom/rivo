@@ -152,6 +152,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub fn push_back(&mut self, token: Located<Token>) {
+        // actually push front in the buffer since we want this to be the next token returned,
+        // not returned after all the other tokens (if any) in the buffer.
+        self.token_buffer.push_front(token);
+    }
+
     pub fn peek_token(&mut self) -> LexResult<Located<Token>> {
         if let Some(t) = self.token_buffer.front() {
             return Ok(t.clone())
