@@ -250,7 +250,7 @@ impl Driver {
 
     pub fn prename_bundle(&mut self, index: BundleIndex) -> Result<(), Located<String>> {
         use namer::prename::Prenamer;
-        use namer::prename::PrenameContext;
+        use namer::prename::PrenameCtx;
         use visit::rewrite::Rewriter;
 
         let bundle = &self.bundles[index.0];
@@ -275,20 +275,28 @@ impl Driver {
                 let line_map1 = line_map.clone();
 
                 {
-                    let mut scopes = HashMap::new();
-                    let mut graph = ScopeGraph::new();
-
                     let mut prenamer = Prenamer {
-                        graph: &mut graph,
-                        scopes: &mut scopes,
+                        graph: &mut ScopeGraph::new(),
+                        scopes: &mut HashMap::new(),
+                        lookups: &mut HashMap::new(),
+                        mixfixes: &mut HashMap::new(),
                         driver: self
                     };
-                    let tree2 = prenamer.visit_root(&tree1.value, &PrenameContext::new(), &tree1.loc);
 
-                    println!("scopes {:#?}", &scopes);
-                    println!("graph {:#?}", &graph);
+                    let tree2 = prenamer.visit_root(&tree1.value, &PrenameCtx::new(), &tree1.loc);
 
-                    let new_bundle = Bundle::Prenamed { source: source1, line_map: line_map1, tree: Located::new(tree1.loc, tree2), graph: graph.clone(), scopes: scopes.clone() };
+                    println!("scopes {:#?}", prenamer.scopes);
+                    println!("graph {:#?}", prenamer.graph);
+
+                    let new_bundle = Bundle::Prenamed {
+                        source: source1,
+                        line_map: line_map1,
+                        tree: Located::new(tree1.loc, tree2),
+                        graph: prenamer.graph.clone(),
+                        scopes: prenamer.scopes.clone(),
+                        lookups: prenamer.lookups.clone(),
+                        mixfixes: prenamer.mixfixes.clone(),
+                    };
                     self.set_bundle(index, new_bundle);
                 }
 
@@ -319,7 +327,7 @@ impl Driver {
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Prenamed { source, line_map, tree, graph, scopes } => {
+            Bundle::Prenamed { source, line_map, tree, graph, scopes, lookups, mixfixes } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
@@ -330,10 +338,12 @@ impl Driver {
                 let scopes1 = scopes.clone();
                 let source1 = source.clone();
                 let line_map1 = line_map.clone();
+                let lookups1 = lookups.clone();
+                let mixfixes1 = mixfixes.clone();
 
                 use namer::namer::Namer;
                 use namer::namer::Cache;
-                use namer::rename::RenamerEnv;
+                use namer::rename::RenamerCtx;
 
                 let mut cache = Cache {
                     lookup_cache: &mut HashMap::new(),
@@ -346,16 +356,20 @@ impl Driver {
                     cache: &mut cache,
                 };
 
+                let mut node_id_generator = NodeIdGenerator::new();
+
                 {
                     let graph1 = namer.graph.clone();
 
                     let mut renamer = Renamer {
                         namer: &mut namer,
+                        scopes: &scopes1,
+                        lookups: &lookups1,
+                        mixfixes: &mixfixes1,
+                        node_id_generator: &mut node_id_generator,
                     };
 
-                    let env = RenamerEnv::new();
-
-                    let tree2 = renamer.visit_root(&tree1.value, &env, &tree1.loc);
+                    let tree2 = renamer.visit_root(&tree1.value, &RenamerCtx::new(), &tree1.loc);
 
                     let new_bundle = Bundle::Named { source: source1, line_map: line_map1, tree: Located::new(tree1.loc, tree2), graph: graph1, scopes: scopes1 };
                     self.set_bundle(index, new_bundle);

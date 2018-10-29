@@ -7,9 +7,6 @@
 // Import nothing to avoid a self-loop.
 import ()
 
-// But do import Prim.
-import Prim
-
 // To clarify the semantics, we write the Prelude without using any
 // syntactic sugar.
 
@@ -17,11 +14,11 @@ import Prim
 trait PrimBoolean = {
   import Boolean._
 
-  fun fromI32 (Prim.i32._0) -> False
-  fun fromI32 (x: Prim.i32.I32) -> True
+  fun fromI32 (Prim.i32._0) = False
+  fun fromI32 (x: Prim.i32.I32) = True
 
-  fun fromI64 (Prim.i64._0) -> False
-  fun fromI64 (x: Prim.i64.I64) -> True
+  fun fromI64 (Prim.i64._0) = False
+  fun fromI64 (x: Prim.i64.I64) = True
 }
 
 // Trait used to resolve precedences in the Prelude.
@@ -88,8 +85,8 @@ trait Eq (a) = {
   import Boolean._
 
   {
-    fun (x: a) == (y: a) -> ! (x != y)
-    fun (x: a) != (y: a) -> ! (x == y)
+    fun (x: a) == (y: a) = ! (x != y)
+    fun (x: a) != (y: a) = ! (x == y)
   }
 }
 
@@ -107,10 +104,10 @@ trait Eq (Ordering.Ordering) = {
   import Boolean._
   import Ordering._
 
-  fun (EQ) == (EQ) -> True
-  fun (LT) == (LT) -> True
-  fun (GT) == (GT) -> True
-  fun (_: Ordering) == (_: Ordering) -> False   // least specific so tried last
+  fun (EQ) == (EQ) = True
+  fun (LT) == (LT) = True
+  fun (GT) == (GT) = True
+  fun (_: Ordering) == (_: Ordering) = False   // least specific so tried last
 }
 
 trait Ord (a) = (Eq a) with {
@@ -118,41 +115,41 @@ trait Ord (a) = (Eq a) with {
   import Control._
 
   {
-    fun (x: a) == (y: a) -> compare x y == EQ
-    fun (x: a) != (y: a) -> ! (x == y)
+    fun (x: a) == (y: a) = compare x y == EQ
+    fun (x: a) != (y: a) = ! (x == y)
   }
 
   {
-    fun (x: a) < (y: a) -> compare x y == LT
-    fun (x: a) > (y: a) -> compare x y == GT
-    fun (x: a) <= (y: a) -> ! (x > y)
-    fun (x: a) >= (y: a) -> ! (x < y)
+    fun (x: a) < (y: a) = compare x y == LT
+    fun (x: a) > (y: a) = compare x y == GT
+    fun (x: a) <= (y: a) = ! (x > y)
+    fun (x: a) >= (y: a) = ! (x < y)
   }
 
-  fun compare (x: a) (y: a) -> cond {
+  fun compare (x: a) (y: a) = cond {
     (x < y) -> LT
     (x > y) -> GT
     _       -> EQ
   }
 
-  fun max (x: a) (y: a) -> if (x >= y) x else y
-  fun min (x: a) (y: a) -> if (x <= y) x else y
+  fun max (x: a) (y: a) = if (x >= y) x else y
+  fun min (x: a) (y: a) = if (x <= y) x else y
 }
 
 trait LowerBounded (a) = {
-  fun Min -> a        // nb. the return pattern is useless. -> a should never match a real call.
+  fun Min = a        // nb. the return pattern is useless. -> a should never match a real call.
 }
 
 trait UpperBounded (a) = {
-  fun Max -> a
+  fun Max = a
 }
 
 trait Bounded (a) = (LowerBounded a) with (UpperBounded a)
 
 trait Enum (a) = {
   import Boolean.False
-  fun succ (a) where False -> a
-  fun pred (a) where False -> a
+  fun succ (a) where False = a
+  fun pred (a) where False = a
 }
 
 trait Range = {
@@ -162,7 +159,7 @@ trait Range = {
   trait (lo) .. (hi) = InclusiveRange lo hi
   trait (lo) ..< (hi) = ExclusiveRange lo hi
 
-  fun toList (InclusiveRange x y) -> {
+  fun toList (InclusiveRange x y) = {
     import (Enum _)._
     import (Ord _)._
     import Control._
@@ -175,7 +172,7 @@ trait Range = {
     }
   }
 
-  fun toList (ExclusiveRange x y) -> {
+  fun toList (ExclusiveRange x y) = {
     import (Enum _)._
     import (Ord _)._
     import Control._
@@ -205,44 +202,44 @@ trait Boolean
 
   trait Boolean = False with True
 
-  fun ((False)) || {e: Boolean} -> e
-  fun ((True)) || {_: Boolean} -> True
+  fun ((False)) || {e: Boolean} = e
+  fun ((True)) || {_: Boolean} = True
 
-  fun ((False)) && {_: Boolean} -> False
-  fun ((True)) && {e: Boolean} -> e
+  fun ((False)) && {_: Boolean} = False
+  fun ((True)) && {e: Boolean} = e
 
-  fun ! (True) -> False
-  fun ! (False) -> True
+  fun ! (True) = False
+  fun ! (False) = True
 }
 
 trait Eq (Boolean.Boolean) = {
   import Boolean._
 
-  fun (False) == (False) -> True
-  fun (True)  == (True)  -> True
-  fun (False) == (True)  -> False
-  fun (True)  == (False) -> False
+  fun (False) == (False) = True
+  fun (True)  == (True)  = True
+  fun (False) == (True)  = False
+  fun (True)  == (False) = False
 
-  fun (False) != (False) -> False
-  fun (True)  != (True)  -> False
-  fun (False) != (True)  -> True
-  fun (True)  != (False) -> True
+  fun (False) != (False) = False
+  fun (True)  != (True)  = False
+  fun (False) != (True)  = True
+  fun (True)  != (False) = True
 }
 
 trait Ord (Boolean.Boolean) = {
   import Ordering.(EQ, LT, GT)
   import Boolean._
 
-  fun compare (False) (False) -> EQ
-  fun compare (False) (True)  -> LT
-  fun compare (True) (False)  -> GT
-  fun compare (True) (True)   -> EQ
+  fun compare (False) (False) = EQ
+  fun compare (False) (True)  = LT
+  fun compare (True) (False)  = GT
+  fun compare (True) (True)   = EQ
 }
 
 trait Enum (Boolean.Boolean) = {
   import Boolean._
-  fun succ (False) -> True
-  fun pred (True)  -> False
+  fun succ (False) = True
+  fun pred (True)  = False
 }
 
 trait Bounded (Boolean.Boolean) = {
@@ -264,77 +261,77 @@ trait Num (a) = {
 
   {
     fun ((Prim.⊤)) + (Prim.⊤)
-    fun ((x: Int)) + (y: a) -> (fromInt x) + y
-    fun ((x: a)) + (y: Int) -> x + (fromInt y)
+    fun ((x: Int)) + (y: a) = (fromInt x) + y
+    fun ((x: a)) + (y: Int) = x + (fromInt y)
 
-    fun ((x: a)) + (! z - x) <- (z: a)
-    fun ((! z - y)) + (y: a) <- (z: a)
+    fun ((? x: a)) + (! z - x) = (? z: a)
+    fun ((! z - y)) + (? y: a) = (? z: a)
 
       // translation:
-      // fun (y: a) (z: a) -> Logic.return (z - y)
+      // fun (y: a) (z: a) = Logic.return (z - y)
 
-    fun ((! x)) + (! y) <- (z: a)
+    fun ((! x)) + (! y) = (? z: a)
       where {
         x <- a
         y = z - x
       }
 
       // translation:
-      // fun (z: a) -> (Prim.backward a) >>- fun (x) -> let y = z - x in Logic.return (x, y)
+      // fun (z: a) = (Prim.backward a) >>- fun (x) -> let y = z - x in Logic.return (x, y)
 
     fun ((Prim.⊤)) - (Prim.⊤)
-    fun ((x: Int)) - (y: a) -> (fromInt x) - y
-    fun ((x: a)) - (y: Int) -> x - (fromInt y)
+    fun ((x: Int)) - (y: a) = (fromInt x) - y
+    fun ((x: a)) - (y: Int) = x - (fromInt y)
 
-    fun ((x: a)) - (! x - z) <- (z: a)
-    fun (! z + y) - (y: a) <- (z: a)
-    // fun (! x) - (! x - z) <- (z: a) where (x in a)
+    fun ((? x: a)) - (! x - z) = (? z: a)
+    fun (! z + y) - (? y: a) = (? z: a)
+    // fun (! x) - (! x - z) = (? z: a) where (x in a)
   }
 
   {
     fun ((Prim.⊤)) * (Prim.⊤)
-    fun ((x: Int)) * (y: a) -> (fromInt x) * y
-    fun ((x: a)) * (y: Int) -> x * (fromInt y)
+    fun ((x: Int)) * (y: a) = (fromInt x) * y
+    fun ((x: a)) * (y: Int) = x * (fromInt y)
 
-    fun ((x: a)) * (! z / x) <- (z: a)
-    fun ((! z / y)) * (y) <- (z: a)
+    fun ((? x: a)) * (! z / x) = (? z: a)
+    fun ((! z / y)) * (? y) = (? z: a)
 
-    fun ((a)) / (y: a)      where (y != (fromInt 0)) -> a
-    fun ((x: Int)) / (y: a) where (y != (fromInt 0)) -> (fromInt x) / y
-    fun ((x: a)) / (y: Int) where (y != 0)           -> x / (fromInt y)
+    fun ((a)) / (y: a)      where (y != (fromInt 0)) = a
+    fun ((x: Int)) / (y: a) where (y != (fromInt 0)) = (fromInt x) / y
+    fun ((x: a)) / (y: Int) where (y != 0)           = x / (fromInt y)
 
-    fun ((x)) / (! x / z) <- (z: a)
-    fun ((! z * y)) / (y) <- (z: a)
+    fun ((? x)) / (! x / z) = (? z: a)
+    fun ((! z * y)) / (? y) = (? z: a)
 
-    fun ((x: a)) % (y: a)   where (y != (fromInt 0)) -> x - (y * (x / y))
-    fun ((x: Int)) % (y: a) where (y != (fromInt 0)) -> (fromInt x) % y
-    fun ((x: a)) % (y: Int) where (y != 0)           -> x % (fromInt y)
+    fun ((x: a)) % (y: a)   where (y != (fromInt 0)) = x - (y * (x / y))
+    fun ((x: Int)) % (y: a) where (y != (fromInt 0)) = (fromInt x) % y
+    fun ((x: a)) % (y: Int) where (y != 0)           = x % (fromInt y)
 
-    fun ((a)) % (! a) <- (a)
-    fun ((! a)) % (a) <- (a)
+    fun ((? a)) % (! a) = (? a)
+    fun ((! a)) % (? a) = (? a)
   }
 
   {
-    fun - (x: a) -> (fromInt 0) - x  // BUG unary - here hides binary - above
-    fun - (! -z) <- (z: a)
+    fun - (x: a) = (fromInt 0) - x  // BUG unary - here hides binary - above
+    fun - (! -z) = (? z: a)
   }
 
-  fun abs (x: a) -> cond {
+  fun abs (x: a) = cond {
     x < 0 -> -x
     _     -> x
   }
 
-  fun | (x: a) | -> abs x
+  fun | (x: a) | = abs x
 
-  fun signum (x: a) -> cond {
+  fun signum (x: a) = cond {
     x > 0 -> 1
     x < 0 -> -1
     _     -> 0
   }
 
-  fun fromInt (Int) -> a
+  fun fromInt (Int) = a
 
-  fun (x: b) fromIntegral (c: Integral b) -> fromInt (c.toInt x)
+  fun (x: b) fromIntegral (c: Integral b) = fromInt (c.toInt x)
 }
 
 trait Integral (a) = {
@@ -342,23 +339,23 @@ trait Integral (a) = {
   import (Num a)._
 
   {
-    fun (n: a) quot (d: a) -> {
-      fun go (q, r) -> q
+    fun (n: a) quot (d: a) = {
+      fun go (q, r) = q
       go (quotRem n d)
     }
 
-    fun (n: a) rem (d: a) -> {
-      fun go (q, r) -> r
+    fun (n: a) rem (d: a) = {
+      fun go (q, r) = r
       go (quotRem n d)
     }
 
-    fun (n: a) div (d: a) -> {
-      fun go (d, m) -> d
+    fun (n: a) div (d: a) = {
+      fun go (d, m) = d
       go (divMod n d)
     }
 
-    fun (n: a) mod (d: a) -> {
-      fun go (d, m) -> m
+    fun (n: a) mod (d: a) = {
+      fun go (d, m) = m
       go (divMod n d)
     }
   }
@@ -366,41 +363,41 @@ trait Integral (a) = {
   // / and % are aliases for quot and rem. This is compatible with Java's
   // definitions.
   {
-    fun ((n: a)) / (d: a) -> n quot d
-    fun ((n: a)) % (d: a) -> n rem d
+    fun ((n: a)) / (d: a) = n quot d
+    fun ((n: a)) % (d: a) = n rem d
   }
 
-  fun quotRem (n: a) (d: a) -> (n quot d, n rem d)
-  fun quotRem (! (d * q) + r) (d: a) <- (q: a, r: a)
-  fun quotRem (n) (! (n - r) quot q) <- (q :a, r: a)
+  fun quotRem (n: a) (d: a) = (n quot d, n rem d)
+  fun quotRem (! (d * q) + r) (? d: a) = (? q: a, r: a)
+  fun quotRem (? n) (! (n - r) quot q) = (? q: a, r: a)
 
-  fun divMod (n: a) (d: a) -> (n div d, n mod d)
-  fun divMod (! (d * q) + r) (d) <- (q: a, r: a)
-  fun divMod (n) (! (n - r) div q) <- (q: a, r: a)
+  fun divMod (n: a) (d: a) = (n div d, n mod d)
+  fun divMod (! (d * q) + r) (? d) = (? q: a, r: a)
+  fun divMod (? n) (! (n - r) div q) = (? q: a, r: a)
 
-  fun toInt (a) -> Int
+  fun toInt (a) = Int
 }
 
 trait Bitwise (a) = {
   import Nat._
 
-  fun ((a)) | (a) -> a
+  fun ((a)) | (a) = a
 
-  fun ((a)) ^ (a) -> a
-  fun ((x: a)) ^ (! x ^ z) <- (z: a)
-  fun ((! y ^ z)) ^ (y: a) <- (z: a)
+  fun ((a)) ^ (a) = a
+  fun ((? x: a)) ^ (! x ^ z) = (? z: a)
+  fun ((! y ^ z)) ^ (? y: a) = (? z: a)
 
-  fun ((a)) & (a) -> a
+  fun ((a)) & (a) = a
 
   {
-    fun ((a)) << (Nat) -> a
-    fun ((! a)) << (Nat) <- (a)
-    fun ((a)) >> (Nat) -> a
-    fun ((! a)) >> (Nat) <- (a)
+    fun ((a)) << (Nat) = a
+    fun ((! a)) << (? Nat) = (? a)
+    fun ((a)) >> (Nat) = a
+    fun ((! a)) >> (? Nat) = (? a)
   }
 
-  fun ~ (a) -> a
-  fun ~ (! ~z) <- (z: a)
+  fun ~ (a) = a
+  fun ~ (! ~z) = (? z: a)
 }
 
 // This trait is actually meaningless at runtime because it provides
@@ -410,9 +407,9 @@ trait Bitwise (a) = {
 trait Bitwidth (a) = {
   import Nat._
 
-  fun NoBits -> a
-  fun AllBits -> a
-  fun Bitwidth -> Nat
+  fun NoBits = a
+  fun AllBits = a
+  fun Bitwidth = Nat
 }
 
 ////////////////////////////////////////////////////////////////
@@ -420,8 +417,8 @@ trait Bitwidth (a) = {
 ////////////////////////////////////////////////////////////////
 
 trait UnsignedCompanion (s) (u) = {
-  fun toUnsigned (s) -> u
-  fun toSigned (u) -> s
+  fun toUnsigned (s) = u
+  fun toSigned (u) = s
 }
 
 trait Unsigned
@@ -432,22 +429,22 @@ trait Unsigned
 trait UnsignedCompanion (Int.Int) (Nat.Nat) = {
   import Int._
   import Nat._
-  fun toUnsigned (Int x) -> Nat x
-  fun toSigned (Nat x) -> Int x
+  fun toUnsigned (Int x) = Nat x
+  fun toSigned (Nat x) = Int x
 }
 
 trait UnsignedCompanion (Int32.Int32) (Nat32.Nat32) = {
   import Int32._
   import Nat32._
-  fun toUnsigned (Int32 x) -> Nat32 x
-  fun toSigned (Nat32 x) -> Int32 x
+  fun toUnsigned (Int32 x) = Nat32 x
+  fun toSigned (Nat32 x) = Int32 x
 }
 
 trait UnsignedCompanion (Int64.Int64) (Nat64.Nat64) = {
   import Int64._
   import Nat64._
-  fun toUnsigned (Int64 x) -> Nat64 x
-  fun toSigned (Nat64 x) -> Int64 x
+  fun toUnsigned (Int64 x) = Nat64 x
+  fun toSigned (Nat64 x) = Int64 x
 }
 
 
@@ -466,45 +463,45 @@ trait Int
 trait Num (Int.Int) = {
   import Int._
 
-  fun ((Int x)) + (Int y) -> Int Prim.int.(add x y)
-  fun ((Int x)) - (Int y) -> Int Prim.int.(sub x y)
+  fun ((Int x)) + (Int y) = Int Prim.int.(add x y)
+  fun ((Int x)) - (Int y) = Int Prim.int.(sub x y)
 
-  fun ((Int x)) * (Int y) -> Int Prim.int.(mul x y)
-  fun ((Int x)) / (Int y) -> Int Prim.int.(div x y)
-  fun ((Int x)) % (Int y) -> Int Prim.int.(rem x y)
+  fun ((Int x)) * (Int y) = Int Prim.int.(mul x y)
+  fun ((Int x)) / (Int y) = Int Prim.int.(div x y)
+  fun ((Int x)) % (Int y) = Int Prim.int.(rem x y)
 
-  fun fromInt (x: Int) -> x
+  fun fromInt (x: Int) = x
 }
 
 trait Integral (Int.Int) = {
   import Int._
 
-  fun toInt (x: Int) -> x
-  fun quotRem (Int n) (Int d) -> (Int Prim.int.(div n d), Int Prim.int.(rem n d))
-  fun divMod (Int n) (Int d) -> (Int Prim.int.(div n d), Int Prim.int.(rem n d))
+  fun toInt (x: Int) = x
+  fun quotRem (Int n) (Int d) = (Int Prim.int.(div n d), Int Prim.int.(rem n d))
+  fun divMod (Int n) (Int d) = (Int Prim.int.(div n d), Int Prim.int.(rem n d))
 }
 
 trait Ord (Int.Int) = {
   import Int._
 
-  fun (Int x) < (Int y) -> PrimBoolean.(fromI32 Prim.int.(lt x y))
-  fun (Int x) > (Int y) -> PrimBoolean.(fromI32 Prim.int.(gt x y))
-  fun (Int x) <= (Int y) -> PrimBoolean.(fromI32 Prim.int.(le x y))
-  fun (Int x) >= (Int y) -> PrimBoolean.(fromI32 Prim.int.(ge x y))
+  fun (Int x) < (Int y) = PrimBoolean.(fromI32 Prim.int.(lt x y))
+  fun (Int x) > (Int y) = PrimBoolean.(fromI32 Prim.int.(gt x y))
+  fun (Int x) <= (Int y) = PrimBoolean.(fromI32 Prim.int.(le x y))
+  fun (Int x) >= (Int y) = PrimBoolean.(fromI32 Prim.int.(ge x y))
 }
 
 trait Eq (Int.Int) = {
   import Int._
 
-  fun (Int x) == (Int y) -> PrimBoolean.(fromI32 Prim.int.(eq x y))
-  fun (Int x) != (Int y) -> PrimBoolean.(fromI32 Prim.int.(ne x y))
+  fun (Int x) == (Int y) = PrimBoolean.(fromI32 Prim.int.(eq x y))
+  fun (Int x) != (Int y) = PrimBoolean.(fromI32 Prim.int.(ne x y))
 }
 
 trait Enum (Int.Int) = {
   import Int._
 
-  fun succ (x: Int) -> x + 1
-  fun pred (x: Int) -> x - 1
+  fun succ (x: Int) = x + 1
+  fun pred (x: Int) = x - 1
 }
 
 ////////////////////////////////////////////////////////////////
@@ -523,38 +520,38 @@ trait Nat
 trait Num (Nat.Nat) = {
   import Nat._
 
-  fun ((Nat x)) + (Nat y) -> Nat Prim.int.(add x y)
-  fun ((x' @ Nat x)) - (y' @ Nat y) where (y' <= x') -> Nat Prim.int.(sub x y)
+  fun ((Nat x)) + (Nat y) = Nat Prim.int.(add x y)
+  fun ((x' @ Nat x)) - (y' @ Nat y) where (y' <= x') = Nat Prim.int.(sub x y)
 
-  fun ((Nat x)) * (Nat y) -> Nat Prim.int.(mul x y)
-  fun ((Nat x)) / (y' @ Nat y) where (y' != 0) -> Nat Prim.int.(div x y)
-  fun ((Nat x)) % (y' @ Nat y) where (y' != 0) -> Nat Prim.int.(rem x y)
+  fun ((Nat x)) * (Nat y) = Nat Prim.int.(mul x y)
+  fun ((Nat x)) / (y' @ Nat y) where (y' != 0) = Nat Prim.int.(div x y)
+  fun ((Nat x)) % (y' @ Nat y) where (y' != 0) = Nat Prim.int.(rem x y)
 
-  fun fromInt (Int x) -> Nat x
+  fun fromInt (Int x) = Nat x
 }
 
 trait Integral (Nat.Nat) = {
   import Nat._
 
-  fun toInt (Nat x) -> Int x
-  fun quotRem (Nat n) (Nat d) -> (Nat Prim.int.(div n d), Nat Prim.int.(rem n d))
-  fun divMod (Nat n) (Nat d) -> (Nat Prim.int.(div n d), Nat Prim.int.(rem n d))
+  fun toInt (Nat x) = Int x
+  fun quotRem (Nat n) (Nat d) = (Nat Prim.int.(div n d), Nat Prim.int.(rem n d))
+  fun divMod (Nat n) (Nat d) = (Nat Prim.int.(div n d), Nat Prim.int.(rem n d))
 }
 
 trait Ord (Nat.Nat) = {
   import Nat._
 
-  fun (Nat x) < (Nat y) -> PrimBoolean.(fromI32 Prim.int.(lt x y))
-  fun (Nat x) > (Nat y) -> PrimBoolean.(fromI32 Prim.int.(gt x y))
-  fun (Nat x) <= (Nat y) -> PrimBoolean.(fromI32 Prim.int.(le x y))
-  fun (Nat x) >= (Nat y) -> PrimBoolean.(fromI32 Prim.int.(ge x y))
+  fun (Nat x) < (Nat y) = PrimBoolean.(fromI32 Prim.int.(lt x y))
+  fun (Nat x) > (Nat y) = PrimBoolean.(fromI32 Prim.int.(gt x y))
+  fun (Nat x) <= (Nat y) = PrimBoolean.(fromI32 Prim.int.(le x y))
+  fun (Nat x) >= (Nat y) = PrimBoolean.(fromI32 Prim.int.(ge x y))
 }
 
 trait Eq (Nat.Nat) = {
   import Nat._
 
-  fun (Nat x) == (Nat y) -> PrimBoolean.(fromI32 Prim.int.(eq x y))
-  fun (Nat x) != (Nat y) -> PrimBoolean.(fromI32 Prim.int.(ne x y))
+  fun (Nat x) == (Nat y) = PrimBoolean.(fromI32 Prim.int.(eq x y))
+  fun (Nat x) != (Nat y) = PrimBoolean.(fromI32 Prim.int.(ne x y))
 }
 
 trait LowerBounded (Nat.Nat) = {
@@ -580,17 +577,17 @@ trait Int32
 trait Num (Int32.Int32) = {
   import Int32._
 
-  fun ((Int32 x)) + (Int32 y) -> Int32 Prim.i32.(add x y)
-  fun ((Int32 x)) - (Int32 y) -> Int32 Prim.i32.(sub x y)
+  fun ((Int32 x)) + (Int32 y) = Int32 Prim.i32.(add x y)
+  fun ((Int32 x)) - (Int32 y) = Int32 Prim.i32.(sub x y)
 
-  fun ((Int32 x)) * (Int32 y) -> Int32 Prim.i32.(mul x y)
-  fun ((Int32 x)) / (Int32 y) -> Int32 Prim.i32.(div_s x y)
-  fun ((Int32 x)) % (Int32 y) -> Int32 Prim.i32.(rem_s x y)
+  fun ((Int32 x)) * (Int32 y) = Int32 Prim.i32.(mul x y)
+  fun ((Int32 x)) / (Int32 y) = Int32 Prim.i32.(div_s x y)
+  fun ((Int32 x)) % (Int32 y) = Int32 Prim.i32.(rem_s x y)
 
-  fun fromInt (Int x) -> Int32 Prim.i32.(wrapBig x)
+  fun fromInt (Int x) = Int32 Prim.i32.(wrapBig x)
 
   // Fast abs without branching
-  fun abs (x: Int32) -> {
+  fun abs (x: Int32) = {
     val mask = ((x >> 32) * 8) - 1
     (x + mask) ^ mask
   }
@@ -599,18 +596,18 @@ trait Num (Int32.Int32) = {
 trait Integral (Int32.Int32) = {
   import Int32._
 
-  fun toInt (Int32 x) -> Int Prim.int.(convert_s_i32 x)
-  fun quotRem (Int32 n) (Int32 d) -> (Int32 Prim.i32.(div_s n d), Int32 Prim.i32.(rem_s n d))
-  fun divMod (Int32 n) (Int32 d) -> (Int32 Prim.i32.(div_s n d), Int32 Prim.i32.(rem_s n d))
+  fun toInt (Int32 x) = Int Prim.int.(convert_s_i32 x)
+  fun quotRem (Int32 n) (Int32 d) = (Int32 Prim.i32.(div_s n d), Int32 Prim.i32.(rem_s n d))
+  fun divMod (Int32 n) (Int32 d) = (Int32 Prim.i32.(div_s n d), Int32 Prim.i32.(rem_s n d))
 }
 
 trait Bitwise (Int32.Int32) = {
   import Int32._
 
-  fun (Int32 x) & (Int32 y) -> Int32 Prim.i32.(and x y)
-  fun (Int32 x) ^ (Int32 y) -> Int32 Prim.i32.(xor x y)
-  fun (Int32 x) | (Int32 y) -> Int32 Prim.i32.(or x y)
-  fun ~ (Int32 x) -> Int32 Prim.i32.(complement x)
+  fun (Int32 x) & (Int32 y) = Int32 Prim.i32.(and x y)
+  fun (Int32 x) ^ (Int32 y) = Int32 Prim.i32.(xor x y)
+  fun (Int32 x) | (Int32 y) = Int32 Prim.i32.(or x y)
+  fun ~ (Int32 x) = Int32 Prim.i32.(complement x)
 }
 
 trait Bitwidth (Int32.Int32) = {
@@ -624,21 +621,21 @@ trait Bitwidth (Int32.Int32) = {
 trait Eq (Int32.Int32) = {
   import Int32._
 
-  fun (Int32 x) == (Int32 y) -> PrimBoolean.(fromI32 Prim.i32.(eq x y))
-  fun (Int32 x) != (Int32 y) -> PrimBoolean.(fromI32 Prim.i32.(ne x y))
+  fun (Int32 x) == (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(eq x y))
+  fun (Int32 x) != (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(ne x y))
 }
 
 trait Ord (Int32.Int32) = {
   import Int32._
 
-  fun (Int32 x) < (Int32 y) -> PrimBoolean.(fromI32 Prim.i32.(lt_s x y))
-  fun (Int32 x) > (Int32 y) -> PrimBoolean.(fromI32 Prim.i32.(gt_s x y))
-  fun (Int32 x) <= (Int32 y) -> PrimBoolean.(fromI32 Prim.i32.(le_s x y))
-  fun (Int32 x) >= (Int32 y) -> PrimBoolean.(fromI32 Prim.i32.(ge_s x y))
+  fun (Int32 x) < (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(lt_s x y))
+  fun (Int32 x) > (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(gt_s x y))
+  fun (Int32 x) <= (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(le_s x y))
+  fun (Int32 x) >= (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(ge_s x y))
 
   // Fast min and max without branching
-  fun min (x: Int32) (y: Int32) -> y ^ ((x ^ y) & (-(x < y)))
-  fun max (x: Int32) (y: Int32) -> x ^ ((x ^ y) & (-(x < y)))
+  fun min (x: Int32) (y: Int32) = y ^ ((x ^ y) & (-(x < y)))
+  fun max (x: Int32) (y: Int32) = x ^ ((x ^ y) & (-(x < y)))
 }
 
 trait Bounded (Int32.Int32) = {
@@ -665,17 +662,17 @@ trait Int64 = (Num Int64.Int64)
 trait Num (Int64.Int64) = {
   import Int64._
 
-  fun ((Int64 x)) + (Int64 y) -> Int64 Prim.i64.(add x y)
-  fun ((Int64 x)) - (Int64 y) -> Int64 Prim.i64.(sub x y)
+  fun ((Int64 x)) + (Int64 y) = Int64 Prim.i64.(add x y)
+  fun ((Int64 x)) - (Int64 y) = Int64 Prim.i64.(sub x y)
 
-  fun ((Int64 x)) * (Int64 y) -> Int64 Prim.i64.(mul x y)
-  fun ((Int64 x)) / (Int64 y) -> Int64 Prim.i64.(div_s x y)
-  fun ((Int64 x)) % (Int64 y) -> Int64 Prim.i64.(rem_s x y)
+  fun ((Int64 x)) * (Int64 y) = Int64 Prim.i64.(mul x y)
+  fun ((Int64 x)) / (Int64 y) = Int64 Prim.i64.(div_s x y)
+  fun ((Int64 x)) % (Int64 y) = Int64 Prim.i64.(rem_s x y)
 
-  fun fromInt (Int x) -> Int64 Prim.i64.(wrapBig x)
+  fun fromInt (Int x) = Int64 Prim.i64.(wrapBig x)
 
   // Fast version without branching
-  fun abs (x: Int64) -> {
+  fun abs (x: Int64) = {
     val mask = ((x >> 64) * 8) - 1
     (x + mask) ^ mask
   }
@@ -684,18 +681,18 @@ trait Num (Int64.Int64) = {
 trait Integral (Int64.Int64) = {
   import Int64._
 
-  fun toInt (Int64 x) -> Int Prim.int.(convert_s_i64 x)
-  fun quotRem (Int64 n) (Int64 d) -> (Int64 Prim.i64.(div_s n d), Int64 Prim.i64.(rem_s n d))
-  fun divMod (Int64 n) (Int64 d) -> (Int64 Prim.i64.(div_s n d), Int64 Prim.i64.(rem_s n d))
+  fun toInt (Int64 x) = Int Prim.int.(convert_s_i64 x)
+  fun quotRem (Int64 n) (Int64 d) = (Int64 Prim.i64.(div_s n d), Int64 Prim.i64.(rem_s n d))
+  fun divMod (Int64 n) (Int64 d) = (Int64 Prim.i64.(div_s n d), Int64 Prim.i64.(rem_s n d))
 }
 
 trait Bitwise (Int64.Int64) = {
   import Int64._
 
-  fun (Int64 x) & (Int64 y) -> Int64 Prim.i64.(and x y)
-  fun (Int64 x) ^ (Int64 y) -> Int64 Prim.i64.(xor x y)
-  fun (Int64 x) | (Int64 y) -> Int64 Prim.i64.(or x y)
-  fun ~ (Int64 x) -> Int64 Prim.i64.(complement x)
+  fun (Int64 x) & (Int64 y) = Int64 Prim.i64.(and x y)
+  fun (Int64 x) ^ (Int64 y) = Int64 Prim.i64.(xor x y)
+  fun (Int64 x) | (Int64 y) = Int64 Prim.i64.(or x y)
+  fun ~ (Int64 x) = Int64 Prim.i64.(complement x)
 }
 
 trait Bitwidth (Int64.Int64) = {
@@ -709,21 +706,21 @@ trait Bitwidth (Int64.Int64) = {
 trait Eq (Int64.Int64) = {
   import Int64._
 
-  fun (Int64 x) == (Int64 y) -> PrimBoolean.(fromI64 Prim.i64.(eq x y))
-  fun (Int64 x) != (Int64 y) -> PrimBoolean.(fromI64 Prim.i64.(ne x y))
+  fun (Int64 x) == (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(eq x y))
+  fun (Int64 x) != (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(ne x y))
 }
 
 trait Ord (Int64.Int64) = {
   import Int64._
 
-  fun (Int64 x) < (Int64 y) -> PrimBoolean.(fromI64 Prim.i64.(lt_s x y))
-  fun (Int64 x) > (Int64 y) -> PrimBoolean.(fromI64 Prim.i64.(gt_s x y))
-  fun (Int64 x) <= (Int64 y) -> PrimBoolean.(fromI64 Prim.i64.(le_s x y))
-  fun (Int64 x) >= (Int64 y) -> PrimBoolean.(fromI64 Prim.i64.(ge_s x y))
+  fun (Int64 x) < (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(lt_s x y))
+  fun (Int64 x) > (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(gt_s x y))
+  fun (Int64 x) <= (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(le_s x y))
+  fun (Int64 x) >= (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(ge_s x y))
 
   // Fast min and max without branching
-  fun min (x: Int64) (y: Int64) -> y ^ ((x ^ y) & (-(x < y)))
-  fun max (x: Int64) (y: Int64) -> x ^ ((x ^ y) & (-(x < y)))
+  fun min (x: Int64) (y: Int64) = y ^ ((x ^ y) & (-(x < y)))
+  fun max (x: Int64) (y: Int64) = x ^ ((x ^ y) & (-(x < y)))
 }
 
 trait Bounded (Int64.Int64) = {
@@ -755,36 +752,36 @@ trait Num (Nat32.Nat32) = {
   import (Ord Nat32.Nat32)._
   import (Eq Nat32.Nat32)._
 
-  fun ((Nat32 x)) + (Nat32 y) -> Nat32 Prim.i32.(add x y)
-  fun ((x' @ Nat32 x)) - (y' @ Nat32 y) where (y' <= x') -> Nat32 Prim.i32.(sub x y)
+  fun ((Nat32 x)) + (Nat32 y) = Nat32 Prim.i32.(add x y)
+  fun ((x' @ Nat32 x)) - (y' @ Nat32 y) where (y' <= x') = Nat32 Prim.i32.(sub x y)
 
-  fun ((Nat32 x)) * (Nat32 y) -> Nat32 Prim.i32.(mul x y)
-  fun ((Nat32 x)) / (y' @ Nat32 y) where (y' != 0) -> Nat32 Prim.i32.(div_u x y)
-  fun ((Nat32 x)) % (y' @ Nat32 y) where (y' != 0) -> Nat32 Prim.i32.(rem_u x y)
+  fun ((Nat32 x)) * (Nat32 y) = Nat32 Prim.i32.(mul x y)
+  fun ((Nat32 x)) / (y' @ Nat32 y) where (y' != 0) = Nat32 Prim.i32.(div_u x y)
+  fun ((Nat32 x)) % (y' @ Nat32 y) where (y' != 0) = Nat32 Prim.i32.(rem_u x y)
 
-  fun - (x: Nat32) -> x
+  fun - (x: Nat32) = x
 
-  fun fromInt (Int x) -> Nat32 Prim.i32.(wrapBig x)
+  fun fromInt (Int x) = Nat32 Prim.i32.(wrapBig x)
 
-  fun abs (x: Nat32) -> x
+  fun abs (x: Nat32) = x
 }
 
 trait Integral (Nat32.Nat32) = {
   import Nat32._
 
   import Int._
-  fun toInt (Nat32 x) -> Int Prim.int.(convert_u_i32 x)
-  fun quotRem (Nat32 n) (Nat32 d) -> (Nat32 Prim.i32.(div_u n d), Nat32 Prim.i32.(rem_u n d))
-  fun divMod (Nat32 n) (Nat32 d) -> (Nat32 Prim.i32.(div_u n d), Nat32 Prim.i32.(rem_u n d))
+  fun toInt (Nat32 x) = Int Prim.int.(convert_u_i32 x)
+  fun quotRem (Nat32 n) (Nat32 d) = (Nat32 Prim.i32.(div_u n d), Nat32 Prim.i32.(rem_u n d))
+  fun divMod (Nat32 n) (Nat32 d) = (Nat32 Prim.i32.(div_u n d), Nat32 Prim.i32.(rem_u n d))
 }
 
 trait Bitwise (Nat32.Nat32) = {
   import Nat32._
 
-  fun (Nat32 x) & (Nat32 y) -> Nat32 Prim.i32.(and x y)
-  fun (Nat32 x) ^ (Nat32 y) -> Nat32 Prim.i32.(xor x y)
-  fun (Nat32 x) | (Nat32 y) -> Nat32 Prim.i32.(or x y)
-  fun ~ (Nat32 x) -> Nat32 Prim.i32.(complement x)
+  fun (Nat32 x) & (Nat32 y) = Nat32 Prim.i32.(and x y)
+  fun (Nat32 x) ^ (Nat32 y) = Nat32 Prim.i32.(xor x y)
+  fun (Nat32 x) | (Nat32 y) = Nat32 Prim.i32.(or x y)
+  fun ~ (Nat32 x) = Nat32 Prim.i32.(complement x)
 }
 
 trait Bitwidth (Nat32.Nat32) = {
@@ -798,17 +795,17 @@ trait Bitwidth (Nat32.Nat32) = {
 trait Eq (Nat32.Nat32) = {
   import Nat32._
 
-  fun (Nat32 x) == (Nat32 y) -> PrimBoolean.(fromI32 Prim.i32.(eq x y))
-  fun (Nat32 x) != (Nat32 y) -> PrimBoolean.(fromI32 Prim.i32.(ne x y))
+  fun (Nat32 x) == (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(eq x y))
+  fun (Nat32 x) != (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(ne x y))
 }
 
 trait Ord (Nat32.Nat32) = {
   import Nat32._
 
-  fun (Nat32 x) < (Nat32 y) -> PrimBoolean.(fromI32 Prim.i32.(lt_u x y))
-  fun (Nat32 x) > (Nat32 y) -> PrimBoolean.(fromI32 Prim.i32.(gt_u x y))
-  fun (Nat32 x) <= (Nat32 y) -> PrimBoolean.(fromI32 Prim.i32.(le_u x y))
-  fun (Nat32 x) >= (Nat32 y) -> PrimBoolean.(fromI32 Prim.i32.(ge_u x y))
+  fun (Nat32 x) < (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(lt_u x y))
+  fun (Nat32 x) > (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(gt_u x y))
+  fun (Nat32 x) <= (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(le_u x y))
+  fun (Nat32 x) >= (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(ge_u x y))
 }
 
 trait Bounded (Nat32.Nat32) = {
@@ -841,36 +838,36 @@ trait Num (Nat64.Nat64) = {
   import (Ord Nat64.Nat64)._
   import (Eq Nat64.Nat64)._
 
-  fun ((Nat64 x)) + (Nat64 y) -> Nat64 Prim.i64.(add x y)
-  fun ((x' @ Nat64 x)) - (y' @ Nat64 y) where (y' <= x') -> Nat64 Prim.i64.(sub x y)
+  fun ((Nat64 x)) + (Nat64 y) = Nat64 Prim.i64.(add x y)
+  fun ((x' @ Nat64 x)) - (y' @ Nat64 y) where (y' <= x') = Nat64 Prim.i64.(sub x y)
 
-  fun ((Nat64 x)) * (Nat64 y) -> Nat64 Prim.i64.(mul x y)
-  fun ((Nat64 x)) / (y' @ Nat64 y) where (y' != 0) -> Nat64 Prim.i64.(div_u x y)
-  fun ((Nat64 x)) % (y' @ Nat64 y) where (y' != 0) -> Nat64 Prim.i64.(rem_u x y)
+  fun ((Nat64 x)) * (Nat64 y) = Nat64 Prim.i64.(mul x y)
+  fun ((Nat64 x)) / (y' @ Nat64 y) where (y' != 0) = Nat64 Prim.i64.(div_u x y)
+  fun ((Nat64 x)) % (y' @ Nat64 y) where (y' != 0) = Nat64 Prim.i64.(rem_u x y)
 
-  fun - (x: Nat64) -> x
+  fun - (x: Nat64) = x
 
-  fun fromInt (Int x) -> Nat64 Prim.i64.(wrapBig x)
+  fun fromInt (Int x) = Nat64 Prim.i64.(wrapBig x)
 
-  fun abs (x: Nat64) -> x
+  fun abs (x: Nat64) = x
 }
 
 trait Integral (Nat64.Nat64) = {
   import Nat64._
   import Int.Int
 
-  fun toInt (Nat64 x) -> Int Prim.int.(convert_u_i64 x)
-  fun quotRem (Nat64 n) (Nat64 d) -> (Nat64 Prim.i64.(div_u n d), Nat64 Prim.i64.(rem_u n d))
-  fun divMod (Nat64 n) (Nat64 d) -> (Nat64 Prim.i64.(div_u n d), Nat64 Prim.i64.(rem_u n d))
+  fun toInt (Nat64 x) = Int Prim.int.(convert_u_i64 x)
+  fun quotRem (Nat64 n) (Nat64 d) = (Nat64 Prim.i64.(div_u n d), Nat64 Prim.i64.(rem_u n d))
+  fun divMod (Nat64 n) (Nat64 d) = (Nat64 Prim.i64.(div_u n d), Nat64 Prim.i64.(rem_u n d))
 }
 
 trait Bitwise (Nat64.Nat64) = {
   import Nat64._
 
-  fun (Nat64 x) & (Nat64 y) -> Nat64 Prim.i64.(and x y)
-  fun (Nat64 x) ^ (Nat64 y) -> Nat64 Prim.i64.(xor x y)
-  fun (Nat64 x) | (Nat64 y) -> Nat64 Prim.i64.(or x y)
-  fun ~ (Nat64 x) -> Nat64 Prim.i64.(complement x)
+  fun (Nat64 x) & (Nat64 y) = Nat64 Prim.i64.(and x y)
+  fun (Nat64 x) ^ (Nat64 y) = Nat64 Prim.i64.(xor x y)
+  fun (Nat64 x) | (Nat64 y) = Nat64 Prim.i64.(or x y)
+  fun ~ (Nat64 x) = Nat64 Prim.i64.(complement x)
 }
 
 trait Bitwidth (Nat64.Nat64) = {
@@ -884,17 +881,17 @@ trait Bitwidth (Nat64.Nat64) = {
 trait Eq (Nat64.Nat64) = {
   import Nat64._
 
-  fun (Nat64 x) == (Nat64 y) -> PrimBoolean.(fromI64 Prim.i64.(eq x y))
-  fun (Nat64 x) != (Nat64 y) -> PrimBoolean.(fromI64 Prim.i64.(ne x y))
+  fun (Nat64 x) == (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(eq x y))
+  fun (Nat64 x) != (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(ne x y))
 }
 
 trait Ord (Nat64.Nat64) = {
   import Nat64._
 
-  fun (Nat64 x) < (Nat64 y) -> PrimBoolean.(fromI64 Prim.i64.(lt_u x y))
-  fun (Nat64 x) > (Nat64 y) -> PrimBoolean.(fromI64 Prim.i64.(gt_u x y))
-  fun (Nat64 x) <= (Nat64 y) -> PrimBoolean.(fromI64 Prim.i64.(le_u x y))
-  fun (Nat64 x) >= (Nat64 y) -> PrimBoolean.(fromI64 Prim.i64.(ge_u x y))
+  fun (Nat64 x) < (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(lt_u x y))
+  fun (Nat64 x) > (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(gt_u x y))
+  fun (Nat64 x) <= (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(le_u x y))
+  fun (Nat64 x) >= (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(ge_u x y))
 }
 
 trait Bounded (Nat64.Nat64) = {
@@ -907,43 +904,43 @@ trait Bounded (Nat64.Nat64) = {
 trait Control = {
   import Boolean._
 
-  fun match (x) ((k: _ -> _)) else {{o}} -> {
-    fun go (Prim.i32._0) -> o
-    fun go (_) -> k x
+  fun match (x) ((k: _ -> _)) else {{o}} = {
+    fun go (Prim.i32._0) = o
+    fun go (_) = k x
     go (Prim.functions.(defined k x))
   }
 
-  fun match (x) ((k: _ -> _)) -> k x
+  fun match (x) ((k: _ -> _)) = k x
 
 //fun match any (a) (a -> b) -> _
 //fun match any (x) (k) -> {
 //      if x in dom k { k x }
 //    }
 
-  fun cond ((f: Boolean -> a)) else {{o}} -> match True f else o
-  fun cond (f: Boolean -> a) -> f True
+  fun cond ((f: Boolean -> a)) else {{o}} = match True f else o
+  fun cond (f: Boolean -> a) = f True
 
-  fun repeat {e} while {c: Boolean} -> {
+  fun repeat {e} while {c: Boolean} = {
     e
     while c e
   }
 
-  fun while {c: Boolean} {{e}} -> {
+  fun while {c: Boolean} {{e}} = {
     if c {
       e
       while c e
     }
   }
 
-  fun if (True) {{e}} -> {
+  fun if (True) {{e}} = {
     e
     _
   }
 
-  fun if (False) {{e}} -> _
+  fun if (False) {{e}} = _
 
-  fun if (True) {e} else {{_}} -> e
-  fun if (False) {_} else {{e}} -> e
+  fun if (True) {e} else {{_}} = e
+  fun if (False) {_} else {{e}} = e
 }
 
 ////////////////////////////////////////////////////////////////
@@ -979,15 +976,15 @@ trait Tuples
   trait Tuple (_1) (_2) (_3) (_4) (_5) (_6) (_7) (_8)
 
   // fst and snd are defined only for pairs
-  fun fst (a, b) -> a
-  fun snd (a, b) -> b
+  fun fst (a, b) = a
+  fun snd (a, b) = b
 }
 
 trait Eq (a, b) = {
   import (Eq a, Eq b)._
   import Boolean._
 
-  fun (a1, b1) == (a2, b2) -> (a1 == a2) && (b1 == b2)
+  fun (a1, b1) == (a2, b2) = (a1 == a2) && (b1 == b2)
 }
 
 trait Ord (a, b) = {
@@ -995,15 +992,15 @@ trait Ord (a, b) = {
   import (Eq a, Eq b)._
   import Boolean._
 
-  fun (a1, b1) < (a2, b2) -> (a1 < a2) || ((a1 == a2) && (b1 < b2))
-  fun (a1, b1) > (a2, b2) -> (a1 > a2) || ((a1 == a2) && (b1 > b2))
+  fun (a1, b1) < (a2, b2) = (a1 < a2) || ((a1 == a2) && (b1 < b2))
+  fun (a1, b1) > (a2, b2) = (a1 > a2) || ((a1 == a2) && (b1 > b2))
 }
 
 trait Eq (a, b, c) = {
   import (Eq a, Eq b, Eq c)._
   import Boolean._
 
-  fun (a1, b1, c1) == (a2, b2, c2) -> ((a1 == a2) && (b1 == b2)) && (c1 == c2)
+  fun (a1, b1, c1) == (a2, b2, c2) = ((a1 == a2) && (b1 == b2)) && (c1 == c2)
 }
 
 trait Ord (a, b, c) = {
@@ -1011,8 +1008,8 @@ trait Ord (a, b, c) = {
   import (Eq a, Eq b, Eq c)._
   import Boolean._
 
-  fun (a1, b1, c1) < (a2, b2, c2) -> (a1 < a2) || ((a1 == a2) && ((b1, c1) < (b2, c2)))
-  fun (a1, b1, c1) > (a2, b2, c2) -> (a1 > a2) || ((a1 == a2) && ((b1, c1) > (b2, c2)))
+  fun (a1, b1, c1) < (a2, b2, c2) = (a1 < a2) || ((a1 == a2) && ((b1, c1) < (b2, c2)))
+  fun (a1, b1, c1) > (a2, b2, c2) = (a1 > a2) || ((a1 == a2) && ((b1, c1) > (b2, c2)))
 }
 
 trait Option = {
@@ -1020,20 +1017,20 @@ trait Option = {
   trait Some (value: a)
   trait Option (a) = None with (Some a)
 
-  fun (Option a) or (Option a) -> Option a
-  fun (None) or (o) -> o
-  fun (Some a) or (o) -> Some a
+  fun (Option a) or (Option a) = Option a
+  fun (None) or (o) = o
+  fun (Some a) or (o) = Some a
 
-  fun (Option a) then (a -> Option b) -> Option b
-  fun (None) then (f) -> None
-  fun (Some a) then (f) -> f a
+  fun (Option a) then (a -> Option b) = Option b
+  fun (None) then (f) = None
+  fun (Some a) then (f) = f a
 
-  fun unwrap (Option a) or {a} -> a
-  fun unwrap (Some a) or {_} -> a
-  fun unwrap (None) or {a} -> a
+  fun unwrap (Option a) or {a} = a
+  fun unwrap (Some a) or {_} = a
+  fun unwrap (None) or {a} = a
 
-  fun unwrap (Option a) -> a
-  fun unwrap (Some a) -> a
+  fun unwrap (Option a) = a
+  fun unwrap (Some a) = a
 }
 
 // Result is like Either
@@ -1043,21 +1040,21 @@ trait Result = {
 
   trait Result (a) (e) = (Ok a) with (Err e)
 
-  fun (Result a e) then (a -> Result b e) -> Result b e
-  fun (Ok a) then (f) -> f a
-  fun (Err b) then (f) -> Err b
+  fun (Result a e) then (a -> Result b e) = Result b e
+  fun (Ok a) then (f) = f a
+  fun (Err b) then (f) = Err b
 
-  fun (Result a e) and {Result b e} -> Result b e
-  fun (Ok a) then {r} -> r
-  fun (Err b) then {_} -> Err b
+  fun (Result a e) and {Result b e} = Result b e
+  fun (Ok a) then {r} = r
+  fun (Err b) then {_} = Err b
 
-  fun (Result a e) else (e -> Result b e) -> Result b e
-  fun (Ok a) else (_) -> Ok a
-  fun (Err e) else (f) -> f e
+  fun (Result a e) else (e -> Result b e) = Result b e
+  fun (Ok a) else (_) = Ok a
+  fun (Err e) else (f) = f e
 
-  fun (Result a e) or {Result b e} -> Result b e
-  fun (Ok a) else {_} -> Ok a
-  fun (Err e) else {r} -> r
+  fun (Result a e) or {Result b e} = Result b e
+  fun (Ok a) else {_} = Ok a
+  fun (Err e) else {r} = r
 }
 
 trait List
@@ -1086,133 +1083,133 @@ trait Filter (s) (a) = {
 }
 
 trait Filter (List.(List a)) (a) = {
-  fun filter (p) (Nil) -> Nil
+  fun filter (p) (Nil) = Nil
   fun filter (p) (Cons x xs) where p x     = Cons x (filter p xs)
   fun filter (p) (Cons x xs) where ! (p x) = filter p xs
 }
 
 trait Sequence (s) = {
-  fun (a) :: ((s a)) -> (s a)
-  fun (! a) :: ((! s a)) <- (s a)
+  fun (a) :: ((s a)) = (s a)
+  fun (! a) :: ((! s a)) = (? s a)
 
-  fun (s) ++ ((s a)) -> (s a)
+  fun (s) ++ ((s a)) = (s a)
 
-  fun head (s a) -> a
-  fun tail (s a) -> (s a)
+  fun head (s a) = a
+  fun tail (s a) = (s a)
 
-  fun init (s a) -> (s a)
+  fun init (s a) = (s a)
 
-  fun last (s a) -> a
+  fun last (s a) = a
 
-  fun concat (s (s a)) -> s a
+  fun concat (s (s a)) = s a
 }
 
 trait Sequence (List.(List _)) = {
   import List._
 
-  fun (x) :: ((xs)) -> Cons x xs
-  fun (! x) :: ((! xs)) <- (Cons x xs)
+  fun (x) :: ((xs)) = Cons x xs
+  fun (! x) :: ((! xs)) = (? Cons x xs)
 
-  fun (Nil) ++ ((ys)) -> ys
-  fun (x::xs) ++ ((ys)) -> x :: (xs ++ ys)
+  fun (Nil) ++ ((ys)) = ys
+  fun (x::xs) ++ ((ys)) = x :: (xs ++ ys)
 
-  fun head (x::_) -> x
-  fun tail (_::xs) -> xs
+  fun head (x::_) = x
+  fun tail (_::xs) = xs
 
-  fun init (x :: Nil) -> Nil
-  fun init (x :: xs) -> x :: (init xs)
+  fun init (x :: Nil) = Nil
+  fun init (x :: xs) = x :: (init xs)
 
-  fun last (x :: Nil) -> x
-  fun last (x :: xs) -> last xs
+  fun last (x :: Nil) = x
+  fun last (x :: xs) = last xs
 
-  fun concat (Nil) -> Nil
-  fun concat (xs :: Nil) -> xs
-  fun concat (xs :: xss) -> xs ++ (concat xss)
+  fun concat (Nil) = Nil
+  fun concat (xs :: Nil) = xs
+  fun concat (xs :: xss) = xs ++ (concat xss)
 }
 
 trait Functor (m) = {
-  fun map (_: a -> b) (m a) -> (m b)
+  fun map (_: a -> b) (m a) = (m b)
 
-  fun (b) <$ (m a) -> (m b)
-  fun (x) <$ (xs) -> map (fun (_) -> x) xs
+  fun (b) <$ (m a) = (m b)
+  fun (x) <$ (xs) = map (fun (_) -> x) xs
 }
 
 trait Functor (List.(List _)) = {
   import List._
 
-  fun map (f) (Nil) -> Nil
-  fun map (f) (Cons x xs) -> Cons (f x) (map f xs)
+  fun map (f) (Nil) = Nil
+  fun map (f) (Cons x xs) = Cons (f x) (map f xs)
 }
 
 trait Applicative (m) = {
-  fun pure (a) -> (m a)
-  fun (m (a -> b)) <*> (m a) -> (m b)
-  fun (m a) *> (m b) -> (m b)
-  fun (m a) <* (m b) -> (m a)
+  fun pure (a) = (m a)
+  fun (m (a -> b)) <*> (m a) = (m b)
+  fun (m a) *> (m b) = (m b)
+  fun (m a) <* (m b) = (m a)
 }
 
 trait Monad (m) = {
-  fun return (a) -> (m a)
-  fun (m a) >>= (a -> m b) -> m b
-  fun (ma) >> (mb) -> ma >>= (fun (_) -> mb)
+  fun return (a) = (m a)
+  fun (m a) >>= (a -> m b) = m b
+  fun (ma) >> (mb) = ma >>= (fun (_) -> mb)
 
-  fun (m a) then (a -> m b) -> m b
+  fun (m a) then (a -> m b) = m b
 }
 
 trait Applicative (List.(List a)) = (Functor List.(List a)) with {
   import List._
 
-  fun pure (x) -> Cons x Nil
-  fun (fs) <*> (xs) -> ()
-  fun (fa) *> (fb) -> fb
-  fun (fa) <* (fb) -> fa
+  fun pure (x) = Cons x Nil
+  fun (fs) <*> (xs) = ()
+  fun (fa) *> (fb) = fb
+  fun (fa) <* (fb) = fa
 }
 
 trait Monad (List.(List a)) = (Applicative List.(List a)) with {
   import List._
 
-  fun return (x) -> Cons x Nil
-  fun (xs) >>= (f) -> concatMap f xs
+  fun return (x) = Cons x Nil
+  fun (xs) >>= (f) = concatMap f xs
 }
 
 trait Foldable (s) = {
-  fun concatMap (a -> s b) (s a) -> s b
+  fun concatMap (a -> s b) (s a) = s b
 
   // FIXME: we need an extra parameter for a?
   // see writeup of optional parameters which default to _ and filtering based on if the actual list succeeds
   // or do we carry around the a in the s data structure?
 
-  fun sum (xs: s a) -> foldr (Num a).`_ + _` (Num a).(fromInt 0) xs
-  fun product (xs: s a) -> foldr (Num a).`_ * _` (Num a).(fromInt 1) xs
+  fun sum (xs: s a) = foldr (Num a).`_ + _` (Num a).(fromInt 0) xs
+  fun product (xs: s a) = foldr (Num a).`_ * _` (Num a).(fromInt 1) xs
 
-  fun any (p) (xs: s a) -> foldr (fun (x) (r) -> Boolean.(p x || r)) Boolean.False xs
-  fun all (p) (xs: s a) -> foldr (fun (x) (r) -> Boolean.(p x && r)) Boolean.True xs
-  fun (t) in (xs: s a) -> any (fun (x) -> (Eq a).(x == t)) xs
+  fun any (p) (xs: s a) = foldr (fun (x) (r) -> Boolean.(p x || r)) Boolean.False xs
+  fun all (p) (xs: s a) = foldr (fun (x) (r) -> Boolean.(p x && r)) Boolean.True xs
+  fun (t) in (xs: s a) = any (fun (x) -> (Eq a).(x == t)) xs
 
-  fun min (xs: s a) -> foldr1 (Ord a).`min _ _` xs
-  fun max (xs: s a) -> foldr1 (Ord a).`max _ _` xs
+  fun min (xs: s a) = foldr1 (Ord a).`min _ _` xs
+  fun max (xs: s a) = foldr1 (Ord a).`max _ _` xs
 
-  fun length (xs) -> foldr (fun (_) (x) -> Nat.(x + 1)) Nat.(fromInt 0) xs
+  fun length (xs) = foldr (fun (_) (x) -> Nat.(x + 1)) Nat.(fromInt 0) xs
 
-  fun foldr1 (a -> b -> b) (s a) -> b
-  fun foldr (a -> b -> b) (b) (s a) -> b
-  fun foldl (b -> a -> b) (b) (s a) -> b
+  fun foldr1 (a -> b -> b) (s a) = b
+  fun foldr (a -> b -> b) (b) (s a) = b
+  fun foldl (b -> a -> b) (b) (s a) = b
 }
 
 trait Foldable (List.(List _)) = {
   import List._
 
-  fun concatMap (f) (Nil) -> Nil
-  fun concatMap (f) (Cons xs Nil) -> map f xs
-  fun concatMap (f) (Cons xs xss) -> (map f xs) ++ (concatMap f xss)
+  fun concatMap (f) (Nil) = Nil
+  fun concatMap (f) (Cons xs Nil) = map f xs
+  fun concatMap (f) (Cons xs xss) = (map f xs) ++ (concatMap f xss)
 
-  fun foldr1 (f) (Cons x xs) -> foldr f x xs
+  fun foldr1 (f) (Cons x xs) = foldr f x xs
 
-  fun foldr (f) (z) (Nil) -> z
-  fun foldr (f) (z) (Cons x xs) -> f x (foldr f z xs)
+  fun foldr (f) (z) (Nil) = z
+  fun foldr (f) (z) (Cons x xs) = f x (foldr f z xs)
 
-  fun foldl (f) (z) (Nil) -> z
-  fun foldl (f) (z) (Cons x xs) -> foldl f (f x z) xs
+  fun foldl (f) (z) (Nil) = z
+  fun foldl (f) (z) (Cons x xs) = foldl f (f x z) xs
 }
 
 trait Eq (List.(List a)) = {
@@ -1220,10 +1217,10 @@ trait Eq (List.(List a)) = {
   import List._
   import Boolean._
 
-  fun (Nil) == (Nil) -> True
-  fun (Nil) == (Cons _ _) -> False
-  fun (Cons _ _) == (Nil) -> False
-  fun (Cons x xs) == (Cons y ys) -> (x == y) && (xs == ys)
+  fun (Nil) == (Nil) = True
+  fun (Nil) == (Cons _ _) = False
+  fun (Cons _ _) == (Nil) = False
+  fun (Cons x xs) == (Cons y ys) = (x == y) && (xs == ys)
 }
 
 trait Ord (List.(List a)) = (Eq List.(List a)) with {
@@ -1231,15 +1228,15 @@ trait Ord (List.(List a)) = (Eq List.(List a)) with {
   import List._
   import Boolean._
 
-  fun (Nil) < (Nil) -> False
-  fun (Nil) < (Cons _ _) -> True
-  fun (Cons _ _) < (Nil) -> False
-  fun (Cons x xs) < (Cons y ys) -> (x < y) || ((x == y) && (xs < ys))
+  fun (Nil) < (Nil) = False
+  fun (Nil) < (Cons _ _) = True
+  fun (Cons _ _) < (Nil) = False
+  fun (Cons x xs) < (Cons y ys) = (x < y) || ((x == y) && (xs < ys))
 
-  fun (Nil) > (Nil) -> False
-  fun (Nil) > (Cons _ _) -> False
-  fun (Cons _ _) > (Nil) -> True
-  fun (Cons x xs) > (Cons y ys) -> (x > y) || ((x == y) && (xs > ys))
+  fun (Nil) > (Nil) = False
+  fun (Nil) > (Cons _ _) = False
+  fun (Cons _ _) > (Nil) = True
+  fun (Cons x xs) > (Cons y ys) = (x > y) || ((x == y) && (xs > ys))
 }
 
 trait Set = {
@@ -1254,26 +1251,26 @@ trait Set = {
   trait Branch (left) (value) (right)
   trait Set (a) = Empty with (Branch (Set a) (a) (Set a))
 
-  fun (Empty) ++ ((Empty)) -> Empty
-  fun (Empty) ++ ((ys)) -> ys
-  fun (xs) ++ ((Empty)) -> xs
-  fun (Branch a x b) ++ ((ys)) -> a ++ insert x ys ++ b
+  fun (Empty) ++ ((Empty)) = Empty
+  fun (Empty) ++ ((ys)) = ys
+  fun (xs) ++ ((Empty)) = xs
+  fun (Branch a x b) ++ ((ys)) = a ++ insert x ys ++ b
 
-  fun (xs) union ((ys)) -> xs ++ ys
-  fun (xs) ∪ ((ys)) -> xs ++ ys
+  fun (xs) union ((ys)) = xs ++ ys
+  fun (xs) ∪ ((ys)) = xs ++ ys
 
-  fun (Empty) intersect ((ys)) -> Empty
-  fun (Branch a x b) intersect ((Empty)) -> Empty
-  fun (Branch a x b) intersect ((ys)) -> {
+  fun (Empty) intersect ((ys)) = Empty
+  fun (Branch a x b) intersect ((Empty)) = Empty
+  fun (Branch a x b) intersect ((ys)) = {
     cond {
       x in ys -> Branch (a intersect ys) x (b intersect ys)
       _       -> (a intersect ys) union (b intersect ys)
     }
   }
-  fun (xs) ∩ ((ys)) -> xs intersect ys
+  fun (xs) ∩ ((ys)) = xs intersect ys
 
-  fun insert (x) (Empty) -> Branch Empty x Empty
-  fun insert (x) (Branch a y b) -> {
+  fun insert (x) (Empty) = Branch Empty x Empty
+  fun insert (x) (Branch a y b) = {
     cond {
       x < y -> Branch (insert x a) y b
       x > y -> Branch a y (insert x b)
@@ -1281,8 +1278,8 @@ trait Set = {
     }
   }
 
-  fun (x) in (Empty) -> False
-  fun (x) in (Branch a y b) -> {
+  fun (x) in (Empty) = False
+  fun (x) in (Branch a y b) = {
     if (x < y) {
       x in a
     } else if (x > y) {
@@ -1292,11 +1289,11 @@ trait Set = {
     }
   }
 
-  fun fromList (xs) -> foldr `_ ++ _` Empty xs
+  fun fromList (xs) = foldr `_ ++ _` Empty xs
 
-  fun singleton (x) -> insert x Empty
+  fun singleton (x) = insert x Empty
 
-  fun Set (xs: List _) -> fromList xs
+  fun Set (xs: List _) = fromList xs
 }
 
 // The prelude proper.

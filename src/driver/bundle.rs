@@ -4,7 +4,7 @@ use syntax::names::*;
 use std::collections::HashMap;
 
 use namer::graph::ScopeGraph;
-use namer::graph::EnvIndex;
+use namer::graph::{LookupIndex, MixfixIndex, EnvIndex};
 use namer::symbols::Scope;
 use namer::symbols::Env;
 
@@ -14,7 +14,12 @@ use super::loader::Input;
 pub enum Bundle {
     Read { source: Source, input: Input },
     Parsed { source: Source, line_map: LineMap, tree: Located<Root> },
-    Prenamed { source: Source, line_map: LineMap, tree: Located<Root>, graph: ScopeGraph, scopes: HashMap<NodeId, Scope> },
+    Prenamed { source: Source, line_map: LineMap, tree: Located<Root>,
+        graph: ScopeGraph,
+        scopes: HashMap<NodeId, Scope>,
+        lookups: HashMap<NodeId, LookupIndex>,
+        mixfixes: HashMap<NodeId, MixfixIndex>,
+    },
     Named { source: Source, line_map: LineMap, tree: Located<Root>, graph: ScopeGraph, scopes: HashMap<NodeId, Scope> },
     Core { source: Source, line_map: LineMap, root_scope: Scope }
 }

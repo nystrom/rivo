@@ -19,7 +19,7 @@ use std::collections::HashMap;
 static mut depth: u32 = 0;
 
 #[derive(Clone)]
-pub struct PrenameContext {
+pub struct PrenameCtx {
     /// The current lexical scope.
     scope: Scope,
     /// Names declared or imported in this scope or a parent scope.
@@ -28,27 +28,21 @@ pub struct PrenameContext {
     unknowns: Vec<Located<Decl>>,
     /// Are we inside a mixfix expression?
     in_mixfix: bool,
-    /// Are we inside an import expression?
-    in_import: bool,
-    /// When doing a lookup, should we search the parents of the scope?
-    search_parent: bool,
     /// Priority of declarations.
     prio: Prio,
 }
 
-impl PrenameContext {
-    // The initial environment is Empty, not Global.
-    // When we enter the Bundle during the tree traversal,
-    // the imports should reference Global. Global is not
-    // a parent of the Bundle scope.
-    pub fn new() -> PrenameContext {
-        PrenameContext {
+impl PrenameCtx {
+    pub fn new() -> PrenameCtx {
+        PrenameCtx {
+            // The initial environment is Empty, not Global.
+            // When we enter the Bundle during the tree traversal,
+            // the imports should reference Global. Global is not
+            // a parent of the Bundle scope.
             scope: Scope::Empty,
             names: vec![],
             unknowns: vec![],
             in_mixfix: false,
-            in_import: false,
-            search_parent: true,
             prio: Prio(0)
         }
     }
@@ -57,6 +51,8 @@ impl PrenameContext {
 pub struct Prenamer<'a> {
     pub graph: &'a mut ScopeGraph,
     pub scopes: &'a mut HashMap<NodeId, Scope>,
+    pub lookups: &'a mut HashMap<NodeId, LookupIndex>,
+    pub mixfixes: &'a mut HashMap<NodeId, MixfixIndex>,
     pub driver: &'a mut driver::Driver,
 }
 
@@ -174,10 +170,10 @@ impl<'a> Prenamer<'a> {
                 Prenamer::add_unknowns_for_exp(decls, flag, &fun, defined_names, scope);
                 Prenamer::add_unknowns_for_exp(decls, flag, &arg, defined_names, scope);
             },
-            Exp::Name { id, name, lookup: _ } => {
+            Exp::Name { id, name } => {
                 Prenamer::add_unknown_for_name(decls, flag, name.clone(), defined_names, scope, &e.loc);
             },
-            Exp::MixfixApply { es, id, lookup: _ } => {
+            Exp::MixfixApply { es, id } => {
                 for e in es {
                     Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
                 }
@@ -201,54 +197,20 @@ impl<'a> Prenamer<'a> {
         where T : IntoIterator<Item = Located<Def>>
     {
         let mut names = Vec::new();
+
         for def in defs {
             match def {
-                Located { loc, value: Def::ImportDef { import } } => {
-                    Prenamer::add_imported_names(&*import, &mut names);
+                Located { loc, value: Def::ImportDef { opt_path, selector: Selector::Including { name } } } => {
+                    names.push(name.clone());
+                },
+                Located { loc, value: Def::ImportDef { opt_path, selector: Selector::Renaming { name, rename } } } => {
+                    names.push(rename.clone());
                 },
                 _ => {},
             }
         }
 
         names
-    }
-
-    fn add_imported_names(namespace: &Located<Exp>, names: &mut Vec<Name>) {
-        match &namespace.value {
-            Exp::Name { name, .. } => {
-                names.push(name.clone());
-            },
-            Exp::Select { name, .. } => {
-                names.push(name.clone());
-            },
-            Exp::MixfixApply { es, .. } => {
-                for e in es {
-                    Prenamer::add_imported_names(e, names);
-                }
-            },
-            Exp::Apply { fun, .. } => {
-                Prenamer::add_imported_names(fun, names);
-            },
-            Exp::Union { es } => {
-                for e in es {
-                    Prenamer::add_imported_names(e, names);
-                }
-            },
-            Exp::Tuple { es } => {
-                for e in es {
-                    Prenamer::add_imported_names(e, names);
-                }
-            },
-            Exp::Within { e2, .. } => {
-                Prenamer::add_imported_names(e2, names);
-            },
-            Exp::Arrow { ret, .. } => {
-                Prenamer::add_imported_names(ret, names);
-            },
-            _ => {
-                // bad import!
-            },
-        }
     }
 
     fn get_declared_names(cmds: &Vec<Located<Cmd>>) -> Vec<Name> {
@@ -321,6 +283,7 @@ impl<'a> Prenamer<'a> {
     }
 
     /// Checks if the given expression is (potentially) stable; that is, evaluatable at compile time.
+    /// Actual stability depends on whether names refer to stable traits.
     fn is_stable(e: &Exp) -> bool {
         match e {
             Exp::Name { .. } => true,
@@ -352,123 +315,62 @@ impl<'a> Prenamer<'a> {
 
         for def in defs {
             match def {
-                Located { loc, value: Def::ImportDef { import } } => {
-                    match import.value {
-                        Exp::Lit { lit: Lit::Nothing } => {
+                Located { loc, value: Def::ImportDef { opt_path, selector } } => {
+                    match selector {
+                        Selector::Nothing => {
                             imports_none = true;
                         },
                         _ => {},
                     }
 
-                    self.add_import(import_into_scope, import_into_scope, &*import);
+                    self.add_import(import_into_scope, import_into_scope, &opt_path.map(|bx| *bx), selector, loc);
                 },
                 _ => {},
             }
         }
 
-        // If in the root scope and there is no import (), add import Prelude._.
+        // If this is in the root scope and there is no import (), add import Prelude._.
+        // FIXME: should we just make the parent of the top-level scope include an import of Prelude.
+        // import () will prevent following the parent link.
         if is_root && ! imports_none {
-            let lookup = self.graph.lookup_here(Scope::Global, Name::Id("Prelude".to_string()));
+            let lookup = self.graph.lookup(Scope::Global, Name::Id("Prelude".to_string()));
             let scope = self.graph.get_scope_of_lookup(lookup);
             self.graph.import(import_into_scope, &Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
         }
     }
 
     #[cfg_attr(debug_assertions, trace)]
-    fn add_import(&mut self, import_into_scope: Scope, lookup_scope: Scope, namespace: &Located<Exp>) {
-        let loc = namespace.loc;
-
-        match &namespace.value {
-            Exp::Lit { lit: Lit::Wildcard } => {
-                self.graph.import(import_into_scope, &Located { loc, value: Import::All { path: lookup_scope.clone() } });
+    fn add_import(&mut self, import_into_scope: Scope, lookup_scope: Scope, opt_path: &Option<Located<Exp>>, selector: Selector, loc: Loc) {
+        match selector {
+            Selector::All => {
+                self.graph.import(import_into_scope, &Located { loc, value: Import::All { path: lookup_scope } });
             },
-            Exp::Lit { lit: Lit::Nothing } => {
-                self.graph.import(import_into_scope, &Located { loc, value: Import::None { path: lookup_scope.clone() } });
+            Selector::Nothing => {
+                self.graph.import(import_into_scope, &Located { loc, value: Import::None { path: lookup_scope } });
             },
-            Exp::Select { exp, name } => {
-                let scope = self.lookup_frame(lookup_scope, true, &*exp);
-                self.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: scope, name: name.clone() } });
+            Selector::Including { name } => {
+                self.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: lookup_scope, name: name.clone() } });
             },
-            Exp::Within { id, e1, e2 } => {
-                let inner_scope = self.lookup_frame(lookup_scope, true, &*e1);
-                self.add_import(import_into_scope, inner_scope, &*e2);
+            Selector::Excluding { name } => {
+                self.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: lookup_scope, name: name.clone() } });
             },
-            Exp::MixfixApply { es, id, lookup: None } => {
-                let lookup = self.parse_mixfix(*id, import_into_scope, true, &es);
-                let inner_scope = self.graph.get_scope_of_mixfix(lookup);
-                self.graph.import(import_into_scope, &Located { loc, value: Import::Here { path: inner_scope } });
-            },
-            Exp::MixfixApply { es, id, lookup: Some(lookup) } => {
-                let inner_scope = self.graph.get_scope_of_mixfix(*lookup);
-                self.graph.import(import_into_scope, &Located { loc, value: Import::Here { path: inner_scope } });
-            },
-            Exp::Name { id: _, name, lookup: _ } => {
-                self.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: lookup_scope.clone(), name: name.clone() } });
-            },
-            Exp::Union { es } => {
-                for e in es {
-                    self.add_import(import_into_scope, lookup_scope, e);
-                }
-            },
-            Exp::Tuple { es } => {
-                for e in es {
-                    self.add_import(import_into_scope, lookup_scope, e);
-                }
-            },
-            Exp::Arrow { id, arg, ret } => {
-                match &***arg {
-                    Exp::Select { exp, name } => {
-                        let inner_scope = self.lookup_frame(import_into_scope, true, &*exp);
-                        match &***ret {
-                            Exp::Name { id: _, name: rename, lookup: _ } => {
-                                self.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: inner_scope.clone(), name: name.clone(), rename: rename.clone() } });
-                            },
-                            Exp::Lit { lit: Lit::Nothing } => {
-                                self.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: inner_scope.clone(), name: name.clone() } });
-                            },
-                            _ => {
-                                // bad import!
-                            },
-                        }
-                    },
-                    Exp::Name { name, .. } => {
-                        match &***ret {
-                            Exp::Name { id: _, name: rename, lookup: _ } => {
-                                self.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: lookup_scope.clone(), name: name.clone(), rename: rename.clone() } });
-                            },
-                            Exp::Lit { lit: Lit::Nothing } => {
-                                self.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: lookup_scope.clone(), name: name.clone() } });
-                            },
-                            _ => {
-                                // bad import!
-                            },
-                        }
-                    },
-                    _ => {
-                        // bad import!
-                    },
-                }
-            },
-            _ => {
-                // bad import!
+            Selector::Renaming { name, rename } => {
+                self.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: lookup_scope, name: name.clone(), rename: rename.clone() } });
             },
         }
     }
 
-    pub fn parse_mixfix(&mut self, id: NodeId, scope: Scope, in_import: bool, es: &Vec<Located<Exp>>) -> MixfixIndex {
+    pub fn lookup(&mut self, id: NodeId, scope: Scope, name: Name) -> LookupIndex {
+        let lookup = self.graph.lookup(scope, name);
+        self.lookups.insert(id, lookup);
+        lookup
+    }
+
+    pub fn parse_mixfix(&mut self, id: NodeId, scope: Scope, es: &Vec<Located<Exp>>) -> MixfixIndex {
         let parts = es.iter().map(|e|
             match e.value {
-                Exp::Name { ref name, id, lookup: None } => {
-                    if in_import {
-                        let lookup = self.graph.lookup_for_import(scope, name.clone());
-                        MixfixPart { name_ref: Some(lookup) }
-                    }
-                    else {
-                        let lookup = self.graph.lookup(scope, name.clone());
-                        MixfixPart { name_ref: Some(lookup) }
-                    }
-                },
-                Exp::Name { ref name, id, lookup: Some(lookup) } => {
+                Exp::Name { ref name, id } => {
+                    let lookup = self.lookup(id, scope, name.clone());
                     MixfixPart { name_ref: Some(lookup) }
                 },
                 _ =>
@@ -476,35 +378,25 @@ impl<'a> Prenamer<'a> {
             }
         ).collect();
 
-        self.graph.parse_mixfix(parts)
+        let lookup = self.graph.parse_mixfix(parts);
+        self.mixfixes.insert(id, lookup);
+        lookup
     }
 
-    pub fn lookup_frame(&mut self, scope: Scope, in_import: bool, e: &Located<Exp>) -> Scope {
+    pub fn lookup_frame(&mut self, scope: Scope, e: &Located<Exp>) -> Scope {
         match &e.value {
-            Exp::Name { name, id, lookup: None } => {
-                if in_import {
-                    let lookup = self.graph.lookup_for_import(scope, name.clone());
-                    self.graph.get_scope_of_lookup(lookup)
-                }
-                else {
-                    let lookup = self.graph.lookup(scope, name.clone());
-                    self.graph.get_scope_of_lookup(lookup)
-                }
+            Exp::Name { name, id } => {
+                let lookup = self.lookup(*id, scope, name.clone());
+                self.graph.get_scope_of_lookup(lookup)
             },
-            Exp::Name { name, id, lookup: Some(lookup) } => {
-                self.graph.get_scope_of_lookup(*lookup)
-            },
-            Exp::MixfixApply { es, id, lookup: None } => {
-                let lookup = self.parse_mixfix(*id, scope, in_import, es);
+            Exp::MixfixApply { es, id } => {
+                let lookup = self.parse_mixfix(*id, scope, es);
                 self.graph.get_scope_of_mixfix(lookup)
-            },
-            Exp::MixfixApply { es, id, lookup: Some(lookup) } => {
-                self.graph.get_scope_of_mixfix(*lookup)
             },
             Exp::Apply { fun, arg } => {
                 // When looking up (`List _` Int) it's sufficient to just lookup
                 // `List _`. The `Int` will be substituted in at runtime.
-                self.lookup_frame(scope, in_import, &*fun)
+                self.lookup_frame(scope, &*fun)
             },
             Exp::Record { id, .. } => {
                 let scope = self.scopes.get(&id);
@@ -517,7 +409,7 @@ impl<'a> Prenamer<'a> {
             Exp::Union { es } => {
                 let env = self.graph.new_env();
                 for e in es {
-                    let s = self.lookup_frame(scope, in_import, e);
+                    let s = self.lookup_frame(scope, e);
                     self.graph.include(env, s);
                 }
                 env
@@ -531,13 +423,13 @@ impl<'a> Prenamer<'a> {
 }
 
 impl<'a> Prenamer<'a> {
-    fn walk_cmd_list(&mut self, body: &Vec<Located<Cmd>>, ctx: &PrenameContext) -> Vec<Located<Cmd>> {
+    fn walk_cmd_list(&mut self, body: &Vec<Located<Cmd>>, ctx: &PrenameCtx) -> Vec<Located<Cmd>> {
         let mut result = Vec::new();
         let mut prio = 0;
         let mut new_names = ctx.names.clone();
 
         for cmd in body {
-            let ctx1 = PrenameContext {
+            let ctx1 = PrenameCtx {
                 prio: Prio(prio),
                 names: new_names.clone(),
                 ..ctx.clone()
@@ -567,13 +459,13 @@ impl<'a> Prenamer<'a> {
         result
     }
 
-    fn walk_def_list(&mut self, body: &Vec<Located<Def>>, ctx: &PrenameContext) -> Vec<Located<Def>> {
+    fn walk_def_list(&mut self, body: &Vec<Located<Def>>, ctx: &PrenameCtx) -> Vec<Located<Def>> {
         let mut result = Vec::new();
         let mut prio = 0;
         let mut new_names = ctx.names.clone();
 
         for def in body {
-            let ctx1 = PrenameContext {
+            let ctx1 = PrenameCtx {
                 prio: Prio(prio),
                 names: new_names.clone(),
                 ..ctx.clone()
@@ -605,8 +497,8 @@ impl<'a> Prenamer<'a> {
 }
 
 // visit any node that has a node id.
-impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
-    fn visit_root(&mut self, s: &'a Root, ctx: &PrenameContext, loc: &Loc) -> Root {
+impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
+    fn visit_root(&mut self, s: &'a Root, ctx: &PrenameCtx, loc: &Loc) -> Root {
         match s {
             Root::Bundle { id, cmds } => {
                 let scope = self.graph.new_env();
@@ -622,7 +514,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 new_names.extend(imported_names.iter().cloned());
                 new_names.extend(decl_names.iter().cloned());
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
                     names: new_names,
                     ..ctx.clone()
@@ -664,7 +556,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
         }
     }
 
-    fn visit_def(&mut self, s: &'a Def, ctx: &PrenameContext, loc: &Loc) -> Def {
+    fn visit_def(&mut self, s: &'a Def, ctx: &PrenameCtx, loc: &Loc) -> Def {
         match s {
             Def::MixfixDef { id, flag, name, opt_guard, params, ret } => {
                 let scope = self.graph.new_env();
@@ -690,13 +582,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                     self.graph.declare(scope, decl);
                 }
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
                     names: new_names.clone(),
                     ..ctx.clone()
                 };
 
-                let input_params_ctx = PrenameContext {
+                let input_params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
@@ -751,7 +643,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 for param in params {
                     match param {
                         Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
-                            inner_frames.push(self.lookup_frame(ctx.scope, false, e));
+                            inner_frames.push(self.lookup_frame(ctx.scope, e));
                         },
                         _ => {},
                     }
@@ -759,7 +651,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 match ret {
                     Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
-                        inner_frames.push(self.lookup_frame(ctx.scope, false, e));
+                        inner_frames.push(self.lookup_frame(ctx.scope, e));
                     },
                     _ => {},
                 }
@@ -822,23 +714,22 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 Def::MixfixDef { id: *id, flag: *flag, name: name.clone(), opt_guard: opt_guard1, params: params1, ret: ret1 }
             },
-            Def::FormulaDef { flag, formula } => {
+            Def::FormulaDef { .. } => {
                 self.walk_def(s, ctx, loc)
             },
-            Def::ImportDef { import } => {
+            Def::ImportDef { .. } => {
                 // Swap the environment with the weaker import env.
                 // This prevents import resolution from searching the frame with
                 // the imports themselves.
-
-                let child_ctx = PrenameContext {
-                    in_import: true,
-                    ..ctx.clone()
+                let new_scope = match ctx.scope {
+                    Scope::Env(index) => Scope::EnvWithoutImports(index),
+                    scope => scope,
                 };
 
-                if ! Prenamer::allowed_in_import(import) {
-                    self.driver.error(Located { loc: *loc, value: "Non-stable expression found in import definition.".to_owned() });
-                    return s.clone();
-                }
+                let child_ctx = PrenameCtx {
+                    scope: new_scope,
+                    ..ctx.clone()
+                };
 
                 self.walk_def(s, &child_ctx, loc)
             },
@@ -846,7 +737,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
     }
 
 
-    fn visit_exp(&mut self, s: &'a Exp, ctx: &PrenameContext, loc: &Loc) -> Exp {
+    fn visit_exp(&mut self, s: &'a Exp, ctx: &PrenameCtx, loc: &Loc) -> Exp {
         match s {
             Exp::Layout { id, cmds } => {
                 let scope = self.graph.new_env();
@@ -862,9 +753,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 new_names.extend(imported_names.iter().cloned());
                 new_names.extend(decl_names.iter().cloned());
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
-                    in_import: false,
                     in_mixfix: false,
                     names: new_names,
                     ..ctx.clone()
@@ -917,7 +807,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 new_names.extend(imported_names.iter().cloned());
                 new_names.extend(decl_names.iter().cloned());
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
                     in_mixfix: false,
                     names: new_names,
@@ -952,7 +842,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                                     if let Some(scope_i) = scopes.get(&id) {
                                         for (j, ej) in es.iter().enumerate() {
                                             if i != j {
-                                                let scope_j = self.lookup_frame(scope, ctx.in_import, ej);
+                                                let scope_j = self.lookup_frame(scope, ej);
                                                 self.graph.import(*scope_i, &Located::new(ej.loc, Import::All { path: scope_j }))
                                             }
                                         }
@@ -982,7 +872,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                     self.graph.declare(scope, decl);
                 }
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
                     in_mixfix: false,
                     names: new_names,
@@ -997,7 +887,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 let ret1 = Box::new(Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
 
-                let params_ctx = PrenameContext {
+                let params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
@@ -1023,7 +913,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                     self.graph.declare(scope, decl);
                 }
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
                     in_mixfix: false,
                     names: new_names,
@@ -1032,7 +922,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 let body1 = Box::new(Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
 
-                let params_ctx = PrenameContext {
+                let params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
@@ -1056,7 +946,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                     self.graph.declare(scope, decl);
                 }
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
                     in_mixfix: false,
                     names: new_names,
@@ -1065,7 +955,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
 
                 let ret1 = Box::new(Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
 
-                let params_ctx = PrenameContext {
+                let params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
@@ -1090,13 +980,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 let scope = self.graph.new_env();
                 self.scopes.insert(*id, scope);
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     scope,
                     in_mixfix: false,
                     ..ctx.clone()
                 };
 
-                let e1_scope = self.lookup_frame(ctx.scope, ctx.in_import, &e1_2);
+                let e1_scope = self.lookup_frame(ctx.scope, &e1_2);
                 self.graph.import(scope, &Located { loc: e1.loc, value: Import::All { path: e1_scope } });
 
                 let e2_1 = self.visit_exp(&e2.value, &child_ctx, &e2.loc);
@@ -1107,25 +997,25 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                     e2: Box::new(Located { loc: e2.loc, value: e2_1 })
                 }
             },
-            Exp::Name { name, id, lookup: None } => {
+            Exp::Name { name, id } => {
                 self.scopes.insert(*id, ctx.scope);
 
                 let new_node = self.walk_exp(s, &ctx, &loc);
 
                 match &new_node {
-                    Exp::Name { name, id, lookup: None } => {
-                        let lookup = self.graph.lookup(ctx.scope, name.clone());
-                        Exp::Name { name: name.clone(), id: *id, lookup: Some(lookup) }
+                    Exp::Name { name, id } => {
+                        let lookup = self.lookup(*id, ctx.scope, name.clone());
+                        Exp::Name { name: name.clone(), id: *id }
                     },
                     _ => {
                         new_node
                     }
                 }
             },
-            Exp::MixfixApply { es, id, lookup: None } => {
+            Exp::MixfixApply { es, id } => {
                 self.scopes.insert(*id, ctx.scope);
 
-                let child_ctx = PrenameContext {
+                let child_ctx = PrenameCtx {
                     in_mixfix: true,
                     ..ctx.clone()
                 };
@@ -1133,11 +1023,11 @@ impl<'tables, 'a> Rewriter<'a, PrenameContext> for Prenamer<'tables> {
                 let new_node = self.walk_exp(s, &child_ctx, &loc);
 
                 match &new_node {
-                    Exp::MixfixApply { es, id, lookup: None } => {
+                    Exp::MixfixApply { es, id } => {
                         // Lookup, but do no rewrite the tree.
                         // Rewrites are done in Renamer.
-                        let lookup = self.parse_mixfix(*id, ctx.scope, ctx.in_import, es);
-                        Exp::MixfixApply { es: es.clone(), id: *id, lookup: Some(lookup) }
+                        let lookup = self.parse_mixfix(*id, ctx.scope, es);
+                        Exp::MixfixApply { es: es.clone(), id: *id }
                     },
                     _ => {
                         new_node

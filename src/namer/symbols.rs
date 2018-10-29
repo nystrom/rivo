@@ -20,6 +20,7 @@ pub enum Scope {
     Lookup(LookupIndex),
     Mixfix(MixfixIndex),
     Env(EnvIndex),
+    EnvWithoutImports(EnvIndex), // just like env but we don't search imports
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -126,26 +127,19 @@ impl Decl {
 pub struct LookupRef {
     pub scope: Scope,
     pub name: Name,
-    pub follow_imports: bool,
     pub follow_parents: bool,
 }
 
 impl LookupRef {
     pub fn new(scope: Scope, name: Name) -> LookupRef {
         LookupRef {
-            scope, name, follow_imports: true, follow_parents: true
+            scope, name, follow_parents: true
         }
     }
 
     pub fn new_here(scope: Scope, name: Name) -> LookupRef {
         LookupRef {
-            scope, name, follow_imports: false, follow_parents: false
-        }
-    }
-
-    pub fn new_for_import(scope: Scope, name: Name) -> LookupRef {
-        LookupRef {
-            scope, name, follow_imports: false, follow_parents: true
+            scope, name, follow_parents: false
         }
     }
 }

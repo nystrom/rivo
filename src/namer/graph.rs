@@ -68,6 +68,22 @@ impl ScopeGraph {
         Scope::Env(EnvIndex(index))
     }
 
+    pub fn get_lookup(&self, index: &LookupIndex) -> LookupRef {
+        match index {
+            LookupIndex(i) => self.lookups.get(*i).unwrap().clone()
+        }
+    }
+    pub fn get_mixfix(&self, index: &MixfixIndex) -> MixfixRef {
+        match index {
+            MixfixIndex(i) => self.mixfixes.get(*i).unwrap().clone()
+        }
+    }
+    pub fn get_env(&self, index: &EnvIndex) -> Env {
+        match index {
+            EnvIndex(i) => self.envs.get(*i).unwrap().clone()
+        }
+    }
+
     pub fn get_scope_of_lookup(&self, r: LookupIndex) -> Scope {
         Scope::Lookup(r)
     }
@@ -118,12 +134,6 @@ impl ScopeGraph {
     pub fn lookup(&mut self, scope: Scope, name: Name) -> LookupIndex {
         let index = self.lookups.len();
         let r = LookupRef::new(scope, name);
-        self.lookups.push(r);
-        LookupIndex(index)
-    }
-    pub fn lookup_for_import(&mut self, scope: Scope, name: Name) -> LookupIndex {
-        let index = self.lookups.len();
-        let r = LookupRef::new_for_import(scope, name);
         self.lookups.push(r);
         LookupIndex(index)
     }

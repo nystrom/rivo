@@ -14,7 +14,7 @@ import ()
 trait Prim = {
   // returns non-zero i32 iff the two arguments are identical values
   // This should never be called directly. Use `Eq` for equality.
-  fun identical (_) (_) -> native
+  fun identical (_) (_) = native
 
   // This is the underlying implementation of `with`.
 
@@ -25,7 +25,7 @@ trait Prim = {
   // 1 ⊓ 1 is 1
   // 1 ⊓ 2 is an error
   // fun ⊓ fun' is an overloaded function
-  fun (_) ⊓ ((_)) -> native
+  fun (_) ⊓ ((_)) = native
 
   // This is the underlying implementation of `@`.
 
@@ -36,57 +36,62 @@ trait Prim = {
   // 1 ⊔ 1 is 1
   // 1 ⊔ 2 is an error
   // fun ⊔ fun' is an overloaded function
-  fun (_) ⊔ ((_)) -> native
+  fun (_) ⊔ ((_)) = native
 
   // top is the union of all values and acts like unit
-  fun ⊤ -> native
+  fun ⊤ = native
   // the top pattern matches nothing
-  fun ⊤ <- native
+  fun ⊤ = (? _) where native
 
   // bottom is the intersection of all values and acts like null
-  fun ⊥ -> native
+  fun ⊥ = native
   // the bottom pattern matches everything
-  fun ⊥ <- native
+  fun ⊥ = (? _) where native
 
-  trait exceptions = {
-    // note that the handler is call by value but we should pass in a function
-    fun try {_} catch (_ -> _) -> native
-    fun try {_} finally {_} -> native
-    fun throw (_) -> native
-  }
+  // Ivo will support exceptions
+  // For now, it just supports the Result type.
+  trait exceptions = { }
 
   // Ivo supports X10-style concurrency.
   // The VM links to the X10 library.
   // We (will) have a notion of place.
   trait par = {
-    fun async {_} -> native
-    fun atomic {_} -> native
-    fun when {_} {_} -> native
-    fun finish {_} -> native
+    fun async {_} = native
+    fun atomic {_} = native
+    fun when {_} {_} = native
+    fun finish {_} = native
 
+    // TODO: put in an Ivo library
     // TODO: offering finish
     // TODO: clocks
     // TODO: futures
   }
 
   trait arrays = {
-    fun new (_) (i32.Int32) -> native
-    fun get (_) (i32.Int32) -> native
-    fun put (_) (i32.Int32) (_) -> native
+    fun new (_) (i32.I64) = native
+    fun get (_) (i32.I64) = native
+    fun put (_) (i32.I64) (_) = native
   }
 
-  trait io = {
+  trait ffi = {
+    // TODO
+    // needed for IO, which can be in another library
+  }
+
+  trait atomic = {
+    // TODO
+    // compare and swap, etc
   }
 
   trait functions = {
     // Is the function defined at the given point?
-    fun defined (_ -> _) (_) -> native
+    fun defined (_ -> _) (_) = native
   }
 
   // Big integers
   trait int = {
-    fun Int -> native
-    fun Int <- native
+    fun Int = native
+    fun Int = (? _) where native
 
     import i32.Bool32
     import i32.I32
@@ -94,44 +99,44 @@ trait Prim = {
     import f32.F32
     import f64.F64
 
-    fun trunc_s_f32 (F32) -> native
-    fun trunc_s_f64 (F64) -> native
-    fun trunc_u_f32 (F32) -> native
-    fun trunc_u_f64 (F64) -> native
-    fun convert_s_i32 (I32) -> native
-    fun convert_s_i64 (I64) -> native
-    fun convert_u_i32 (I32) -> native
-    fun convert_u_i64 (I64) -> native
+    fun trunc_s_f32 (F32) = native
+    fun trunc_s_f64 (F64) = native
+    fun trunc_u_f32 (F32) = native
+    fun trunc_u_f64 (F64) = native
+    fun convert_s_i32 (I32) = native
+    fun convert_s_i64 (I64) = native
+    fun convert_u_i32 (I32) = native
+    fun convert_u_i64 (I64) = native
 
-    fun add (Int) (Int) -> native
-    fun sub (Int) (Int) -> native
-    fun mul (Int) (Int) -> native
-    fun div (Int) (Int) -> native
-    fun rem (Int) (Int) -> native
+    fun add (Int) (Int) = native
+    fun sub (Int) (Int) = native
+    fun mul (Int) (Int) = native
+    fun div (Int) (Int) = native
+    fun rem (Int) (Int) = native
 
-    fun and (Int) (Int) -> native
-    fun or (Int) (Int) -> native
-    fun xor (Int) (Int) -> native
-    fun complement (Int) -> native
+    fun and (Int) (Int) = native
+    fun or (Int) (Int) = native
+    fun xor (Int) (Int) = native
+    fun complement (Int) = native
 
-    fun eq (Int) (Int) -> native
-    fun ne (Int) (Int) -> native
-    fun lt (Int) (Int) -> native
-    fun le (Int) (Int) -> native
-    fun gt (Int) (Int) -> native
-    fun ge (Int) (Int) -> native
+    fun eq (Int) (Int) = native
+    fun ne (Int) (Int) = native
+    fun lt (Int) (Int) = native
+    fun le (Int) (Int) = native
+    fun gt (Int) (Int) = native
+    fun ge (Int) (Int) = native
 
-    fun shl (Int) (Int) -> native
-    fun shr_s (Int) (Int) -> native
-    fun shr_u (Int) (Int) -> native
+    fun shl (Int) (Int) = native
+    fun shr_s (Int) (Int) = native
+    fun shr_u (Int) (Int) = native
   }
 
   trait i32 = {
-    fun I32 -> native
-    fun I32 <- native
+    fun I32 = native
+    fun I32 = (? _) where native
 
     fun Bool32 = I32
-    fun Bool32 <- I32
+    fun Bool32 = (? I32)
 
     import i64.I64
     import f32.F32
@@ -142,66 +147,66 @@ trait Prim = {
     // constants for 0, 1, -1, etc.
     // The compiler knows the values, so we don't actually lose any
     // efficiency here.
-    fun _0 -> native
-    fun _1 -> native
-    fun _m1 -> native
-    fun _max -> native
-    fun _min -> native
-    fun _0 <- native
-    fun _1 <- native
-    fun _m1 <- native
-    fun _max <- native
-    fun _min <- native
+    fun _0 = native
+    fun _1 = native
+    fun _m1 = native
+    fun _max = native
+    fun _min = native
+    fun _0 = (? _) where native
+    fun _1 = (? _) where native
+    fun _m1 = (? _) where native
+    fun _max = (? _) where native
+    fun _min = (? _) where native
 
-    fun ctz (I32) -> native
-    fun clz (I32) -> native
-    fun popcount (I32) -> native
-    fun eqz (I32) -> native
-    fun trunc_s_f32 (F32) -> native
-    fun trunc_s_f64 (F64) -> native
-    fun trunc_u_f32 (F32) -> native
-    fun trunc_u_f64 (F64) -> native
-    fun reinterpret (F32) -> native
-    fun wrap (I64) -> native
-    fun wrapBig (Int) -> native
+    fun ctz (I32) = native
+    fun clz (I32) = native
+    fun popcount (I32) = native
+    fun eqz (I32) = native
+    fun trunc_s_f32 (F32) = native
+    fun trunc_s_f64 (F64) = native
+    fun trunc_u_f32 (F32) = native
+    fun trunc_u_f64 (F64) = native
+    fun reinterpret (F32) = native
+    fun wrap (I64) = native
+    fun wrapBig (Int) = native
 
-    fun add (I32) (I32) -> native
-    fun sub (I32) (I32) -> native
-    fun mul (I32) (I32) -> native
-    fun div_s (I32) (I32) -> native
-    fun div_u (I32) (I32) -> native
-    fun rem_s (I32) (I32) -> native
-    fun rem_u (I32) (I32) -> native
+    fun add (I32) (I32) = native
+    fun sub (I32) (I32) = native
+    fun mul (I32) (I32) = native
+    fun div_s (I32) (I32) = native
+    fun div_u (I32) (I32) = native
+    fun rem_s (I32) (I32) = native
+    fun rem_u (I32) (I32) = native
 
-    fun and (I32) (I32) -> native
-    fun or (I32) (I32) -> native
-    fun xor (I32) (I32) -> native
-    fun complement (I32) -> native
+    fun and (I32) (I32) = native
+    fun or (I32) (I32) = native
+    fun xor (I32) (I32) = native
+    fun complement (I32) = native
 
-    fun eq (I32) (I32) -> native
-    fun ne (I32) (I32) -> native
-    fun lt_s (I32) (I32) -> native
-    fun lt_u (I32) (I32) -> native
-    fun le_s (I32) (I32) -> native
-    fun le_u (I32) (I32) -> native
-    fun gt_s (I32) (I32) -> native
-    fun gt_u (I32) (I32) -> native
-    fun ge_s (I32) (I32) -> native
-    fun ge_u (I32) (I32) -> native
+    fun eq (I32) (I32) = native
+    fun ne (I32) (I32) = native
+    fun lt_s (I32) (I32) = native
+    fun lt_u (I32) (I32) = native
+    fun le_s (I32) (I32) = native
+    fun le_u (I32) (I32) = native
+    fun gt_s (I32) (I32) = native
+    fun gt_u (I32) (I32) = native
+    fun ge_s (I32) (I32) = native
+    fun ge_u (I32) (I32) = native
 
-    fun rotl (I32) -> native
-    fun rotr (I32) -> native
-    fun shl (I32) (I32) -> native
-    fun shr_s (I32) (I32) -> native
-    fun shr_u (I32) (I32) -> native
+    fun rotl (I32) = native
+    fun rotr (I32) = native
+    fun shl (I32) (I32) = native
+    fun shr_s (I32) (I32) = native
+    fun shr_u (I32) (I32) = native
   }
 
   trait i64 = {
-    fun I64 -> native
-    fun I64 <- native
+    fun I64 = native
+    fun I64 = (? _) where native
 
     fun Bool64 = I64
-    fun Bool64 <- I64
+    fun Bool64 = (? I64)
 
     import i32.I32
     import f32.F32
@@ -212,137 +217,137 @@ trait Prim = {
     // constants for 0, 1, -1, etc.
     // The compiler knows the values, so we don't actually lose any
     // efficiency here.
-    fun _0 -> native
-    fun _1 -> native
-    fun _m1 -> native
-    fun _max -> native
-    fun _min -> native
-    fun _0 <- native
-    fun _1 <- native
-    fun _m1 <- native
-    fun _max <- native
-    fun _min <- native
+    fun _0 = native
+    fun _1 = native
+    fun _m1 = native
+    fun _max = native
+    fun _min = native
+    fun _0 = (? _) where native
+    fun _1 = (? _) where native
+    fun _m1 = (? _) where native
+    fun _max = (? _) where native
+    fun _min = (? _) where native
 
-    fun ctz (I64) -> native
-    fun clz (I64) -> native
-    fun popcount (I64) -> native
-    fun eqz (I64) -> native
-    fun trunc_s_f32 (F32) -> native
-    fun trunc_s_f64 (F64) -> native
-    fun trunc_u_f32 (F32) -> native
-    fun trunc_u_f64 (F64) -> native
-    fun reinterpret (F64) -> native
-    fun extend_s (I32) -> native
-    fun extend_u (I32) -> native
-    fun wrapBig (Int) -> native
+    fun ctz (I64) = native
+    fun clz (I64) = native
+    fun popcount (I64) = native
+    fun eqz (I64) = native
+    fun trunc_s_f32 (F32) = native
+    fun trunc_s_f64 (F64) = native
+    fun trunc_u_f32 (F32) = native
+    fun trunc_u_f64 (F64) = native
+    fun reinterpret (F64) = native
+    fun extend_s (I32) = native
+    fun extend_u (I32) = native
+    fun wrapBig (Int) = native
 
-    fun add (I64) (I64) -> native
-    fun sub (I64) (I64) -> native
-    fun mul (I64) (I64) -> native
-    fun div_s (I64) (I64) -> native
-    fun div_u (I64) (I64) -> native
-    fun rem_s (I64) (I64) -> native
-    fun rem_u (I64) (I64) -> native
+    fun add (I64) (I64) = native
+    fun sub (I64) (I64) = native
+    fun mul (I64) (I64) = native
+    fun div_s (I64) (I64) = native
+    fun div_u (I64) (I64) = native
+    fun rem_s (I64) (I64) = native
+    fun rem_u (I64) (I64) = native
 
-    fun and (I64) (I64) -> native
-    fun or (I64) (I64) -> native
-    fun xor (I64) (I64) -> native
-    fun complement (I64) -> native
+    fun and (I64) (I64) = native
+    fun or (I64) (I64) = native
+    fun xor (I64) (I64) = native
+    fun complement (I64) = native
 
-    fun eq (I64) (I64) -> native
-    fun ne (I64) (I64) -> native
-    fun lt_s (I64) (I64) -> native
-    fun lt_u (I64) (I64) -> native
-    fun le_s (I64) (I64) -> native
-    fun le_u (I64) (I64) -> native
-    fun gt_s (I64) (I64) -> native
-    fun gt_u (I64) (I64) -> native
-    fun ge_s (I64) (I64) -> native
-    fun ge_u (I64) (I64) -> native
+    fun eq (I64) (I64) = native
+    fun ne (I64) (I64) = native
+    fun lt_s (I64) (I64) = native
+    fun lt_u (I64) (I64) = native
+    fun le_s (I64) (I64) = native
+    fun le_u (I64) (I64) = native
+    fun gt_s (I64) (I64) = native
+    fun gt_u (I64) (I64) = native
+    fun ge_s (I64) (I64) = native
+    fun ge_u (I64) (I64) = native
 
-    fun rotl (I64) -> native
-    fun rotr (I64) -> native
-    fun shl (I64) (I64) -> native
-    fun shr_s (I64) (I64) -> native
-    fun shr_u (I64) (I64) -> native
+    fun rotl (I64) = native
+    fun rotr (I64) = native
+    fun shl (I64) (I64) = native
+    fun shr_s (I64) (I64) = native
+    fun shr_u (I64) (I64) = native
   }
 
   trait f32 = {
-    fun F32 -> native
-    fun F32 <- native
+    fun F32 = native
+    fun F32 = (? _) where native
 
     import i32.Bool32
     import i32.I32
     import i64.I64
     import f64.F64
 
-    fun neg (F32) -> native
-    fun abs (F32) -> native
-    fun ceil (F32) -> native
-    fun floor (F32) -> native
-    fun trunc (F32) -> native
-    fun nearest (F32) -> native
-    fun reinterpret (I32) -> native
-    fun convert_s_i32 (I32) -> native
-    fun convert_u_i32 (I32) -> native
-    fun convert_s_i64 (I64) -> native
-    fun convert_u_i64 (I64) -> native
-    fun demote (F64) -> native
+    fun neg (F32) = native
+    fun abs (F32) = native
+    fun ceil (F32) = native
+    fun floor (F32) = native
+    fun trunc (F32) = native
+    fun nearest (F32) = native
+    fun reinterpret (I32) = native
+    fun convert_s_i32 (I32) = native
+    fun convert_u_i32 (I32) = native
+    fun convert_s_i64 (I64) = native
+    fun convert_u_i64 (I64) = native
+    fun demote (F64) = native
 
-    fun min (F32) (F32) -> native
-    fun max (F32) (F32) -> native
+    fun min (F32) (F32) = native
+    fun max (F32) (F32) = native
     // magnitude of left, sign of right (abs x == copysign x 1)
-    fun copysign (F32) (F32) -> native
+    fun copysign (F32) (F32) = native
 
-    fun exp (F32) -> native
-    fun log (F32) -> native
+    fun exp (F32) = native
+    fun log (F32) = native
 
-    fun sqrt (F32) -> native
+    fun sqrt (F32) = native
 
-    fun pow (F32) (F32) -> native
-    fun logb (F32) (F32) -> native
+    fun pow (F32) (F32) = native
+    fun logb (F32) (F32) = native
 
-    fun sin (F32) -> native
-    fun cos (F32) -> native
-    fun tan (F32) -> native
+    fun sin (F32) = native
+    fun cos (F32) = native
+    fun tan (F32) = native
 
-    fun asin (F32) -> native
-    fun acos (F32) -> native
-    fun atan (F32) -> native
+    fun asin (F32) = native
+    fun acos (F32) = native
+    fun atan (F32) = native
 
-    fun sinh (F32) -> native
-    fun cosh (F32) -> native
-    fun tanh (F32) -> native
+    fun sinh (F32) = native
+    fun cosh (F32) = native
+    fun tanh (F32) = native
 
-    fun asinh (F32) -> native
-    fun acosh (F32) -> native
-    fun atanh (F32) -> native
+    fun asinh (F32) = native
+    fun acosh (F32) = native
+    fun atanh (F32) = native
 
-    fun atan2 (F32) (F32) -> native
+    fun atan2 (F32) (F32) = native
 
-    fun isNaN (F32) -> native
-    fun isInfinite (F32) -> native
-    fun isDenormalized (F32) -> native
-    fun isNegativeZero (F32) -> native
-    fun isIEEE (F32) -> native
+    fun isNaN (F32) = native
+    fun isInfinite (F32) = native
+    fun isDenormalized (F32) = native
+    fun isNegativeZero (F32) = native
+    fun isIEEE (F32) = native
 
-    fun add (F32) (F32) -> native
-    fun sub (F32) (F32) -> native
-    fun mul (F32) (F32) -> native
-    fun div (F32) (F32) -> native
-    fun rem (F32) (F32) -> native
+    fun add (F32) (F32) = native
+    fun sub (F32) (F32) = native
+    fun mul (F32) (F32) = native
+    fun div (F32) (F32) = native
+    fun rem (F32) (F32) = native
 
-    fun eq (F32) (F32) -> native
-    fun ne (F32) (F32) -> native
-    fun lt (F32) (F32) -> native
-    fun le (F32) (F32) -> native
-    fun gt (F32) (F32) -> native
-    fun ge (F32) (F32) -> native
+    fun eq (F32) (F32) = native
+    fun ne (F32) (F32) = native
+    fun lt (F32) (F32) = native
+    fun le (F32) (F32) = native
+    fun gt (F32) (F32) = native
+    fun ge (F32) (F32) = native
   }
 
   trait f64 = {
-    fun F64 -> native
-    fun F64 <- native
+    fun F64 = native
+    fun F64 = (? _) where native
 
     import i32.Bool32
     import i32.I32
@@ -350,67 +355,67 @@ trait Prim = {
     import f32.F32
     import i64.Bool64
 
-    fun neg (F64) -> native
-    fun abs (F64) -> native
-    fun ceil (F64) -> native
-    fun floor (F64) -> native
-    fun trunc (F64) -> native
-    fun nearest (F64) -> native
-    fun reinterpret (I32) -> native
-    fun convert_s_i32 (I32) -> native
-    fun convert_u_i32 (I32) -> native
-    fun convert_s_i64 (I64) -> native
-    fun convert_u_i64 (I64) -> native
-    fun promote (F32) -> native
+    fun neg (F64) = native
+    fun abs (F64) = native
+    fun ceil (F64) = native
+    fun floor (F64) = native
+    fun trunc (F64) = native
+    fun nearest (F64) = native
+    fun reinterpret (I32) = native
+    fun convert_s_i32 (I32) = native
+    fun convert_u_i32 (I32) = native
+    fun convert_s_i64 (I64) = native
+    fun convert_u_i64 (I64) = native
+    fun promote (F32) = native
 
-    fun min (F64) (F64) -> native
-    fun max (F64) (F64) -> native
+    fun min (F64) (F64) = native
+    fun max (F64) (F64) = native
     // magnitude of left, sign of right (abs x == copysign x 1)
-    fun copysign (F64) (F64) -> native
+    fun copysign (F64) (F64) = native
 
-    fun exp (F64) -> native
-    fun log (F64) -> native
+    fun exp (F64) = native
+    fun log (F64) = native
 
-    fun sqrt (F64) -> native
+    fun sqrt (F64) = native
 
-    fun pow (F64) (F64) -> native
-    fun logb (F64) (F64) -> native
+    fun pow (F64) (F64) = native
+    fun logb (F64) (F64) = native
 
-    fun sin (F64) -> native
-    fun cos (F64) -> native
-    fun tan (F64) -> native
+    fun sin (F64) = native
+    fun cos (F64) = native
+    fun tan (F64) = native
 
-    fun asin (F64) -> native
-    fun acos (F64) -> native
-    fun atan (F64) -> native
+    fun asin (F64) = native
+    fun acos (F64) = native
+    fun atan (F64) = native
 
-    fun sinh (F64) -> native
-    fun cosh (F64) -> native
-    fun tanh (F64) -> native
+    fun sinh (F64) = native
+    fun cosh (F64) = native
+    fun tanh (F64) = native
 
-    fun asinh (F64) -> native
-    fun acosh (F64) -> native
-    fun atanh (F64) -> native
+    fun asinh (F64) = native
+    fun acosh (F64) = native
+    fun atanh (F64) = native
 
-    fun atan2 (F64) (F64) -> native
+    fun atan2 (F64) (F64) = native
 
-    fun isNaN (F64) -> native
-    fun isInfinite (F64) -> native
-    fun isDenormalized (F64) -> native
-    fun isNegativeZero (F64) -> native
-    fun isIEEE (F64) -> native
+    fun isNaN (F64) = native
+    fun isInfinite (F64) = native
+    fun isDenormalized (F64) = native
+    fun isNegativeZero (F64) = native
+    fun isIEEE (F64) = native
 
-    fun add (F64) (F64) -> native
-    fun sub (F64) (F64) -> native
-    fun mul (F64) (F64) -> native
-    fun div (F64) (F64) -> native
-    fun rem (F64) (F64) -> native
+    fun add (F64) (F64) = native
+    fun sub (F64) (F64) = native
+    fun mul (F64) (F64) = native
+    fun div (F64) (F64) = native
+    fun rem (F64) (F64) = native
 
-    fun eq (F64) (F64) -> native
-    fun ne (F64) (F64) -> native
-    fun lt (F64) (F64) -> native
-    fun le (F64) (F64) -> native
-    fun gt (F64) (F64) -> native
-    fun ge (F64) (F64) -> native
+    fun eq (F64) (F64) = native
+    fun ne (F64) (F64) = native
+    fun lt (F64) (F64) = native
+    fun le (F64) (F64) = native
+    fun gt (F64) (F64) = native
+    fun ge (F64) (F64) = native
   }
 }

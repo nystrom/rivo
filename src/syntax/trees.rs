@@ -21,6 +21,23 @@ use namer::graph::MixfixIndex;
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct NodeId(pub usize);
 
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct NodeIdGenerator {
+    next: usize
+}
+
+impl NodeIdGenerator {
+    pub fn new() -> NodeIdGenerator {
+        NodeIdGenerator { next: 0 }
+    }
+
+    pub fn new_id(&mut self) -> NodeId {
+        let index = self.next;
+        self.next += 1;
+        NodeId(index)
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Lit {
     Int { value: BigInt },
@@ -79,7 +96,16 @@ pub enum Cmd {
 pub enum Def {
     FormulaDef { flag: FormulaFlag, formula: Box<Located<Exp>> },
     MixfixDef { id: NodeId, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
-    ImportDef { import: Box<Located<Exp>> },
+    ImportDef { opt_path: Option<Box<Located<Exp>>>, selector: Selector },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Selector {
+    All,
+    Nothing,
+    Including { name: Name },
+    Excluding { name: Name },
+    Renaming { name: Name, rename: Name },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -119,10 +145,10 @@ pub enum Exp {
 
     // ambiguous names -- might resolve to variable names or parts of function names
     // or _ or ? or = as part of a function name or partial application
-    Name { name: Name, id: NodeId, lookup: Option<LookupIndex> },
+    Name { name: Name, id: NodeId },
 
     // Parsed trees
-    MixfixApply { es: Vec<Located<Exp>>, id: NodeId, lookup: Option<MixfixIndex> },
+    MixfixApply { es: Vec<Located<Exp>>, id: NodeId },
 }
 
 #[derive(Clone, Debug, PartialEq)]

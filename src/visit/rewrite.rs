@@ -89,8 +89,8 @@ pub trait Rewriter<'a, Ctx>: Sized {
             Def::MixfixDef { id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
                 Def::MixfixDef { id, flag: *flag, name: name.clone(), opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), params: walk_located_vec!(self, visit_param, params, ctx), ret: walk_located!(self, visit_param, ret, ctx) }
             },
-            Def::ImportDef { ref import } => {
-                Def::ImportDef { import: walk_located_box!(self, visit_exp, import, ctx) }
+            Def::ImportDef { ref opt_path, ref selector } => {
+                Def::ImportDef { opt_path: walk_located_opt!(self, visit_exp, opt_path, ctx), selector: selector.clone() }
             },
         }
     }
@@ -142,11 +142,11 @@ pub trait Rewriter<'a, Ctx>: Sized {
             Exp::Native =>
                 Exp::Native,
 
-            Exp::Name { ref name, id, lookup } =>
-                Exp::Name { name: name.clone(), id, lookup },
+            Exp::Name { ref name, id } =>
+                Exp::Name { name: name.clone(), id },
 
-            Exp::MixfixApply { ref es, id, lookup } =>
-                Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es, ctx), id, lookup },
+            Exp::MixfixApply { ref es, id } =>
+                Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es, ctx), id },
         }
     }
 

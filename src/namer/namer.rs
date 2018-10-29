@@ -44,8 +44,8 @@ pub struct Namer<'a> {
 impl<'a> Namer<'a> {
     pub fn lookup(&mut self, r: &LookupRef) -> LookupResult<Vec<Located<Decl>>> {
         match r {
-            LookupRef { scope, name, follow_parents, follow_imports } => {
-                self.lookup_in_scope(*scope, &name, *follow_parents, *follow_imports, &HashTrieSet::new())
+            LookupRef { scope, name, follow_parents } => {
+                self.lookup_in_scope(*scope, &name, *follow_parents)
             }
         }
     }
@@ -53,25 +53,25 @@ impl<'a> Namer<'a> {
     pub fn parse_mixfix(&mut self, r: &MixfixRef) -> LookupResult<Vec<MixfixTree>> {
         match r {
             MixfixRef { parts } => {
-                self.resolve_mixfix(&parts, &HashTrieSet::new())
+                self.resolve_mixfix(&parts)
             }
         }
     }
 
-    fn do_lookup(&mut self, r: LookupRef, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+    fn do_lookup(&mut self, r: LookupRef) -> LookupResult<Vec<Located<Decl>>> {
         match r {
-            LookupRef { scope, name, follow_parents, follow_imports } => self.lookup_in_scope(scope, &name, follow_parents, follow_imports, crumbs)
+            LookupRef { scope, name, follow_parents } => self.lookup_in_scope(scope, &name, follow_parents)
         }
     }
 
-    fn do_mixfix(&mut self, r: MixfixRef, crumbs: &Crumbs) -> LookupResult<Vec<MixfixTree>> {
+    fn do_mixfix(&mut self, r: MixfixRef) -> LookupResult<Vec<MixfixTree>> {
         match r {
-            MixfixRef { parts } => self.resolve_mixfix(&parts, crumbs)
+            MixfixRef { parts } => self.resolve_mixfix(&parts)
         }
     }
 
     #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
-    fn resolve_mixfix(&mut self, parts: &Vec<MixfixPart>, crumbs: &Crumbs) -> LookupResult<Vec<MixfixTree>> {
+    fn resolve_mixfix(&mut self, parts: &Vec<MixfixPart>) -> LookupResult<Vec<MixfixTree>> {
         match self.cache.mixfix_cache.get(&MixfixRef { parts: parts.clone() }) {
             Some(trees) => {
                 println!("mixfix cache hit");
@@ -110,7 +110,7 @@ impl<'a> Namer<'a> {
         for r in refs {
             match r {
                 Some(r) => {
-                    let decls = self.do_lookup(r.clone(), &crumbs)?;
+                    let decls = self.do_lookup(r.clone())?;
 
                     if ! decls.is_empty() && Namer::all_mixfix(&decls) {
                         match &r.name {
@@ -195,14 +195,9 @@ impl<'a> Namer<'a> {
     }
 
 
-    #[cfg_attr(debug_assertions, trace(disable(driver, crumbs)))]
-    fn lookup_in_root(&mut self, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+    #[cfg_attr(debug_assertions, trace(disable(driver)))]
+    fn lookup_in_root(&mut self, name: &Name) -> LookupResult<Vec<Located<Decl>>> {
         self.driver.stats.accum("lookup_in_root", 1);
-
-        if crumbs.contains(&Scope::Global) {
-            self.driver.stats.accum("lookup_in_root cycle", 1);
-            return Ok(vec![]);
-        }
 
         // we only search other bundles for legal bundle names
         if ! name.is_bundle_name() {
@@ -210,7 +205,7 @@ impl<'a> Namer<'a> {
             return Ok(vec![]);
         }
 
-        let mut results = self.lookup_in_trees(name, &crumbs.insert(Scope::Global))?;
+        let mut results = self.lookup_in_trees(name)?;
 
         if Namer::all_mixfix(&results) {
             match self.load_bundle_by_name(name) {
@@ -231,7 +226,7 @@ impl<'a> Namer<'a> {
                     match self.driver.get_bundle(index) {
                         Some(Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
                             if let Some(scope) = scopes.get(&id) {
-                                let mut v = self.lookup_in_scope(*scope, name, false, false, crumbs)?;
+                                let mut v = self.lookup_in_scope(*scope, name, false)?;
                                 results.append(&mut v);
                             }
                             else {
@@ -240,7 +235,7 @@ impl<'a> Namer<'a> {
                         },
                         Some(Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
                             if let Some(scope) = scopes.get(&id) {
-                                let mut v = self.lookup_in_scope(*scope, name, false, false, crumbs)?;
+                                let mut v = self.lookup_in_scope(*scope, name, false)?;
                                 results.append(&mut v);
                             }
                             else {
@@ -248,7 +243,7 @@ impl<'a> Namer<'a> {
                             }
                         },
                         Some(Bundle::Core { root_scope, .. }) => {
-                            let mut v = self.lookup_in_scope(root_scope, name, false, false, crumbs)?;
+                            let mut v = self.lookup_in_scope(root_scope, name, false)?;
                             results.append(&mut v);
                         },
                         _ => {},
@@ -269,8 +264,8 @@ impl<'a> Namer<'a> {
         self.driver.load_bundle_by_name(name)
     }
 
-    #[cfg_attr(debug_assertions, trace(disable(driver, crumbs)))]
-    fn lookup_in_trees(&mut self, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+    #[cfg_attr(debug_assertions, trace(disable(driver)))]
+    fn lookup_in_trees(&mut self, name: &Name) -> LookupResult<Vec<Located<Decl>>> {
         self.driver.stats.accum("lookup_in_trees", 1);
 
         let mut results = Vec::new();
@@ -330,20 +325,19 @@ impl<'a> Namer<'a> {
         // HACK
         // We want to call lookup_in_scope, but can't since we have to mutably borrow driver
         // while we're looping over it.
-        // We pass in empty crumbs since crumbs are bundle specific.
         let stats = &mut self.driver.stats;
 
         for bundle in &self.driver.bundles {
             match bundle {
                 Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
                     if let Some(Scope::Env(env)) = scopes.get(&id) {
-                        let mut v = Namer::lookup_here_in_env(stats, graph, *env, name, &HashTrieSet::new())?;
+                        let mut v = Namer::lookup_here_in_env(stats, graph, *env, name)?;
                         results.append(&mut v);
                     }
                 },
                 Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
                     if let Some(Scope::Env(env)) = scopes.get(&id) {
-                        let mut v = Namer::lookup_here_in_env(stats, graph, *env, name, &HashTrieSet::new())?;
+                        let mut v = Namer::lookup_here_in_env(stats, graph, *env, name)?;
                         results.append(&mut v);
                     }
                 },
@@ -373,7 +367,7 @@ impl<'a> Namer<'a> {
         // }
         //
         // for (graph, scope) in to_search {
-        //     let mut v = graph.lookup_here_in_scope(driver, *scope, name, &HashTrieSet::new(), &Cache { lookup_here_cache: &HashMap::new(), lookup_cache: &HashMap::new(), mixfix_cache: &HashMap::new() })?;
+        //     let mut v = graph.lookup_here_in_scope(driver, *scope, name, &Cache { lookup_here_cache: &HashMap::new(), lookup_cache: &HashMap::new(), mixfix_cache: &HashMap::new() })?;
         //     results.append(&mut v);
         // }
 
@@ -383,7 +377,7 @@ impl<'a> Namer<'a> {
     }
 
     #[cfg_attr(debug_assertions, cfg_attr(debug_assertions, trace(disable(driver, cache))))]
-    fn lookup_in_imports(&mut self, imports: &Vec<Located<Import>>, x: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
+    fn lookup_in_imports(&mut self, imports: &Vec<Located<Import>>, x: &Name) -> LookupResult<Vec<Located<Decl>>> {
         let include_self: Vec<(Scope, Name)> = imports.iter().filter_map(|import| {
             match import {
                 Located { loc, value: Import::Here { path: scope } } =>
@@ -453,7 +447,7 @@ impl<'a> Namer<'a> {
 
         for (scope, x) in paths {
             // When looking up an imported name, we should search the parents of the scope, but not the other imports, otherwise we'll find ourselves.
-            let r = self.lookup_in_scope(scope, &x, false, false, crumbs)?;
+            let r = self.lookup_in_scope(scope, &x, false)?;
             results.extend(r.iter().cloned());
         }
 
@@ -462,13 +456,13 @@ impl<'a> Namer<'a> {
             match scope {
                 Scope::Lookup(LookupIndex(index)) => {
                     let r = self.graph.lookups.get(index).unwrap();
-                    let decls = self.do_lookup(r.clone(), &crumbs.insert(scope))?;
+                    let decls = self.do_lookup(r.clone())?;
                     let found_here: Vec<Located<Decl>> = decls.iter().cloned().filter(|decl| decl.name() == x).collect();
                     results.extend(found_here.iter().cloned());
                 },
                 Scope::Mixfix(MixfixIndex(index)) => {
                     let r = self.graph.mixfixes.get(index).unwrap();
-                    let trees = self.do_mixfix(r.clone(), &crumbs.insert(scope))?;
+                    let trees = self.do_mixfix(r.clone())?;
                     let decls: Vec<Located<Decl>> = trees.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
                     let found_here: Vec<Located<Decl>> = decls.iter().cloned().filter(|decl| decl.name() == x).collect();
                     results.extend(found_here.iter().cloned());
@@ -494,7 +488,7 @@ impl<'a> Namer<'a> {
     }
 
     #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
-    fn get_inner_decls(&mut self, scope: Scope, name: &Name, follow_parents: bool, follow_imports: bool, crumbs: &Crumbs, decls: &Vec<Located<Decl>>) -> LookupResult<Vec<Located<Decl>>> {
+    fn get_inner_decls(&mut self, scope: Scope, name: &Name, follow_parents: bool, decls: &Vec<Located<Decl>>) -> LookupResult<Vec<Located<Decl>>> {
         let frames = decls.iter().flat_map(|d| {
             match d {
                 Located { loc, value: Decl::Trait { body, .. } } => body.to_vec(),
@@ -503,7 +497,7 @@ impl<'a> Namer<'a> {
         });
         let mut inner_decls = Vec::new();
         for s in frames {
-            let mut v = self.lookup_in_scope(s, name, follow_parents, follow_imports, &crumbs.insert(scope))?;
+            let mut v = self.lookup_in_scope(s, name, follow_parents)?;
             inner_decls.append(&mut v);
         }
         Ok(inner_decls)
@@ -515,12 +509,7 @@ impl<'a> Namer<'a> {
     // borrowing the driver mutably. The assumption is that the root scope of a bundle
     // is always a simple Env.
     #[cfg_attr(debug_assertions, trace(disable(stats, graph)))]
-    fn lookup_here_in_env(stats: &mut driver::stats::Stats, graph: &ScopeGraph, env_index: EnvIndex, name: &Name, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
-        if crumbs.contains(&Scope::Env(env_index)) {
-            stats.accum("lookup_here cycle", 1);
-            return Ok(vec![]);
-        }
-
+    fn lookup_here_in_env(stats: &mut driver::stats::Stats, graph: &ScopeGraph, env_index: EnvIndex, name: &Name) -> LookupResult<Vec<Located<Decl>>> {
         match env_index {
             EnvIndex(index) => {
                 let env = graph.envs.get(index).unwrap();
@@ -534,7 +523,11 @@ impl<'a> Namer<'a> {
                 for include in includes {
                     match include {
                         Scope::Env(include) if include != env_index => {
-                            let v = Namer::lookup_here_in_env(stats, graph, include, name, &crumbs.insert(Scope::Env(env_index)))?;
+                            let v = Namer::lookup_here_in_env(stats, graph, include, name)?;
+                            results.extend(v.iter().cloned());
+                        },
+                        Scope::EnvWithoutImports(include) if include != env_index => {
+                            let v = Namer::lookup_here_in_env(stats, graph, include, name)?;
                             results.extend(v.iter().cloned());
                         },
                         _ => {},
@@ -547,13 +540,8 @@ impl<'a> Namer<'a> {
     }
 
     #[cfg_attr(debug_assertions, trace(disable(driver, cache)))]
-    fn lookup_in_scope(&mut self, scope: Scope, name: &Name, follow_parents: bool, follow_imports: bool, crumbs: &Crumbs) -> LookupResult<Vec<Located<Decl>>> {
-        if crumbs.contains(&scope) {
-            self.driver.stats.accum("lookup cycle", 1);
-            // return Ok(vec![]);
-        }
-
-        match self.cache.lookup_cache.get(&LookupRef { scope, name: name.clone(), follow_parents, follow_imports }) {
+    fn lookup_in_scope(&mut self, scope: Scope, name: &Name, follow_parents: bool) -> LookupResult<Vec<Located<Decl>>> {
+        match self.cache.lookup_cache.get(&LookupRef { scope, name: name.clone(), follow_parents }) {
             Some(decls) => {
                 println!("lookup cache hit");
                 self.driver.stats.accum("lookup cache hit size", decls.len() as u64);
@@ -566,22 +554,57 @@ impl<'a> Namer<'a> {
         }
 
         // Cache the empty vec.
-        self.cache.lookup_cache.insert(LookupRef { scope, name: name.clone(), follow_parents, follow_imports }, vec![]);
+        // If we hit a cycle, we'll return that rather than loop forever.
+        // FIXME: consider caching a Result to differentiate an empth Ok from a cycle.
+        self.cache.lookup_cache.insert(LookupRef { scope, name: name.clone(), follow_parents }, vec![]);
 
         let result = match scope {
             Scope::Empty => Ok(vec![]),
-            Scope::Global => self.lookup_in_root(name, crumbs),
+            Scope::Global => self.lookup_in_root(name),
             Scope::Lookup(LookupIndex(index)) => {
                 let r = self.graph.lookups.get(index).unwrap();
-                let decls = self.do_lookup(r.clone(), &crumbs.insert(scope))?;
-                self.get_inner_decls(scope, &name, follow_parents, follow_imports, &crumbs, &decls)
+                let decls = self.do_lookup(r.clone())?;
+                self.get_inner_decls(scope, &name, follow_parents, &decls)
             },
             Scope::Mixfix(MixfixIndex(index)) => {
                 let r = self.graph.mixfixes.get(index).unwrap();
-                let trees = self.do_mixfix(r.clone(), &crumbs.insert(scope))?;
+                let trees = self.do_mixfix(r.clone())?;
                 let decls = trees.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
-                self.get_inner_decls(scope, &name, follow_parents, follow_imports, &crumbs, &decls)
+                self.get_inner_decls(scope, &name, follow_parents, &decls)
             },
+            Scope::EnvWithoutImports(EnvIndex(index)) => {
+                let env = self.graph.envs.get(index).unwrap();
+                // need to clone the imports and parents and includes
+                // before we borrow self mutably.
+                let imports = env.imports.clone();
+                let parents = env.parents.clone();
+                let includes = env.includes.clone();
+                let found_here: Vec<Located<Decl>> = env.decls.iter().cloned().filter(|decl| decl.name() == *name).collect();
+
+                let mut results = Vec::new();
+                results.append(&mut found_here.clone());
+
+                if follow_parents && Namer::all_mixfix(&results) {
+                    let mut ps = Vec::new();
+                    for parent in parents {
+                        if self.imports_truncated(&imports, parent) {
+                            continue;
+                        }
+                        let v = self.lookup_in_scope(parent, name, follow_parents)?;
+                        ps.extend(v.iter().cloned());
+                    }
+
+                    let found_parents = Namer::filter_mixfix(ps, &results);
+                    results.extend(found_parents.iter().cloned());
+                }
+
+                for include in includes {
+                    let v = self.lookup_in_scope(include, name, follow_parents)?;
+                    results.extend(v.iter().cloned());
+                }
+
+                Ok(results)
+            }
             Scope::Env(EnvIndex(index)) => {
                 let env = self.graph.envs.get(index).unwrap();
                 // need to clone the imports and parents and includes
@@ -594,18 +617,20 @@ impl<'a> Namer<'a> {
                 let mut results = Vec::new();
                 results.append(&mut found_here.clone());
 
-                if follow_imports && Namer::all_mixfix(&results) {
-                    if follow_imports {
-                        let rs = self.lookup_in_imports(&imports, name, &crumbs.insert(scope))?;
-                        let found_imports = Namer::filter_mixfix(rs, &results);
-                        results.extend(found_imports.iter().cloned());
-                    }
+                if Namer::all_mixfix(&results) {
+                    let rs = self.lookup_in_imports(&imports, name)?;
+                    let found_imports = Namer::filter_mixfix(rs, &results);
+                    results.extend(found_imports.iter().cloned());
                 }
+
 
                 if follow_parents && Namer::all_mixfix(&results) {
                     let mut ps = Vec::new();
                     for parent in parents {
-                        let v = self.lookup_in_scope(parent, name, follow_parents, follow_imports, &crumbs.insert(scope))?;
+                        if self.imports_truncated(&imports, parent) {
+                            continue;
+                        }
+                        let v = self.lookup_in_scope(parent, name, follow_parents)?;
                         ps.extend(v.iter().cloned());
                     }
 
@@ -614,7 +639,7 @@ impl<'a> Namer<'a> {
                 }
 
                 for include in includes {
-                    let v = self.lookup_in_scope(include, name, follow_parents, follow_imports, &crumbs.insert(scope))?;
+                    let v = self.lookup_in_scope(include, name, follow_parents)?;
                     results.extend(v.iter().cloned());
                 }
 
@@ -622,10 +647,9 @@ impl<'a> Namer<'a> {
             }
         };
 
-
         match &result {
             Ok(decls) => {
-                self.cache.lookup_cache.insert(LookupRef { scope, name: name.clone(), follow_parents, follow_imports }, decls.clone());
+                self.cache.lookup_cache.insert(LookupRef { scope, name: name.clone(), follow_parents }, decls.clone());
                 self.driver.stats.accum("lookup result size", decls.len() as u64);
             },
             _ => {
@@ -634,6 +658,19 @@ impl<'a> Namer<'a> {
         }
 
         result
+    }
+
+    fn imports_truncated(&self, imports: &Vec<Located<Import>>, scope: Scope) -> bool {
+        for import in imports {
+            match import {
+                Located { loc, value: Import::None { path } } =>
+                    if *path == scope {
+                        return true
+                    }
+                _ => {},
+            }
+        }
+        false
     }
 
     pub fn all_mixfix(decls: &Vec<Located<Decl>>) -> bool {

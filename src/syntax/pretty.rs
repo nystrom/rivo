@@ -137,11 +137,30 @@ impl ToDoc for Def {
                    .append(Doc::space())
                    .append(show_located!(ret))
             },
-            Def::ImportDef { ref import } => {
+            Def::ImportDef { opt_path: None, ref selector } => {
                 Doc::text("import")
                    .append(Doc::space())
-                   .append(show_located_box!(import))
+                   .append(selector.to_doc())
             },
+            Def::ImportDef { opt_path: Some(ref path), ref selector } => {
+                Doc::text("import")
+                   .append(Doc::space())
+                   .append(show_located_box!(path))
+                   .append(Doc::text("."))
+                   .append(selector.to_doc())
+            },
+        }
+    }
+}
+
+impl ToDoc for Selector {
+    fn to_doc(&self) -> Doc<BoxDoc<()>> {
+        match self {
+            Selector::Nothing => Doc::text("()"),
+            Selector::All => Doc::text("_"),
+            Selector::Including { name } => name.to_doc(),
+            Selector::Excluding { name } => name.to_doc().append(Doc::space()).append("->").append(Doc::space()).append(Doc::text("()")),
+            Selector::Renaming { name, rename } => name.to_doc().append(Doc::space()).append("->").append(Doc::space()).append(rename.to_doc()),
         }
     }
 }

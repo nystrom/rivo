@@ -17,16 +17,20 @@ static mut depth: u32 = 0;
 
 pub struct Renamer<'a> {
     pub namer: &'a mut Namer<'a>,
+    pub scopes: &'a HashMap<NodeId, Scope>,
+    pub lookups: &'a HashMap<NodeId, LookupIndex>,
+    pub mixfixes: &'a HashMap<NodeId, MixfixIndex>,
+    pub node_id_generator: &'a mut NodeIdGenerator,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct RenamerEnv {
+pub struct RenamerCtx {
     in_mixfix: bool,
 }
 
-impl RenamerEnv {
-    pub fn new() -> RenamerEnv {
-        RenamerEnv {
+impl RenamerCtx {
+    pub fn new() -> RenamerCtx {
+        RenamerCtx {
             in_mixfix: false,
         }
     }
@@ -39,41 +43,46 @@ impl<'a> Renamer<'a> {
             rest: Vec<Located<Exp>>
         }
 
-        fn parse(t: MixfixTree, es: Vec<Located<Exp>>) -> Option<ParseResult> {
+        fn parse(node_id_generator: &mut NodeIdGenerator, t: MixfixTree, es: Vec<Located<Exp>>) -> Option<ParseResult> {
             match t {
-                MixfixTree::Name(x, decls) =>
+                MixfixTree::Name(x, decls) => {
+                    let id = node_id_generator.new_id();
                     Some(
                         ParseResult {
                             // FIXME NodeId is wrong and lookup is wrong
-                            e: Located::new(NO_LOC, Exp::Name { name: x, id: NodeId(0), lookup: None }),
+                            e: Located::new(NO_LOC, Exp::Name { name: x, id: id }),
                             rest: es
                         }
-                    ),
-                MixfixTree::Apply(t1, t2) =>
-                    parse(*t1, es).and_then(|ParseResult { e: e1, rest: rest1 }|
-                        parse(*t2, rest1).map(|ParseResult { e: e2, rest: rest2 }|
+                    )
+                },
+                MixfixTree::Apply(t1, t2) => {
+                    parse(node_id_generator, *t1, es).and_then(|ParseResult { e: e1, rest: rest1 }|
+                        parse(node_id_generator, *t2, rest1).map(|ParseResult { e: e2, rest: rest2 }|
                             ParseResult {
                                 e: Located::new(NO_LOC, Exp::Apply { fun: Box::new(e1), arg: Box::new(e2) }),
                                 rest: rest2
                             }
                         )
-                    ),
-                MixfixTree::Exp =>
+                    )
+                },
+                MixfixTree::Exp => {
                     match es.split_first() {
                         Some((e, es)) => Some(ParseResult { e: e.clone(), rest: es.to_vec() }),
                         None => None,
-                    },
+                    }
+                },
             }
         }
 
         // filter out MixfixParts from es
         let vs = es.iter().filter(|e|
             match &e.value {
-                Exp::Name { name, id, lookup: Some(LookupIndex(index)) } => {
+                Exp::Name { name, id } => {
                     // return false if mixfix part
-                    let lookup = self.namer.graph.lookups.get(*index).unwrap().clone();
+                    let lookup = self.lookups.get(id).unwrap();
+                    let lookup_ref = self.namer.graph.get_lookup(lookup);
 
-                    match self.namer.lookup(&lookup) {
+                    match self.namer.lookup(&lookup_ref) {
                         Ok(decls) => ! Namer::all_mixfix(&decls),
                         _ => true,
                     }
@@ -82,7 +91,7 @@ impl<'a> Renamer<'a> {
             }
         ).cloned().collect();
 
-        match parse(tree, vs) {
+        match parse(&mut self.node_id_generator, tree, vs) {
             Some(ParseResult { ref e, ref rest }) if rest.is_empty() => Some(e.value.clone()),
             _ => None,
         }
@@ -90,24 +99,25 @@ impl<'a> Renamer<'a> {
 }
 
 // visit any node that has a node id.
-impl<'tables, 'a> Rewriter<'a, RenamerEnv> for Renamer<'tables> {
+impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
     #[cfg_attr(debug_assertions, trace)]
-    fn visit_exp(&mut self, e: &'a Exp, env: &RenamerEnv, loc: &Loc) -> Exp {
+    fn visit_exp(&mut self, e: &'a Exp, ctx: &RenamerCtx, loc: &Loc) -> Exp {
         match e {
             Exp::Name { .. } => {
-                let new_node = self.walk_exp(e, env, loc);
+                let new_node = self.walk_exp(e, ctx, loc);
 
                 match &new_node {
-                    Exp::Name { name, id, lookup: Some(LookupIndex(index)) } => {
-                        let lookup = self.namer.graph.lookups.get(*index).unwrap().clone();
-                        println!("NAME {:?}", name);
+                    Exp::Name { name, id } => {
+                        println!("id = {:?}", id);
+                        let lookup = self.lookups.get(id).unwrap();
+                        let lookup_ref = self.namer.graph.get_lookup(lookup);
 
-                        match self.namer.lookup(&lookup) {
+                        match self.namer.lookup(&lookup_ref) {
                             Ok(decls) => {
                                 if decls.is_empty() {
                                     self.namer.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope.", name)));
                                 }
-                                else if Namer::all_mixfix(&decls) && ! env.in_mixfix {
+                                else if Namer::all_mixfix(&decls) && ! ctx.in_mixfix {
                                     self.namer.driver.error(Located::new(loc.clone(), format!("Name {} is a mixfix part, not a name.", name)));
                                 }
                                 else {
@@ -128,17 +138,18 @@ impl<'tables, 'a> Rewriter<'a, RenamerEnv> for Renamer<'tables> {
             Exp::MixfixApply { .. } => {
                 self.namer.driver.stats.accum("mixfix rename", 1);
 
-                let env1 = RenamerEnv {
+                let ctx1 = RenamerCtx {
                     in_mixfix: true,
                 };
 
-                let new_node = self.walk_exp(e, &env1, &loc);
+                let new_node = self.walk_exp(e, &ctx1, &loc);
 
                 match &new_node {
-                    Exp::MixfixApply { es, id, lookup: Some(MixfixIndex(index)) } => {
-                        let lookup = self.namer.graph.mixfixes.get(*index).unwrap().clone();
+                    Exp::MixfixApply { es, id } => {
+                        let lookup = self.mixfixes.get(id).unwrap();
+                        let lookup_ref = self.namer.graph.get_mixfix(lookup);
 
-                        match self.namer.parse_mixfix(&lookup) {
+                        match self.namer.parse_mixfix(&lookup_ref) {
                             Ok(trees) => {
                                 if trees.len() == 1 {
                                     match self.apply_mixfix(trees.first().unwrap().clone(), es.clone()) {
@@ -165,11 +176,11 @@ impl<'tables, 'a> Rewriter<'a, RenamerEnv> for Renamer<'tables> {
             },
 
             _ => {
-                let env1 = RenamerEnv {
+                let ctx1 = RenamerCtx {
                     in_mixfix: false,
                 };
 
-                self.walk_exp(e, &env1, loc)
+                self.walk_exp(e, &ctx1, loc)
             },
         }
     }
