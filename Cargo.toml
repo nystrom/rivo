@@ -28,7 +28,12 @@ pretty = "*"
 rpds = "*"
 failure = "*"
 trace = "*"
-# menhir = "*"
+
+lazy_static = "*"
+string-interner = "0.7.0"
+
+gearley = "*"
+cfg = "*"
 
 [patch.crates-io]
 trace = { git = "https://github.com/nystrom/trace.git" }

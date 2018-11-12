@@ -21,7 +21,7 @@ use namer::graph::MixfixIndex;
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct NodeId(pub usize);
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct NodeIdGenerator {
     next: usize
 }
@@ -48,13 +48,13 @@ pub enum Lit {
     Nothing,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum FormulaFlag {
     Val,
     Var,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum MixfixFlag {
     Fun,
     Trait,
@@ -68,19 +68,19 @@ pub struct Param {
     pub pat: Box<Located<Exp>>,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum CallingMode {
     Input,
     Output,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Assoc {
     NonAssoc,
     Assoc,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum CallingConv {
     ByValue,
     ByName,
@@ -146,6 +146,10 @@ pub enum Exp {
     // ambiguous names -- might resolve to variable names or parts of function names
     // or _ or ? or = as part of a function name or partial application
     Name { name: Name, id: NodeId },
+
+    Unknown { name: Name, id: NodeId, },
+    MixfixPart { name: Name, id: NodeId, },
+    Var { name: Name, id: NodeId, },
 
     // Parsed trees
     MixfixApply { es: Vec<Located<Exp>>, id: NodeId },

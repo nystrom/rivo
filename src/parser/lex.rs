@@ -31,11 +31,10 @@ pub enum LexError {
     UnexpectedChar(char),
 }
 
+#[derive(Debug)]
 pub struct Lexer<'a> {
-    // position of the lexer
+    // char position of the lexer
     offset: u32,
-    line: u32,
-    column: u32,
     source: &'a Source,
 
     // stack of brackets used for deciding when to insert a virtual ;
@@ -60,8 +59,6 @@ impl<'a> Lexer<'a> {
     pub fn new(source: &'a Source, input: &'a str) -> Lexer<'a> {
         Lexer {
             offset: 0,
-            line: 1,
-            column: 1,
             source: source,
             stack: vec![],
             token_buffer: VecDeque::new(),
@@ -71,13 +68,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn newline(&mut self) {
-        self.line += 1;
-        self.column = 1;
     }
 
     fn read_char(&mut self) -> Option<char> {
         self.offset += 1;
-        self.column += 1;
         self.input.next()
     }
 
@@ -160,11 +154,13 @@ impl<'a> Lexer<'a> {
 
     pub fn peek_token(&mut self) -> LexResult<Located<Token>> {
         if let Some(t) = self.token_buffer.front() {
+            // println!("peek {:?}", t);
             return Ok(t.clone())
         }
 
         let t = self.next_token()?;
         self.token_buffer.insert(0, t.clone());
+        // println!("peek {:?}", t);
         Ok(t)
     }
 
@@ -449,7 +445,7 @@ impl<'a> Lexer<'a> {
             "with"   => self.locate(Token::With, text.len() as u32),
             "where"  => self.locate(Token::Where, text.len() as u32),
             "import" => self.locate(Token::Import, text.len() as u32),
-            text     => self.locate(Token::Id(text.to_string()), text.len() as u32)
+            text     => self.locate(Token::Id(String::from(text)), text.len() as u32)
         }
     }
 
@@ -518,6 +514,11 @@ impl<'a> Lexer<'a> {
         let mut value = BigInt::from(0);
 
         while let Some(&ch) = self.peek_char() {
+            if ch == '_' {
+                self.read_char();
+                continue;
+            }
+
             match Lexer::from_digit(ch) {
                 Some(n) if n < radix => {
                     text.push(ch);
@@ -548,6 +549,11 @@ impl<'a> Lexer<'a> {
         let mut value = BigInt::from(0);
 
         while let Some(&ch) = self.peek_char() {
+            if ch == '_' {
+                self.read_char();
+                continue;
+            }
+
             match Lexer::from_digit(ch) {
                 Some(n) if n < 10 => {
                     text.push(ch);
@@ -586,6 +592,11 @@ impl<'a> Lexer<'a> {
         let mut denom = 1;
 
         while let Some(&ch) = self.peek_char() {
+            if ch == '_' {
+                self.read_char();
+                continue;
+            }
+
             match Lexer::from_digit(ch) {
                 Some(n) if n < 10 => {
                     text.push(ch);
@@ -634,6 +645,11 @@ impl<'a> Lexer<'a> {
         }
 
         while let Some(&ch) = self.peek_char() {
+            if ch == '_' {
+                self.read_char();
+                continue;
+            }
+
             match Lexer::from_digit(ch) {
                 Some(n) if n < 8 => {
                     text.push(ch);

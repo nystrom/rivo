@@ -79,11 +79,48 @@ impl Driver {
 
             for Located { loc, value: msg } in errors {
                 let decoded = bundle.decode_loc(loc);
-                println!("{}:{}", decoded, msg);
+                println!("{}: {}", decoded, msg);
                 count += 1;
             }
         }
 
+        count
+    }
+
+    fn error_count_for_bundle(&self, index: usize, bundle: &Bundle) -> u32 {
+        if index < self.errors.len() {
+            let errors = self.errors[index].clone();
+            errors.len() as u32
+        }
+        else {
+            0
+        }
+    }
+
+    fn bundle_has_errors(&self, index: usize, bundle: &Bundle) -> bool {
+        if index < self.errors.len() {
+            let errors = self.errors[index].clone();
+            errors.len() > 0
+        }
+        else {
+            false
+        }
+    }
+
+    pub fn has_errors(&self) -> bool {
+        for (i, b) in self.bundles.iter().enumerate() {
+            if self.bundle_has_errors(i, b) {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn error_count(&self) -> u32 {
+        let mut count = 0;
+        for (i, b) in self.bundles.iter().enumerate() {
+            count += self.error_count_for_bundle(i, b);
+        }
         count
     }
 
@@ -121,17 +158,17 @@ impl Driver {
 
                 let timer = self.stats.start_timer();
 
-                let mut parser = Parser::new(&source, input.as_str());
+                let mut node_id_generator = NodeIdGenerator::new();
+                let mut parser = Parser::new(&source, input.as_str(), &mut node_id_generator);
 
                 match parser.parse_bundle() {
                     Ok(t) => {
-                        let line_map = self.compute_line_map(&input);
-
                         self.stats.end_timer(&format!("parse_bundle({})", &source), timer);
                         self.stats.end_timer("parse_bundle", timer);
                         self.stats.accum("parse success", 1);
 
-                        self.set_bundle(index, Bundle::Parsed { source: source.clone(), line_map, tree: t });
+                        let line_map = LineMap::new(&input);
+                        self.set_bundle(index, Bundle::Parsed { source: source.clone(), line_map, node_id_generator, tree: t });
                         self.current_bundle = old_bundle;
 
                         Ok(())
@@ -140,6 +177,18 @@ impl Driver {
                         self.stats.end_timer(&format!("parse_bundle({})", &source), timer);
                         self.stats.end_timer("parse_bundle", timer);
                         self.stats.accum("parse failure", 1);
+
+                        // To get correct error messasges, we need the line map.
+                        let line_map = LineMap::new(&input);
+
+                        // We have to clone the errors before mutating self with set_bundle.
+                        let errs = parser.errors.clone();
+
+                        self.set_bundle(index, Bundle::Parsed { source: source.clone(), line_map, node_id_generator, tree: Located::new(Loc::no_loc(), Root::Bundle { id: NodeId(0), cmds: vec![] }) });
+
+                        for err in errs {
+                            self.error(err);
+                        }
 
                         self.current_bundle = old_bundle;
 
@@ -153,31 +202,6 @@ impl Driver {
         }
     }
 
-    // FIXME: the parser should compute this to avoid
-    // scanning the input more than once.
-    pub fn compute_line_map(&self, input: &String) -> LineMap {
-        let mut v = vec![0];
-        let mut cr = false;
-        for (i, ch) in input.char_indices() {
-            match ch {
-                '\r' => {
-                    cr = true;
-                },
-                '\n' => {
-                    cr = false;
-                    v.push((i+1) as u32);
-                },
-                _ => {
-                    if cr {
-                        v.push(i as u32);
-                        cr = false;
-                    }
-                }
-            }
-        }
-        LineMap { line_offsets: v }
-    }
-
     pub fn debug_lex_bundle(&mut self, index: BundleIndex) -> Result<(), Located<String>> {
         use parser::parse::Parser;
 
@@ -189,7 +213,7 @@ impl Driver {
                 use parser::tokens::Token;
                 use syntax::loc::Located;
 
-                let line_map = self.compute_line_map(&input);
+                let line_map = LineMap::new(&input);
 
                 let mut lex = Lexer::new(source, input.as_str());
 
@@ -261,7 +285,7 @@ impl Driver {
                 self.prename_bundle(index)?;
                 Ok(())
             },
-            Bundle::Parsed { source, line_map, tree } => {
+            Bundle::Parsed { source, line_map, node_id_generator, tree } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
@@ -273,6 +297,7 @@ impl Driver {
                 let tree1 = tree.clone();
                 let source1 = source.clone();
                 let line_map1 = line_map.clone();
+                let mut node_id_generator1 = *node_id_generator;
 
                 {
                     let mut prenamer = Prenamer {
@@ -280,6 +305,7 @@ impl Driver {
                         scopes: &mut HashMap::new(),
                         lookups: &mut HashMap::new(),
                         mixfixes: &mut HashMap::new(),
+                        node_id_generator: &mut node_id_generator1,
                         driver: self
                     };
 
@@ -291,6 +317,7 @@ impl Driver {
                     let new_bundle = Bundle::Prenamed {
                         source: source1,
                         line_map: line_map1,
+                        node_id_generator: *prenamer.node_id_generator,
                         tree: Located::new(tree1.loc, tree2),
                         graph: prenamer.graph.clone(),
                         scopes: prenamer.scopes.clone(),
@@ -322,12 +349,12 @@ impl Driver {
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Parsed { source, line_map, tree } => {
+            Bundle::Parsed { source, line_map, node_id_generator, tree } => {
                 self.prename_bundle(index)?;
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Prenamed { source, line_map, tree, graph, scopes, lookups, mixfixes } => {
+            Bundle::Prenamed { source, line_map, node_id_generator, tree, graph, scopes, lookups, mixfixes } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
@@ -340,6 +367,7 @@ impl Driver {
                 let line_map1 = line_map.clone();
                 let lookups1 = lookups.clone();
                 let mixfixes1 = mixfixes.clone();
+                let mut node_id_generator1 = *node_id_generator;
 
                 use namer::namer::Namer;
                 use namer::namer::Cache;
@@ -356,8 +384,6 @@ impl Driver {
                     cache: &mut cache,
                 };
 
-                let mut node_id_generator = NodeIdGenerator::new();
-
                 {
                     let graph1 = namer.graph.clone();
 
@@ -366,12 +392,12 @@ impl Driver {
                         scopes: &scopes1,
                         lookups: &lookups1,
                         mixfixes: &mixfixes1,
-                        node_id_generator: &mut node_id_generator,
+                        node_id_generator: &mut node_id_generator1,
                     };
 
                     let tree2 = renamer.visit_root(&tree1.value, &RenamerCtx::new(), &tree1.loc);
 
-                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, tree: Located::new(tree1.loc, tree2), graph: graph1, scopes: scopes1 };
+                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, node_id_generator: *renamer.node_id_generator, tree: Located::new(tree1.loc, tree2), graph: graph1, scopes: scopes1 };
                     self.set_bundle(index, new_bundle);
                 }
 

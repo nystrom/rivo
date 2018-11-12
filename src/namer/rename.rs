@@ -3,7 +3,6 @@ use syntax::loc::*;
 use syntax::names::*;
 
 use namer::symbols::*;
-use namer::glr::*;
 use namer::graph::*;
 use namer::namer::Namer;
 
@@ -37,27 +36,27 @@ impl RenamerCtx {
 }
 
 impl<'a> Renamer<'a> {
-    pub fn apply_mixfix(&mut self, tree: MixfixTree, es: Vec<Located<Exp>>) -> Option<Exp> {
+    fn apply_mixfix(&mut self, tree: &MixfixTree, es: &Vec<Located<Exp>>) -> Option<Exp> {
         struct ParseResult {
             e: Located<Exp>,
             rest: Vec<Located<Exp>>
         }
 
-        fn parse(node_id_generator: &mut NodeIdGenerator, t: MixfixTree, es: Vec<Located<Exp>>) -> Option<ParseResult> {
+        fn parse(node_id_generator: &mut NodeIdGenerator, t: &MixfixTree, es: Vec<Located<Exp>>) -> Option<ParseResult> {
             match t {
                 MixfixTree::Name(x, decls) => {
                     let id = node_id_generator.new_id();
                     Some(
                         ParseResult {
                             // FIXME NodeId is wrong and lookup is wrong
-                            e: Located::new(NO_LOC, Exp::Name { name: x, id: id }),
+                            e: Located::new(NO_LOC, Exp::Name { name: x.clone(), id: id }),
                             rest: es
                         }
                     )
                 },
                 MixfixTree::Apply(t1, t2) => {
-                    parse(node_id_generator, *t1, es).and_then(|ParseResult { e: e1, rest: rest1 }|
-                        parse(node_id_generator, *t2, rest1).map(|ParseResult { e: e2, rest: rest2 }|
+                    parse(node_id_generator, t1, es).and_then(|ParseResult { e: e1, rest: rest1 }|
+                        parse(node_id_generator, t2, rest1).map(|ParseResult { e: e2, rest: rest2 }|
                             ParseResult {
                                 e: Located::new(NO_LOC, Exp::Apply { fun: Box::new(e1), arg: Box::new(e2) }),
                                 rest: rest2
@@ -96,6 +95,24 @@ impl<'a> Renamer<'a> {
             _ => None,
         }
     }
+
+    fn lookup_by_id(&mut self, id: NodeId) -> Result<Vec<Located<Decl>>, Located<String>> {
+        println!("id = {:?}", id);
+        let lookup = self.lookups.get(&id).unwrap();
+        println!("lookup = {:?}", lookup);
+
+        match self.namer.graph.get_pre_resolved(lookup) {
+            Some(decls) => {
+                println!("pre_resolved = {:?}", decls);
+                Ok(decls.clone())
+            },
+            None => {
+                let lookup_ref = self.namer.graph.get_lookup(lookup);
+                println!("lookup_ref = {:?}", lookup_ref);
+                self.namer.lookup(&lookup_ref)
+            },
+        }
+    }
 }
 
 // visit any node that has a node id.
@@ -108,16 +125,12 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
 
                 match &new_node {
                     Exp::Name { name, id } => {
-                        println!("id = {:?}", id);
-                        let lookup = self.lookups.get(id).unwrap();
-                        let lookup_ref = self.namer.graph.get_lookup(lookup);
-
-                        match self.namer.lookup(&lookup_ref) {
+                        match self.lookup_by_id(*id) {
                             Ok(decls) => {
                                 if decls.is_empty() {
                                     self.namer.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope.", name)));
                                 }
-                                else if Namer::all_mixfix(&decls) && ! ctx.in_mixfix {
+                                else if ! ctx.in_mixfix && Namer::all_mixfix(&decls) {
                                     self.namer.driver.error(Located::new(loc.clone(), format!("Name {} is a mixfix part, not a name.", name)));
                                 }
                                 else {
@@ -126,7 +139,9 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                 new_node
                             },
                             Err(_) => {
-                                self.namer.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope (internal error too).", name)));
+                                // Don't report... should have already been reported.
+                                assert!(self.namer.driver.has_errors());
+                                // self.namer.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope (internal error too).", name)));
                                 new_node
                             },
                         }
@@ -138,11 +153,11 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
             Exp::MixfixApply { .. } => {
                 self.namer.driver.stats.accum("mixfix rename", 1);
 
-                let ctx1 = RenamerCtx {
+                let child_ctx = RenamerCtx {
                     in_mixfix: true,
                 };
 
-                let new_node = self.walk_exp(e, &ctx1, &loc);
+                let new_node = self.walk_exp(e, &child_ctx, &loc);
 
                 match &new_node {
                     Exp::MixfixApply { es, id } => {
@@ -151,22 +166,34 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
 
                         match self.namer.parse_mixfix(&lookup_ref) {
                             Ok(trees) => {
-                                if trees.len() == 1 {
-                                    match self.apply_mixfix(trees.first().unwrap().clone(), es.clone()) {
-                                        Some(e) => e,
-                                        None => {
-                                            self.namer.driver.error(Located::new(loc.clone(), "cannot resolve mixfix expression (internal error too)".to_owned()));
+                                match trees.first() {
+                                    Some(tree) => {
+                                        if trees.len() > 1 {
+                                            use crate::syntax::pretty::*;
+                                            let mut trees_clone = trees.clone();
+                                            trees_clone.sort();
+                                            self.namer.driver.error(Located::new(*loc, format!("Ambiguous mixfix expression: {}; resolves to one of {}.", new_node.pretty(1000), MixfixTreeVec(&trees_clone))));
                                             new_node
-                                        },
-                                    }
-                                }
-                                else {
-                                    self.namer.driver.error(Located::new(loc.clone(), "ambiguous mixfix expression".to_owned()));
-                                    new_node
+                                        }
+                                        else {
+                                            match self.apply_mixfix(tree, es) {
+                                                Some(e) => e,
+                                                None => {
+                                                    assert!(self.namer.driver.has_errors());
+                                                    // self.namer.driver.error(Located::new(loc.clone(), "cannot resolve mixfix expression (internal error too)".to_owned()));
+                                                    new_node
+                                                },
+                                            }
+                                        }
+                                    },
+                                    None => {
+                                        self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression: {:?}.", &new_node)));
+                                        new_node
+                                    },
                                 }
                             }
-                            Err(_) => {
-                                self.namer.driver.error(Located::new(loc.clone(), "cannot resolve mixfix expression".to_owned()));
+                            Err(msg) => {
+                                self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression. {}: {:?}.", msg.value, &new_node)));
                                 new_node
                             },
                         }

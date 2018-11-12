@@ -10,18 +10,19 @@ use namer::symbols::Env;
 
 use super::loader::Input;
 
+// TODO: refactor to get rid of the redundant fields.
 #[derive(Clone, Debug)]
 pub enum Bundle {
     Read { source: Source, input: Input },
-    Parsed { source: Source, line_map: LineMap, tree: Located<Root> },
-    Prenamed { source: Source, line_map: LineMap, tree: Located<Root>,
+    Parsed { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root> },
+    Prenamed { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>,
         graph: ScopeGraph,
         scopes: HashMap<NodeId, Scope>,
         lookups: HashMap<NodeId, LookupIndex>,
         mixfixes: HashMap<NodeId, MixfixIndex>,
     },
-    Named { source: Source, line_map: LineMap, tree: Located<Root>, graph: ScopeGraph, scopes: HashMap<NodeId, Scope> },
-    Core { source: Source, line_map: LineMap, root_scope: Scope }
+    Named { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>, graph: ScopeGraph, scopes: HashMap<NodeId, Scope> },
+    Core { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, root_scope: Scope }
 }
 
 impl Bundle {

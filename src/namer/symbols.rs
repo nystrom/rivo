@@ -5,6 +5,8 @@ use syntax::trees::Assoc;
 use syntax::trees::CallingConv;
 use syntax::trees::CallingMode;
 
+use std::collections::BTreeMap;
+
 // During naming we form a graph of scopes, refs, and declarations.
 // Rather than represent the graph using references, we use
 // vector indices. This simplifies the memory management considerably.
@@ -13,29 +15,40 @@ use syntax::trees::CallingMode;
 use namer::graph::{LookupIndex, MixfixIndex, EnvIndex};
 
 // need to implement hash for breadcrumbs to work.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Scope {
     Empty,
     Global,
-    Lookup(LookupIndex),
+    Lookup(LookupIndex),   // should be a LookupRef, but LookupRef contains a Scope and we can't have a cyclic data structure
     Mixfix(MixfixIndex),
     Env(EnvIndex),
+    EnvHere(EnvIndex), // just like env but we don't search imports or parents
     EnvWithoutImports(EnvIndex), // just like env but we don't search imports
+}
+
+impl Scope {
+    pub fn to_here(&self) -> Scope {
+        match *self {
+            Scope::Env(i) => Scope::EnvHere(i),
+            Scope::EnvWithoutImports(i) => Scope::EnvHere(i),
+            scope => scope,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Env {
     pub index: EnvIndex, // for easier debugging
-    pub decls: Vec<Located<Decl>>,
+    pub decls: BTreeMap<Name, Vec<Located<Decl>>>,  // FIXME: use a BTreeMap keyed on name.
     pub imports: Vec<Located<Import>>,
     pub parents: Vec<Scope>,
     pub includes: Vec<Scope>,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Prio(pub usize);
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Import {
     All { path: Scope },
     None { path: Scope },
@@ -45,12 +58,43 @@ pub enum Import {
     Renaming { path: Scope, name: Name, rename: Name },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+impl Import {
+    pub fn path(&self) -> Scope {
+        match self {
+            Import::All { path } => *path,
+            Import::None { path } => *path,
+            Import::Here { path } => *path,
+            Import::Including { path, .. } => *path,
+            Import::Excluding { path, .. } => *path,
+            Import::Renaming { path, .. } => *path,
+        }
+    }
+}
+
+// TODO
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ParamAttribute {
+    assoc: Assoc,
+    conv: CallingConv,
+    mode: CallingMode,
+}
+
+// TODO
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Attribute {
+    Prio(usize),
+    Default,
+    Inline,
+    Type(String),
+    Pragma(String),  // the string contains an unevaluated Ivo expression. Should just contain an Exp tree, but don't want to mix trees and symbols.
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Decl {
     Trait {
         scope: Scope,
         name: Name,
-        param_assocs: Vec<Assoc>,
+        param_assocs: Vec<Assoc>,   // FIXME merge into one vec.
         param_convs: Vec<CallingConv>,
         param_modes: Vec<CallingMode>,
         ret_mode: CallingMode,
@@ -121,25 +165,36 @@ impl Decl {
 
         None
     }
+
+    pub fn scope(&self) -> Scope {
+        match self {
+            Decl::Trait { scope, .. } => *scope,
+            Decl::Fun { scope, .. } => *scope,
+            Decl::Val { scope, .. } => *scope,
+            Decl::Var { scope, .. } => *scope,
+            _ => Scope::Empty,
+        }
+    }
+
+    pub fn prio(&self) -> Prio {
+        match self {
+            Decl::Trait { prio, .. } => *prio,
+            Decl::Fun { prio, .. } => *prio,
+            _ => Prio(0),
+        }
+    }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LookupRef {
     pub scope: Scope,
     pub name: Name,
-    pub follow_parents: bool,
 }
 
 impl LookupRef {
     pub fn new(scope: Scope, name: Name) -> LookupRef {
         LookupRef {
-            scope, name, follow_parents: true
-        }
-    }
-
-    pub fn new_here(scope: Scope, name: Name) -> LookupRef {
-        LookupRef {
-            scope, name, follow_parents: false
+            scope, name
         }
     }
 }
@@ -154,24 +209,90 @@ pub struct MixfixPart {
     pub name_ref: Option<LookupIndex>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MixfixTree {
     Name(Name, Vec<Located<Decl>>),
     Apply(Box<MixfixTree>, Box<MixfixTree>),
     Exp,
 }
 
+use std::fmt;
+
+impl fmt::Display for MixfixTree {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MixfixTree::Name(x, _) => write!(f, "{}", x),
+            MixfixTree::Exp => write!(f, "_"),
+            MixfixTree::Apply(e1, e2) => write!(f, "({} {})", *e1, *e2),
+        }
+    }
+}
+
+pub struct MixfixTreeVec<'a>(pub &'a Vec<MixfixTree>);
+
+impl<'a> fmt::Display for MixfixTreeVec<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.0.len() {
+            0 => Ok({}),
+            1 => {
+                write!(f, "{}", self.0[0])?;
+                Ok({})
+            },
+            2 => {
+                write!(f, "{} or {}", self.0[0], self.0[1])?;
+                Ok({})
+            }
+            n => {
+                for (i, t) in self.0.iter().enumerate() {
+                    write!(f, "{}", t)?;
+                    if i < n-2 {
+                        write!(f, ", ")?;
+                    }
+                    else if i == n-2 {
+                        write!(f, ", or ")?;
+                    }
+                }
+                Ok({})
+            }
+        }
+    }
+}
+
 // 1 + 2 + 3 -->
 // ((`_ + _` ((`_ + _` 1) 2)) 3)
 // the structure is
-// MixfixTreeApply(
-//   MixfixTreeApply(
-//     MixfixTreeName(`_ + _`),
-//     MixfixTreeApply(
-//       MixfixTreeApply(
-//         MixfixTreeName(`_ + _`),
-//         MixfixExp()),
-//       MixfixExp())),
-// MixfixExp())
+// Apply(
+//   Apply(
+//     Name(`_ + _`),
+//     Apply(
+//       Apply(
+//         Name(`_ + _`),
+//         Exp()),
+//       Exp())),
+// Exp())
 // We can apply this tree to a list of expressions to create the
-// correctly nested apply expression. See applyMixfixTree in Namer.
+// correctly nested apply expression.
+
+impl MixfixTree {
+    pub fn make_call(e: MixfixTree, es: &[MixfixTree]) -> MixfixTree {
+        if let Some((arg, args)) = es.split_first() {
+            MixfixTree::make_call(
+                MixfixTree::Apply(Box::new(e), Box::new(arg.clone())),
+                args)
+        }
+        else {
+            e
+        }
+    }
+
+    pub fn make_nameless_call(args: &[MixfixTree]) -> Option<MixfixTree> {
+        // If there were no name parts, just left associate all the expression into a call.
+        if let Some((e, es)) = args.split_first() {
+            Some(MixfixTree::make_call(e.clone(), es))
+        }
+        else {
+            None
+        }
+    }
+
+}

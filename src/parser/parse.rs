@@ -1,5 +1,6 @@
 use num::bigint::BigInt;
 use num::rational::BigRational;
+use std::fmt::Debug;
 
 use syntax::loc::*;
 use syntax::trees::*;
@@ -8,6 +9,10 @@ use syntax::names::*;
 use parser::tokens::*;
 use parser::lex::Lexer;
 use parser::lex::LexError;
+
+// #[cfg(debug_assertions)]
+// #[allow(non_upper_case_globals)]
+// static mut depth: u32 = 0;
 
 // TODO: parse groups of definitions directly rather than building a dummy trait.
 // TODO: rename Trait to Record and add a tag, generate by the parser.
@@ -64,14 +69,15 @@ macro_rules! consume_or_else {
 
 macro_rules! consume {
     ($parser: expr, $expected: expr) => {
-        match *$parser.lookahead()? {
+        {
+            let t = $parser.lookahead()?;
             // $expected is a expr, not a pattern so we have to compare using ==
-            ref t if *t == $expected => {
+            if *t == $expected {
                 $parser.eat();
                 Ok({})
-            },
-            ref t => {
-                $parser.error_unexpected(vec![$expected], t.clone())
+            }
+            else {
+                $parser.error_unexpected(vec![$expected], &t)
             }
         }
     }
@@ -92,13 +98,14 @@ macro_rules! filter_collect_loc {
                     Located { loc, value: $pat } =>
                         vec!(Located { loc: loc.clone(), value: $exp }),
                     _ =>
-                        vec!(),
+                        vec![],
                 }
             })
             .collect();
     };
 }
 
+#[derive(Debug)]
 enum MixfixParam {
     Name(Part),
     Param(Located<Param>),
@@ -106,35 +113,37 @@ enum MixfixParam {
 
 type PResult<A> = Result<A, Located<String>>;
 
+#[derive(Debug)]
 pub struct Parser<'a> {
     pub lex: Lexer<'a>,
     pub last_token: Located<Token>,
     pub errors: Vec<Located<String>>,
-    pub next_node_id: usize,
+    pub node_id_generator: &'a mut NodeIdGenerator,
 }
 
+// #[cfg_attr(debug_assertions, cfg_attr(not(test), trace))]
 impl<'a> Parser<'a> {
-    pub fn new(source: &'a Source, input: &'a str) -> Parser<'a> {
+    pub fn new(source: &'a Source, input: &'a str, node_id_generator: &'a mut NodeIdGenerator) -> Parser<'a> {
         Parser {
             lex: Lexer::new(source, input),
             last_token: Located {
                 loc: NO_LOC,
                 value: Token::EOF
             },
-            errors: vec!(),
-            next_node_id: 0,
+            errors: vec![],
+            node_id_generator,
         }
     }
 
-    pub fn new_from_lexer(lex: Lexer<'a>) -> Parser<'a> {
+    pub fn new_from_lexer(lex: Lexer<'a>, node_id_generator: &'a mut NodeIdGenerator) -> Parser<'a> {
         Parser {
             lex,
             last_token: Located {
                 loc: NO_LOC,
                 value: Token::EOF
             },
-            errors: vec!(),
-            next_node_id: 0,
+            errors: vec![],
+            node_id_generator,
         }
     }
 
@@ -145,22 +154,22 @@ impl<'a> Parser<'a> {
     fn lookahead(&mut self) -> PResult<Located<Token>> {
         match self.lex.peek_token() {
             Err(Located { loc, value: LexError::BadInt }) => {
-                self.error(loc, "bad integer literal")
+                self.error(loc, "Invalid integer literal.")
             },
             Err(Located { loc, value: LexError::BadChar }) => {
-                self.error(loc, "bad character literal")
+                self.error(loc, "Invalid character literal.")
             },
             Err(Located { loc, value: LexError::BadString }) => {
-                self.error(loc, "bad string literal")
+                self.error(loc, "Invalid string literal.")
             },
             Err(Located { loc, value: LexError::BadRat }) => {
-                self.error(loc, "bad rational literal")
+                self.error(loc, "Invalid rational literal.")
             },
             Err(Located { loc, value: LexError::BadComment }) => {
-                self.error(loc, "bad comment")
+                self.error(loc, "Invalid comment.")
             },
             Err(Located { loc, value: LexError::UnexpectedChar(ch) }) => {
-                self.error(loc, &format!("unexpected character '{}'", ch))
+                self.error(loc, &format!("Unexpected character '{}'.", ch))
             },
             Ok(t) => {
                 Ok(t)
@@ -168,28 +177,27 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn error_unexpected<T>(&mut self, expected: Vec<Token>, got: Token) -> PResult<T> {
+    fn error_unexpected<T: Debug>(&mut self, expected: Vec<Token>, got: &Located<Token>) -> PResult<T> {
         if expected.len() == 0 {
-            let msg = format!("unexpected token '{}'", got);
-            self.error_here(&msg)
+            let msg = format!("Unexpected token {}.", got.value);
+            self.error(got.loc, &msg)
         }
         else if expected.len() == 1 {
-            let msg = format!("unexpected token '{}', expected '{}'", got, expected.first().unwrap());
-            self.error_here(&msg)
+            let msg = format!("Unexpected token {}, expected {}.", got.value, expected.first().unwrap());
+            self.error(got.loc, &msg)
         }
         else {
-            let msg = format!("unexpected token '{}', expected one of {}", got, TokenVec(expected));
-            self.error_here(&msg)
+            let msg = format!("Unexpected token {}, expected one of {}.", got.value, TokenVec(expected));
+            self.error(got.loc, &msg)
         }
     }
 
-    fn error_here<T>(&mut self, msg: &str) -> PResult<T> {
+    fn error_here<T: Debug>(&mut self, msg: &str) -> PResult<T> {
         let t = self.lookahead()?;
-        let loc = t.loc.clone();
-        self.error(loc, msg)
+        self.error(t.loc, msg)
     }
 
-    fn error<T>(&mut self, loc: Loc, msg: &str) -> PResult<T> {
+    fn error<T: Debug>(&mut self, loc: Loc, msg: &str) -> PResult<T> {
         let lmsg = Located { loc: loc, value: String::from(msg) };
         self.errors.push(lmsg.clone());
         // panic!("{:?}", lmsg);
@@ -202,8 +210,7 @@ impl<'a> Parser<'a> {
         // panic!("{:?}", lmsg);
     }
 
-    fn error_string<T>(&mut self, lmsg: Located<String>) -> PResult<T> {
-        println!("{}", lmsg.value);
+    fn error_string<T: Debug>(&mut self, lmsg: Located<String>) -> PResult<T> {
         self.errors.push(lmsg.clone());
         Err(lmsg)
     }
@@ -211,22 +218,22 @@ impl<'a> Parser<'a> {
     fn eat(&mut self) {
         match self.lex.next_token() {
             Err(Located { loc, value: LexError::BadInt }) => {
-                self.error_void(loc, "bad integer literal");
+                self.error_void(loc, "Invalid integer literal.");
             },
             Err(Located { loc, value: LexError::BadChar }) => {
-                self.error_void(loc, "bad character literal");
+                self.error_void(loc, "Invalid character literal.");
             },
             Err(Located { loc, value: LexError::BadString }) => {
-                self.error_void(loc, "bad string literal");
+                self.error_void(loc, "Invalid string literal.");
             },
             Err(Located { loc, value: LexError::BadRat }) => {
-                self.error_void(loc, "bad rational literal");
+                self.error_void(loc, "Invalid rational literal.");
             },
             Err(Located { loc, value: LexError::BadComment }) => {
-                self.error_void(loc, "bad comment");
+                self.error_void(loc, "Invalid comment.");
             },
             Err(Located { loc, value: LexError::UnexpectedChar(ch) }) => {
-                self.error_void(loc, "unexpected character");
+                self.error_void(loc, format!("Unexpected character '{}'.", ch).as_str());
             },
             Ok(t) => {
                 self.last_token = t;
@@ -272,12 +279,13 @@ impl<'a> Parser<'a> {
                             }
 
                             // A command should be followed by a ; or } or EOF.
-                            match *self.lookahead()? {
+                            let t = self.lookahead()?;
+                            match *t {
                                 Token::Semi => {},
                                 Token::Rc => {},
                                 Token::EOF => {},
-                                ref t => {
-                                    return self.error_here(format!("unexpected token '{}'", *t).as_str());
+                                _ => {
+                                    return self.error_unexpected(vec![Token::Semi, Token::Rc, Token::EOF], &t);
                                 },
                             }
                         },
@@ -333,99 +341,137 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_mixfix_return(&mut self, mode_given: bool) -> PResult<Located<Param>> {
-        located_ok!(self, {
-            match self.lookahead()? {
-                Located { loc, value: Token::Lp } => {
-                    self.eat();
-                    match *self.lookahead()? {
-                        Token::Question => {
-                            self.eat();
-                            let e = self.parse_tuple()?;
-                            consume!(self, Token::Rp)?;
-                            Ok(Param {
-                                assoc: Assoc::NonAssoc,
-                                by_name: CallingConv::ByValue,
-                                mode: CallingMode::Input,
-                                pat: Box::new(e),
-                            })
-                        },
-                        Token::Bang => {
-                            self.eat();
-                            let e = self.parse_tuple()?;
-                            consume!(self, Token::Rp)?;
-                            Ok(Param {
-                                assoc: Assoc::NonAssoc,
-                                by_name: CallingConv::ByValue,
-                                mode: CallingMode::Output,
-                                pat: Box::new(e),
-                            })
-                        },
-                        _ => {
-                            if mode_given {
-                                return self.error_here("Invalid return attribute. Expected an attribute mode, either `!` or `?`.")
-                            }
+    fn parse_mixfix_return(&mut self, mode_given: bool) -> PResult<(bool, Located<Param>)> {
+        let first_token = self.lookahead()?;
 
-                            let e = self.parse_tuple()?;
-                            consume!(self, Token::Rp)?;
-                            Ok(Param {
-                                assoc: Assoc::NonAssoc,
-                                by_name: CallingConv::ByValue,
-                                mode: CallingMode::Output,
-                                pat: Box::new(e),
-                            })
+        let (mode_given2, param) = match self.lookahead()? {
+            Located { loc, value: Token::Lp } => {
+                self.eat();
+                match *self.lookahead()? {
+                    Token::Question => {
+                        self.eat();
+                        let e = self.parse_tuple()?;
+                        consume!(self, Token::Rp)?;
+                        Ok(
+                            (
+                                true,
+                                Param {
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByValue,
+                                    mode: CallingMode::Input,
+                                    pat: Box::new(e),
+                                }
+                            )
+                        )
+                    },
+                    Token::Bang => {
+                        self.eat();
+                        let e = self.parse_tuple()?;
+                        consume!(self, Token::Rp)?;
+                        Ok(
+                            (
+                                true,
+                                Param {
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByValue,
+                                    mode: CallingMode::Output,
+                                    pat: Box::new(e),
+                                }
+                            )
+                        )
+                    },
+                    _ => {
+                        if mode_given {
+                            return self.error_here("Invalid return attribute. Expected an attribute mode, either `!` or `?`.")
                         }
+
+                        // We have the beginning of an expression.
+                        // We should parse as an expression, but we've already eaten the (.
+                        // This may consume past the end of the tuple we're starting.
+                        self.push_back(Located { loc, value: Token::Lp });
+
+                        let e = self.parse_exp()?;
+
+                        Ok(
+                            (
+                                false,
+                                Param {
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByValue,
+                                    mode: CallingMode::Output,
+                                    pat: Box::new(e),
+                                }
+                            )
+                        )
                     }
-                },
-                Located { loc, value: Token::Lc } => {
-                    self.eat();
-                    match *self.lookahead()? {
-                        Token::Question => {
-                            self.eat();
-                            let e = self.parse_tuple()?;
-                            consume!(self, Token::Rc)?;
-                            Ok(Param {
-                                assoc: Assoc::NonAssoc,
-                                by_name: CallingConv::ByName,
-                                mode: CallingMode::Input,
-                                pat: Box::new(e),
-                            })
-                        },
-                        _ => {
-                            if mode_given {
-                                return self.error_here("Invalid return attribute. Call-by-name attributes must have an output mode. Expected `?`.")
-                            }
-
-                            // We have the beginning of a layout block or struct block.
-                            // We should parse as an expression, but we've already eaten the {.
-                            self.push_back(Located { loc, value: Token::Lc });
-
-                            let e = self.parse_exp()?;
-
-                            Ok(Param {
-                                assoc: Assoc::NonAssoc,
-                                by_name: CallingConv::ByValue,
-                                mode: CallingMode::Output,
-                                pat: Box::new(e),
-                            })
-                        }
-                    }
-                },
-                _ => {
-                    if mode_given {
-                        return self.error_here("Invalid return attribute. Expected `(` or `{` and an attribute mode.")
-                    }
-
-                    let e = self.parse_exp()?;
-                    Ok(Param {
-                        assoc: Assoc::NonAssoc,
-                        by_name: CallingConv::ByValue,
-                        mode: CallingMode::Output,
-                        pat: Box::new(e),
-                    })
                 }
+            },
+            Located { loc, value: Token::Lc } => {
+                self.eat();
+                match *self.lookahead()? {
+                    Token::Question => {
+                        self.eat();
+                        let e = self.parse_tuple()?;
+                        consume!(self, Token::Rc)?;
+                        Ok(
+                            (
+                                true,
+                                Param {
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByName,
+                                    mode: CallingMode::Input,
+                                    pat: Box::new(e),
+                                }
+                            )
+                        )
+                    },
+                    _ => {
+                        if mode_given {
+                            return self.error_here("Invalid return attribute. Call-by-name attributes must have an output mode. Expected `?`.")
+                        }
+
+                        // We have the beginning of a layout block or struct block.
+                        // We should parse as an expression, but we've already eaten the {.
+                        self.push_back(Located { loc, value: Token::Lc });
+
+                        let e = self.parse_exp()?;
+
+                        Ok(
+                            (
+                                false,
+                                Param {
+                                    assoc: Assoc::NonAssoc,
+                                    by_name: CallingConv::ByValue,
+                                    mode: CallingMode::Output,
+                                    pat: Box::new(e),
+                                }
+                            )
+                        )
+                    }
+                }
+            },
+            _ => {
+                if mode_given {
+                    return self.error_here("Invalid return attribute. Expected `(` or `{` and an attribute mode.")
+                }
+
+                let e = self.parse_exp()?;
+
+                Ok(
+                    (
+                        false,
+                        Param {
+                            assoc: Assoc::NonAssoc,
+                            by_name: CallingConv::ByValue,
+                            mode: CallingMode::Output,
+                            pat: Box::new(e),
+                        }
+                    )
+                )
             }
-        })
+        }?;
+
+        Ok( (mode_given2, Located::new(Loc::span_from(&first_token, &self.last_token), param) ) )
     }
 
     // where Exp
@@ -452,22 +498,22 @@ impl<'a> Parser<'a> {
             match *self.lookahead()? {
                 Token::Id(ref s) => {
                     self.eat();
-                    let e = MixfixParam::Name(Part::Id(s.clone()));
+                    let e = MixfixParam::Name(Part::Id(Interned::new(s)));
                     elements.push(e);
                 },
                 Token::Op(ref s) => {
                     self.eat();
-                    let e = MixfixParam::Name(Part::Op(s.clone()));
+                    let e = MixfixParam::Name(Part::Op(Interned::new(s)));
                     elements.push(e);
                 },
                 Token::Bang => {
                     self.eat();
-                    let e = MixfixParam::Name(Part::Op(String::from("!")));
+                    let e = MixfixParam::Name(Part::Op(Interned::new("!")));
                     elements.push(e);
                 },
                 Token::Question => {
                     self.eat();
-                    let e = MixfixParam::Name(Part::Op(String::from("?")));
+                    let e = MixfixParam::Name(Part::Op(Interned::new("?")));
                     elements.push(e);
                 },
                 Token::Lp => {
@@ -491,8 +537,8 @@ impl<'a> Parser<'a> {
                                         }
                                     },
                                     Token::Question => {
-                                        self.eat();
                                         mode_given = true;
+                                        self.eat();
                                         let e = self.parse_tuple()?;
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
@@ -684,13 +730,13 @@ impl<'a> Parser<'a> {
                 for param in params {
                     match *param {
                         Param { assoc: Assoc::Assoc, .. } => {
-                            return self.error(param.loc.clone(), "anonymous function parameter cannot be associative.")
+                            return self.error(param.loc.clone(), "Anonymous function parameter cannot be associative.")
                         },
                         Param { by_name: CallingConv::ByName, .. } => {
-                            return self.error(param.loc.clone(), "anonymous function parameter cannot be call-by-name.")
+                            return self.error(param.loc.clone(), "Anonymous function parameter cannot be call-by-name.")
                         },
                         Param { mode: CallingMode::Output, .. } => {
-                            return self.error(param.loc.clone(), "anonymous function parameter cannot be an output parameter.")
+                            return self.error(param.loc.clone(), "Anonymous function parameter cannot be an output parameter.")
                         },
                         Param { pat: ref exp, .. } => {
                             // copy the location from the Param.
@@ -725,14 +771,15 @@ impl<'a> Parser<'a> {
                     Token::Eq => {
                         self.eat();
 
-                        let e = self.parse_mixfix_return(mode_given)?;
+                        let (mode_given2, e) = self.parse_mixfix_return(mode_given)?;
 
                         // If a mode was given or there are no parameters, we require a mode.
-                        if mode_given {
+                        if mode_given || mode_given2 {
                             let opt_guard2 = match opt_guard {
                                 Some(g) => Some(g),
                                 None => self.parse_opt_guard()?
                             };
+
                             Ok(Cmd::Def(Def::MixfixDef {
                                 id,
                                 flag: MixfixFlag::Fun,
@@ -887,8 +934,16 @@ impl<'a> Parser<'a> {
                 }
             }
             Exp::Select { exp, name } => {
-                Located::new(e.loc,
-                    Def::ImportDef { opt_path: opt_path.map(|p| Box::new(p)), selector: Selector::Including { name } })
+                match opt_path {
+                    None => {
+                        let id = self.alloc_node_id();
+                        self.convert_import(Some(*exp), Located::new(e.loc, Exp::Name { id, name }))?
+                    },
+                    Some(e0) => {
+                        let id = self.alloc_node_id();
+                        self.convert_import(Some(Located::new(e.loc, Exp::Within { id, e1: Box::new(e0), e2: exp })), Located::new(e.loc, Exp::Name { id, name }))?
+                    },
+                }
             },
             Exp::Within { id, e1, e2 } => {
                 match opt_path {
@@ -897,8 +952,7 @@ impl<'a> Parser<'a> {
                     },
                     Some(e0) => {
                         let id = self.alloc_node_id();
-                        self.convert_import(Some(Located::new(Loc::span_from(&*e1, &*e2),
-                            Exp::Within { id, e1: Box::new(e0), e2: e1 })), *e2)?
+                        self.convert_import(Some(Located::new(e.loc, Exp::Within { id, e1: Box::new(e0), e2: e1 })), *e2)?
                     },
                 }
             },
@@ -929,7 +983,7 @@ impl<'a> Parser<'a> {
             let params = Parser::make_params(&elements);
 
             if ! has_name {
-                self.error_here("trait missing name")
+                self.error_here("Missing trait name.")
             }
             else {
                 // We have a trait definition.
@@ -941,14 +995,15 @@ impl<'a> Parser<'a> {
                     Token::Eq => {
                         self.eat();
 
-                        let e = self.parse_mixfix_return(mode_given)?;
+                        let (mode_given2, e) = self.parse_mixfix_return(mode_given)?;
 
                         // If a mode was given, we require a mode.
-                        if mode_given {
+                        if mode_given || mode_given2 {
                             let opt_guard2 = match opt_guard {
                                 Some(g) => Some(g),
                                 None => self.parse_opt_guard()?
                             };
+
                             Ok(Def::MixfixDef {
                                 id,
                                 flag: MixfixFlag::Trait,
@@ -977,7 +1032,7 @@ impl<'a> Parser<'a> {
                             value:
                                 Exp::Record {
                                     id: self.alloc_node_id(),
-                                    defs: vec!(),
+                                    defs: vec![],
                                 }
                         };
 
@@ -996,48 +1051,40 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_exp(&mut self) -> PResult<Located<Exp>> {
-        match *self.lookahead()? {
-            Token::Native =>
-                located_ok!(self, {
-                    self.eat();
-                    Ok(Exp::Native)
-                }),
-            _ =>
-                located_ok!(self, {
-                    let left = self.parse_exp0()?;
+        located_ok!(self, {
+            let left = self.parse_exp0()?;
 
-                    match *self.lookahead()? {
-                        Token::Assign => {
-                            self.eat();
-                            let right = self.parse_exp()?;
-                            Ok(Exp::Assign { lhs: Box::new(left), rhs: Box::new(right) })
-                        },
-                        Token::Eq => {
-                            self.eat();
-                            let right = self.parse_exp()?;
-                            Ok(Exp::Bind { lhs: Box::new(left), rhs: Box::new(right) })
-                        },
-                        Token::BackArrow => {
-                            self.eat();
-                            let right = self.parse_exp()?;
-                            Ok(Exp::Generator { lhs: Box::new(left), rhs: Box::new(right) })
-                        },
-                        Token::Arrow => {
-                            self.eat();
-                            let right = self.parse_exp()?;
-                            Ok(Exp::Arrow { id: self.alloc_node_id(), arg: Box::new(left), ret: Box::new(right) })
-                        },
-                        Token::With => {
-                            self.eat();
-                            let right = self.parse_exp()?;
-                            Ok(Exp::Union { es: vec!(left, right) })
-                        },
-                        _ => {
-                            Ok(left.value)
-                        },
-                    }
-                }),
-        }
+            match *self.lookahead()? {
+                Token::Assign => {
+                    self.eat();
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Assign { lhs: Box::new(left), rhs: Box::new(right) })
+                },
+                Token::Eq => {
+                    self.eat();
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Bind { lhs: Box::new(left), rhs: Box::new(right) })
+                },
+                Token::BackArrow => {
+                    self.eat();
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Generator { lhs: Box::new(left), rhs: Box::new(right) })
+                },
+                Token::Arrow => {
+                    self.eat();
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Arrow { id: self.alloc_node_id(), arg: Box::new(left), ret: Box::new(right) })
+                },
+                Token::With => {
+                    self.eat();
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Union { es: vec!(left, right) })
+                },
+                _ => {
+                    Ok(left.value)
+                },
+            }
+        })
     }
 
     fn parse_exp0(&mut self) -> PResult<Located<Exp>> {
@@ -1114,31 +1161,36 @@ impl<'a> Parser<'a> {
             },
             _ => {
                 located_ok!(self, {
-                    let first = self.parse_select()?;
+                    let mut es = vec![];
 
-                    match *self.lookahead()? {
+                    loop {
+                        let first = self.parse_select()?;
+                        es.push(first);
+
                         // If the lookahead can start a primary expression,
                         // parse recursively.
-                        Token::Lc | Token::Lp | Token::Lb | Token::Id(_) | Token::Op(_) | Token::Tick | Token::Int(_, _) | Token::Rat(_, _) | Token::String(_) | Token::Char(_) | Token::Bang | Token::Question | Token::Underscore => {
-                            let rest = self.parse_mixfix_exp()?;
+                        match *self.lookahead()? {
+                            Token::Lc | Token::Lp | Token::Lb | Token::Id(_) | Token::Op(_) | Token::Tick | Token::Int(_, _) | Token::Rat(_, _) | Token::String(_) | Token::Char(_) | Token::Bang | Token::Question | Token::Underscore => {
+                                continue;
+                            },
+                            _ => {
+                                break;
+                            }
+                        }
+                    }
 
-                            match *rest.clone() {
-                                Exp::MixfixApply { id, ref es, .. } => {
-                                    let mut more = Vec::new();
-                                    more.push(first);
-                                    more.append(&mut es.clone());
-                                    Ok(Exp::MixfixApply { id, es: more })
-                                },
-                                _ => {
-                                    let id = self.alloc_node_id();
-                                    let more = vec!(first, rest);
-                                    Ok(Exp::MixfixApply { id, es: more })
-                                },
+                    match es.first() {
+                        Some(first) => {
+                            if es.len() == 1 {
+                                Ok(first.value.clone())
+                            }
+                            else {
+                                let id = self.alloc_node_id();
+                                Ok(Exp::MixfixApply { id, es })
                             }
                         },
-                        _ => {
-                            // Otherwise, we're done.
-                            Ok(first.value)
+                        None => {
+                            unreachable!()
                         },
                     }
                 })
@@ -1177,8 +1229,8 @@ impl<'a> Parser<'a> {
                                 exp: Box::new(left),
                                 name: name.clone()
                             })),
-                    _ =>
-                        self.error(loc, "invalid selection")
+                    ref t =>
+                        self.error(loc, "Invalid selection expression. Expected a name.")
                 }?;
 
                 match *self.lookahead()? {
@@ -1206,7 +1258,7 @@ impl<'a> Parser<'a> {
                 }
             },
             _ =>
-                self.error_here("invalid selector"),
+                self.error_here("Invalid select expression. Expected an identifier, operator, `_`, or `(`"),
         }
     }
 
@@ -1219,11 +1271,11 @@ impl<'a> Parser<'a> {
             match *self.lookahead()? {
                 Token::Id(ref s) => {
                     self.eat();
-                    parts.push(Part::Id(s.clone()))
+                    parts.push(Part::Id(Interned::new(s)))
                 },
                 Token::Op(ref s) => {
                     self.eat();
-                    parts.push(Part::Op(s.clone()))
+                    parts.push(Part::Op(Interned::new(s)))
                 },
                 Token::Underscore => {
                     self.eat();
@@ -1233,7 +1285,7 @@ impl<'a> Parser<'a> {
                     break;
                 },
                 _ => {
-                    return self.error_here("bad mixfix name part")
+                    return self.error_here("Invalid mixfix name. Expected identifier, operator or `_`.")
                 }
             }
         }
@@ -1242,13 +1294,13 @@ impl<'a> Parser<'a> {
 
         match parts[..] {
             [] =>
-                self.error_here("invalid mixfix name"),
+                self.error_here("Mixfix names cannot be empty."),
             [Part::Id(ref s)] =>
-                Ok(Name::Id(s.clone())),
+                Ok(Name::Id(*s)),
             [Part::Op(ref s)] =>
-                Ok(Name::Op(s.clone())),
+                Ok(Name::Op(*s)),
             _ =>
-                Ok(Name::Mixfix(parts.clone()))
+                Ok(Name::Mixfix(Name::encode_parts(&parts)))
         }
 
     }
@@ -1268,7 +1320,9 @@ impl<'a> Parser<'a> {
             _ => {
                 let first = self.parse_exp()?;
 
-                match *self.lookahead()? {
+                let t = self.lookahead()?;
+
+                match *t {
                     Token::Rp => {
                         // (e) is just e
                         self.eat();
@@ -1301,8 +1355,8 @@ impl<'a> Parser<'a> {
 
                         Ok(Exp::Tuple { es })
                     },
-                    ref t => {
-                        self.error_unexpected(vec![Token::Rp, Token::Comma], t.clone())
+                    _ => {
+                        self.error_unexpected(vec![Token::Comma, Token::Rp], &t)
                     },
                 }
             },
@@ -1397,8 +1451,11 @@ impl<'a> Parser<'a> {
     fn parse_primary(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
             match *self.lookahead()? {
+                Token::Native => {
+                    self.eat();
+                    Ok(Exp::Native)
+                },
                 Token::Underscore => {
-                    // _ is the any value
                     self.eat();
                     Ok(Exp::Lit { lit: Lit::Wildcard })
                 },
@@ -1478,7 +1535,7 @@ impl<'a> Parser<'a> {
                 },
                 ref t => {
                     // panic!("unexpected token {}", t.clone());
-                    self.error_here("unexpected token")
+                    self.error_here("Unexpected token. Expected identifier, operator, bracket, or literal.")
                 },
             }
         })
@@ -1488,33 +1545,31 @@ impl<'a> Parser<'a> {
         match *self.lookahead()? {
             Token::Id(ref s) => {
                 self.eat();
-                Ok(Name::Id(s.clone()))
+                Ok(Name::Id(Interned::new(s)))
             },
             Token::Op(ref s) => {
                 self.eat();
-                Ok(Name::Op(s.clone()))
+                Ok(Name::Op(Interned::new(s)))
             },
             Token::Bang => {
                 self.eat();
-                Ok(Name::Op(String::from("!")))
+                Ok(Name::Op(Interned::new("!")))
             },
             Token::Question => {
                 self.eat();
-                Ok(Name::Op(String::from("?")))
+                Ok(Name::Op(Interned::new("?")))
             },
             Token::Tick => {
                 self.parse_mixfix_name()
             },
-            _ => {
-                self.error_here("expected name")
+            ref t => {
+                self.error_here("Unexpected token. Expected a name.")
             },
         }
     }
 
     fn alloc_node_id(&mut self) -> NodeId {
-        let id = self.next_node_id;
-        self.next_node_id += 1;
-        NodeId(id)
+        self.node_id_generator.new_id()
     }
 
     fn make_mixfix_name(elements: &Vec<MixfixParam>) -> Name {
@@ -1533,14 +1588,14 @@ impl<'a> Parser<'a> {
 
         if parts.len() == 1 {
             if let Some(Part::Id(s)) = parts.first() {
-                return Name::Id(s.clone());
+                return Name::Id(*s);
             }
             if let Some(Part::Op(s)) = parts.first() {
-                return Name::Op(s.clone());
+                return Name::Op(*s);
             }
         }
 
-        Name::Mixfix(parts)
+        Name::Mixfix(Name::encode_parts(&parts))
     }
 
     fn make_params(elements: &Vec<MixfixParam>) -> Vec<Located<Param>> {
@@ -1579,7 +1634,7 @@ mod tests {
     macro_rules! test_parse_ok {
         ($input: expr, $ast: expr) => {
             let source = Source::FileSource(PathBuf::from("foo.ivo"));
-            let mut p = Parser::new(&source, $input);
+            let mut p = Parser::new(&source, $input, &mut NodeIdGenerator::new());
             match p.parse_bundle() {
                 Ok(t) => {
                     assert_eq!(*t, $ast);
@@ -1762,7 +1817,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(2),
                                 flag: MixfixFlag::Trait,
-                                name: Name::Mixfix(vec![Part::Id(String::from("T")), Part::Placeholder]),
+                                name: Name::Mixfix(&vec![Part::Id(String::from("T")), Part::Placeholder]),
                                 opt_guard: None,
                                 params: vec!(
                                     Located::new(
@@ -1866,7 +1921,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(3),
                                 flag: MixfixFlag::Trait,
-                                name: Name::Mixfix(vec![Part::Id(String::from("T")), Part::Placeholder]),
+                                name: Name::Mixfix(&vec![Part::Id(String::from("T")), Part::Placeholder]),
                                 opt_guard: Some(
                                     Box::new(
                                         Located::new(

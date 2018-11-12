@@ -88,11 +88,11 @@ fn main() {
                                 },
                             }
                         },
-                        Err(msg) => {
-                            driver.stats.accum("namer error", 1);
-                            let b = driver.get_bundle(bundle).unwrap();
-                            let loc = b.decode_loc(msg.loc);
-                            println!("{}: parse error {}", loc, *msg);
+                        Err(_msg) => {
+                            assert!(driver.has_errors());
+                            // let b = driver.get_bundle(bundle).unwrap();
+                            // let loc = b.decode_loc(msg.loc);
+                            // driver.error(Located::new(loc, "Compilation failed."));
                         },
                     }
                 }

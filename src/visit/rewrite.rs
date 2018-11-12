@@ -15,7 +15,7 @@ macro_rules! walk_located {
 #[macro_export]
 macro_rules! walk_located_vec {
     ($visitor: expr, $method: ident, $list: expr, $ctx: expr) => {
-        $list.into_iter().map(
+        $list.iter().map(
             |located| walk_located!($visitor, $method, located, $ctx)
         ).collect()
     };
@@ -87,7 +87,7 @@ pub trait Rewriter<'a, Ctx>: Sized {
                 Def::FormulaDef { flag: *flag, formula: walk_located_box!(self, visit_exp, formula, ctx) }
             },
             Def::MixfixDef { id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
-                Def::MixfixDef { id, flag: *flag, name: name.clone(), opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), params: walk_located_vec!(self, visit_param, params, ctx), ret: walk_located!(self, visit_param, ret, ctx) }
+                Def::MixfixDef { id, flag: *flag, name: *name, opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), params: walk_located_vec!(self, visit_param, params, ctx), ret: walk_located!(self, visit_param, ret, ctx) }
             },
             Def::ImportDef { ref opt_path, ref selector } => {
                 Def::ImportDef { opt_path: walk_located_opt!(self, visit_exp, opt_path, ctx), selector: selector.clone() }
@@ -129,7 +129,7 @@ pub trait Rewriter<'a, Ctx>: Sized {
                 Exp::Bind { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
 
             Exp::Select { ref exp, ref name } =>
-                Exp::Select { exp: walk_located_box!(self, visit_exp, exp, ctx), name: name.clone() },
+                Exp::Select { exp: walk_located_box!(self, visit_exp, exp, ctx), name: *name },
             Exp::Within { id, ref e1, ref e2 } =>
                 Exp::Within { id, e1: walk_located_box!(self, visit_exp, e1, ctx), e2: walk_located_box!(self, visit_exp, e2, ctx) },
 
@@ -143,7 +143,14 @@ pub trait Rewriter<'a, Ctx>: Sized {
                 Exp::Native,
 
             Exp::Name { ref name, id } =>
-                Exp::Name { name: name.clone(), id },
+                Exp::Name { name: *name, id },
+
+            Exp::Unknown { ref name, id } =>
+                Exp::Unknown { name: *name, id },
+            Exp::MixfixPart { ref name, id } =>
+                Exp::MixfixPart { name: *name, id },
+            Exp::Var { ref name, id } =>
+                Exp::Var { name: *name, id },
 
             Exp::MixfixApply { ref es, id } =>
                 Exp::MixfixApply { es: walk_located_vec!(self, visit_exp, es, ctx), id },

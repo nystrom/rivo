@@ -2,9 +2,7 @@
 /// in a separate array indexed by NodeId.
 /// When rewriting trees, it is important to maintain the NodeId.
 
-/// A node identifier.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NodeId(usize);
+use super::trees::NodeId;
 
 /// An example Bundle might look like this.
 struct Example {

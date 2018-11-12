@@ -34,7 +34,7 @@ impl Loader {
     pub fn locate_bundle(&mut self, name: &Name) -> LoaderResult<Source> {
         match name {
             Name::Id(x) => {
-                if let Some(ch) = x.chars().next() {
+                if let Some(ch) = x.to_string().chars().next() {
                     if ch.is_uppercase() {
                         for dir in &self.paths {
                             if ! dir.is_dir() {
@@ -42,7 +42,7 @@ impl Loader {
                             }
 
                             let mut ivo_file = dir.clone();
-                            ivo_file.set_file_name(x);
+                            ivo_file.set_file_name(x.to_string());
                             ivo_file.set_extension("ivo");
 
                             let path = fs::canonicalize(ivo_file)?;

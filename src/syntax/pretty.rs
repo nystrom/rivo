@@ -49,20 +49,18 @@ pub trait ToDoc {
 
 impl ToDoc for Name {
     fn to_doc(&self) -> Doc<BoxDoc<()>> {
-        match *self {
-            Name::Id(ref x) => Doc::text(x),
-            Name::Op(ref x) => Doc::text(x),
-            Name::Mixfix(ref parts) =>
-                Doc::text("`")
-                .append(
-                    Doc::intersperse(
-                        parts.into_iter().map(
-                            |part| part.to_doc()
-                        ),
-                        Doc::space()
-                    )
-                )
-                .append(Doc::text("`")),
+        match self {
+            Name::Id(x) => Doc::text(x.to_string()),
+            Name::Op(x) => Doc::text(x.to_string()),
+            Name::Mixfix(s) => Doc::text(s.to_string()),
+            //     let parts = Name::decode_parts(*s);
+            //     let docs: Vec<Doc<BoxDoc<()>>> = parts.iter().cloned().map(|part| part.to_doc()).collect();
+            //     Doc::text("`")
+            //     .append(
+            //         Doc::intersperse(docs, Doc::space())
+            //     )
+            //     .append(Doc::text("`"))
+            // },
         }
     }
 }
@@ -70,8 +68,8 @@ impl ToDoc for Name {
 impl ToDoc for Part {
     fn to_doc(&self) -> Doc<BoxDoc<()>> {
         match *self {
-            Part::Id(ref x) => Doc::text(x),
-            Part::Op(ref x) => Doc::text(x),
+            Part::Id(ref x) => Doc::text(x.to_string()),
+            Part::Op(ref x) => Doc::text(x.to_string()),
             Part::Placeholder => Doc::text("_"),
         }
     }
@@ -124,16 +122,13 @@ impl ToDoc for Def {
                     MixfixFlag::Trait => Doc::text("trait"),
                     MixfixFlag::Fun => Doc::text("fun"),
                 };
-                let arrow = match ret.value {
-                    Param { mode: CallingMode::Output, .. } => Doc::text("->"),
-                    Param { mode: CallingMode::Input, .. } => Doc::text("<-"),
-                };
                 doc.append(Doc::space())
                    .append(name.to_doc())
+                   .append(Doc::space())
                    .append(show_located_vec!(params, Doc::space()))
                    .append(show_located_opt!(opt_guard))
                    .append(Doc::space())
-                   .append(arrow)
+                   .append(Doc::text("="))
                    .append(Doc::space())
                    .append(show_located!(ret))
             },
@@ -199,6 +194,7 @@ impl ToDoc for Exp {
                 Doc::text("fun")
                 .append(Doc::space())
                 .append(show_located_vec!(params, Doc::space()))
+                .append(Doc::space())
                 .append(show_located_opt!(opt_guard))
                 .append(Doc::text("->"))
                 .append(Doc::space())
@@ -270,6 +266,12 @@ impl ToDoc for Exp {
                 Doc::text("native"),
 
             Exp::Name { ref name, .. } =>
+                name.to_doc(),
+            Exp::Unknown { ref name, .. } =>
+                name.to_doc(),
+            Exp::MixfixPart { ref name, .. } =>
+                name.to_doc(),
+            Exp::Var { ref name, .. } =>
                 name.to_doc(),
 
             Exp::MixfixApply { ref es, .. } =>

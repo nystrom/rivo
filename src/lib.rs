@@ -7,7 +7,7 @@
 #![allow(unreachable_code)]
 // #![allow(unused_must_use)]
 
-#![feature(vec_resize_default)] 
+#![feature(vec_resize_default)]
 #![feature(vec_remove_item)]
 #![feature(nll)]
 
@@ -18,6 +18,15 @@ extern crate pretty;
 extern crate lazycell;
 extern crate rpds;
 #[macro_use] extern crate failure;
+
+// extern crate rayon;
+// extern crate chalk;
+
+extern crate cfg;
+extern crate gearley;
+
+extern crate string_interner;
+#[macro_use] extern crate lazy_static;
 
 #[cfg(test)] #[macro_use] extern crate pretty_assertions;
 
