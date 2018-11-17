@@ -1,0 +1,200 @@
+import ()
+
+// Red-black trees, based on [Okasaki 1999] and [Germane and Might 2014].
+
+import Prelude.Ord._
+import Prelude.Boolean._
+import Prelude.Option._
+
+trait OrderedSet = {
+  trait Color = {
+    trait R
+    trait B
+    trait BB // double black... used for deletion but should never be exposed
+
+  }
+
+
+  trait Tree (a) = {
+    trait C = Color.R with Color.B with Color.BB
+
+    trait E
+    trait EE // double empty... used for deletion but should never be exposed
+    trait T (color: C) (left: Tree a) (value: a) (right: Tree a)
+  }
+
+  import Color._
+  import (Tree _)._
+  import util._
+
+  trait Set (a) = Tree (a)
+  trait Empty = E
+
+  fun singleton (x) = T R E x E
+
+  fun insert (x) (s) = {
+    fun ins (E) = T R E x E
+    fun ins (T color a y b) = cond {
+      x < y -> balance color (ins a) y b
+      x > y -> balance color a y (ins b)
+      _     -> T color a y b
+    }
+
+    fun blacken (T R (T R a x b) y c) = T B (T R a x b) y x
+    fun blacken (T R a x (T R b y c)) = T B a x (T R b y c)
+    fun blacken (t)                   = t
+
+    blacken (ins s)
+  }
+
+  fun delete (x) (s) = {
+    fun del (E) = E
+    fun del (T R E y E) = cond {
+      x == y -> E
+      _      -> T R E y E
+    }
+    fun del (T B E y E) = cond {
+      x == y -> EE
+      _      -> T B E y E
+    }
+    fun del (T B (T R E y E) z E) = cond {
+      x < z -> T B (del (T R E y E)) z E
+      x > z -> T B (T R E y E) z E
+      _     -> T B E y E
+    }
+    fun del (T color a y b) = cond {
+      x < y -> rotate color (del a) y b
+      x > y -> rotate color a y (del b)
+      _     -> {
+        val (y', b') = min_del b
+        rotate color a y' b'
+      }
+    }
+
+    fun redden (T B (T B a x b) y (T B c z d)) = T R (T B a x b) y (T B c z d)
+    fun redden (t)                             = t
+
+    del (redden s)
+  }
+
+  fun (x) in (E)         = False
+  fun (x) in (T _ a y b) = cond {
+    x < y -> x in a
+    x > y -> x in b
+    _     -> True
+  }
+
+  // Backward version of `in`
+  fun (! x) in (? T _ a y b) = (? True)
+    where x in a || x == y || x in b
+
+  // `insert` and `delete` are inverses
+  fun insert (? x) (! delete x s) = (? s)
+  fun delete (? x) (! insert x s) = (? s)
+
+  // But they're also idempotent
+  fun insert (? x) (! s)          = (? s)
+  fun delete (? x) (! s)          = (? s)
+
+  // Convert to a list.
+  fun (E) toList = []
+  fun (T a x b) toList = a toList ++ [x] ++ b toList
+
+  fun fromList ([]) = E
+  fun fromList (x::xs) = insert x (fromList xs)
+
+  // union
+  fun (E)       ++ (t) = t
+  fun (T a x b) ++ (E) = (T a x b)
+  fun (T a x b) ++ (t) = a ++ (insert x b) ++ t
+
+  // min and max in the set
+  fun min (E) = None
+  fun min (T E x b) = Some x
+  fun min (T a x b) = min a
+
+  fun max (E) = None
+  fun max (T a x E) = Some x
+  fun max (T a x b) = max b
+
+  fun next (E) = None
+  fun next (T a y b) (x) = cond {
+    x < y -> (next a x) else y
+    x > y -> next b x
+    _     -> min b
+  }
+
+  fun prev (E) = None
+  fun prev (T a y b) (x) = cond {
+    x < y -> prev b x
+    x > y -> (prev b x) else y
+    _     -> max a
+  }
+
+  // map may destroys the structure if not monotonic
+  fun map (f) (t) = E
+  fun map (f) (T a x b) = insert (f x) (map f (a ++ b))
+
+  // mapping a monotonic function preserves the structure and is generally faster
+  fun mapMonotonic (f) (E) = E
+  fun mapMonotonic (f) (T a x b) = T (mapMonotonic f a) (f x) (mapMonotonic f b)
+
+  fun filter (p) (t) = collect (fun (x) -> if (p x) Some x else None) t
+
+  fun collect (f) (E) = E
+  fun collect (f) (T a x b) = {
+    val t = (collect f a) ++ (collect f b)
+    match f x {
+      None   -> t
+      Some y -> insert y t
+    }
+  }
+
+  fun foldTree (z) (f) (E) = z
+  fun foldTree (z) (f) (T a x b) = f (fold z f a) x (fold z f b)
+
+  fun foldMap (m) (f) (t) = foldTree m.mzero (fun (a) (x) (b) -> m.mappend a (m.mappend (f x) b)) t
+
+  fun size (t) = foldMap Monoid.Sum (fun (x) -> 1) t
+  fun sum (t) = foldMap Monoid.Sum id t
+  fun product (t) = foldMap Monoid.Product id t
+  fun all (p) (t) = foldMap Monoid.All p t
+  fun any (p) (t) = foldMap Monoid.Any p t
+
+  fun foldl (z) (f) (E) = z
+  fun foldl (z) (f) (T a x b) = foldl (f (foldl z f a) x) f b
+  fun foldr (z) (f) (E) = z
+  fun foldr (z) (f) (T a x b) = foldr z f (f x (foldr z f b))
+
+  trait util = {
+    fun balance (B)     (T R (T R a x b) y c) (z) (d)                   = T R (T B a x b) y (T B c z d)
+    fun balance (B)     (T R a x (T R b y c)) (z) (d)                   = T R (T B a x b) y (T B c z d)
+    fun balance (B)     (a)                   (x) (T R (T R b y c) z d) = T R (T B a x b) y (T B c z d)
+    fun balance (B)     (a)                   (x) (T R b y (T R c z d)) = T R (T B a x b) y (T B c z d)
+    fun balance (BB)    (T R a x (T R b y c)) (z) (d)                   = T B (T B a x b) y (T B c z d)
+    fun balance (BB)    (a)                   (x) (T R (T R b y c) z d) = T B (T B a x b) y (T B c z d)
+    fun balance (color) (a)                   (x) (b)                   = T color a x b
+
+    fun rotate (R)     (T BB a x b)           (y) (T B c z d)           = balance B (T R (T B a x b) y c) z d
+    fun rotate (R)     (EE)                   (y) (T B c z d)           = balance B (T R E y c) z d
+    fun rotate (R)     (T B a x b)            (y) (T BB c z d)          = balance B a x (T R b y (T B c z d))
+    fun rotate (R)     (T B a x b)            (y) (EE)                  = balance B a x (T R b y E)
+    fun rotate (B)     (T BB a c b)           (y) (T B c z d)           = balance BB (T R (T B a x b) y c) z d
+    fun rotate (B)     (EE)                   (y) (T B c z d)           = balance BB (T R E y c) z d
+    fun rotate (B)     (T B a x b)            (y) (T BB c z d)          = balance BB a x (T R b y (T B c z d))
+    fun rotate (B)     (T B a x b)            (y) (EE)                  = balance BB a x (T R b y E)
+    fun rotate (B)     (T BB a w b)           (x) (T R (T B c y d) z e) = T B (balance B (T R (T B a w b) x c) y d) z e
+    fun rotate (B)     (EE)                   (x) (T R (T B c y d) z e) = T B (balance B (T R E x c) y d) z e
+    fun rotate (B)     (T R a w (T B b x c))  (y) (T B d z e)           = T B a w (balance B b x (T R c y (T B d z e)))
+    fun rotate (B)     (T R a b (T B b x c))  (y) (EE)                  = T B a w (balance B b x (T R c y E))
+    fun rotate (color) (a)                    (x) (b)                   = T color a x b
+
+    fun min_del (T R E x E)           = (x, E)
+    fun min_del (T B E x E)           = (x, EE)
+    fun min_del (T B E x (T R E y E)) = (x, T B E y E)
+    fun min_del (T color a x b)       = {
+      val (x', a') = min_del a
+      (x', rotate color a' x b)
+    }
+  }
+}
