@@ -48,6 +48,7 @@ trait Eq (Ordering.Ordering) = {
 trait Ord (a) = (Eq a) with {
   import Ordering._
   import Control._
+  import Boolean._
 
   {
     fun (x: a) == (y: a) = (compare x y) == EQ
@@ -846,8 +847,8 @@ trait Control = {
 //      if x in dom k { k x }
 //    }
 
-  fun cond ((f: Boolean -> a)) else {{o}} = match True f else o
-  fun cond (f: Boolean -> a) = f True
+  fun cond ((f: Boolean -> _)) else {{o}} = match True f else o
+  fun cond (f: Boolean -> _) = f True
 
   fun repeat {e} while {c: Boolean} = {
     e
@@ -1234,7 +1235,7 @@ trait GlobalOperators = {
 
   {
     fun cond (_) else {{_}}
-    fun cond (_) = f True
+    fun cond (_)
   }
 
   {
