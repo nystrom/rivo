@@ -280,7 +280,7 @@ impl Driver {
         let bundle = &self.bundles[index.0];
 
         match bundle {
-            Bundle::Read { source, input } => {
+            Bundle::Read { .. } => {
                 self.parse_bundle(index)?;
                 self.prename_bundle(index)?;
                 Ok(())
@@ -344,12 +344,12 @@ impl Driver {
         let bundle = &self.bundles[index.0];
 
         match bundle {
-            Bundle::Read { source, input } => {
+            Bundle::Read { .. } => {
                 self.prename_bundle(index)?;
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Parsed { source, line_map, node_id_generator, tree } => {
+            Bundle::Parsed { .. } => {
                 self.prename_bundle(index)?;
                 self.name_bundle(index)?;
                 Ok(())
@@ -361,6 +361,8 @@ impl Driver {
                 let timer = self.stats.start_timer();
 
                 // FIXME: avoid the cloning
+                // We clone so that after the cloning we're no longer borrowing &self immutably.
+                let graph1 = graph.clone();
                 let tree1 = tree.clone();
                 let scopes1 = scopes.clone();
                 let source1 = source.clone();
@@ -375,18 +377,16 @@ impl Driver {
 
                 let mut cache = Cache {
                     lookup_cache: &mut HashMap::new(),
-                    mixfix_cache: &mut HashMap::new(),
+                    tree_cache: &mut HashMap::new(),
                 };
 
                 let mut namer = Namer {
-                    graph: &mut graph.clone(),
+                    graph: &graph1,
                     driver: self,
                     cache: &mut cache,
                 };
 
                 {
-                    let graph1 = namer.graph.clone();
-
                     let mut renamer = Renamer {
                         namer: &mut namer,
                         scopes: &scopes1,

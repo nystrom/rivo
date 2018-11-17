@@ -1,4 +1,4 @@
-extern crate ivo;
+extern crate rivo;
 extern crate clap;
 
 use clap::{Arg, App};
@@ -38,7 +38,7 @@ fn main() {
 
     // Gets a value for config if supplied by user, or defaults to "default.conf"
     let _config = matches.value_of("config").unwrap_or("ivo.conf");
-    use ivo::syntax::loc::Source;
+    use rivo::syntax::loc::Source;
 
     let opt_input = {
         match matches.value_of("file.ivo") {
@@ -52,8 +52,8 @@ fn main() {
         }
     };
 
-    use ivo::driver::*;
-    use ivo::driver::bundle::Bundle;
+    use rivo::driver::*;
+    use rivo::driver::bundle::Bundle;
     let mut driver = Driver::new();
 
     let timer = driver.stats.start_timer();
@@ -73,7 +73,7 @@ fn main() {
                     }
                 }
                 else {
-                    use ivo::syntax::pretty::*;
+                    use rivo::syntax::pretty::*;
 
                     match driver.name_bundle(bundle) {
                         Ok(_) => {

@@ -183,15 +183,22 @@ impl fmt::Display for Part {
 
 impl fmt::Display for Name {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for (i, part) in self.parts().iter().enumerate() {
-            if i == 0 {
-                write!(f, "{}", part)?;
-            }
-            else {
-                write!(f, " {}", part)?;
+        match self {
+            Name::Id(x) => write!(f, "{}", x.to_string()),
+            Name::Op(x) => write!(f, "{}", x.to_string()),
+            Name::Mixfix(x) => {
+                write!(f, "`")?;
+                for (i, part) in self.parts().iter().enumerate() {
+                    if i == 0 {
+                        write!(f, "{}", part)?;
+                    }
+                    else {
+                        write!(f, " {}", part)?;
+                    }
+                }
+                write!(f, "`")
             }
         }
-        write!(f, "`")
     }
 }
 

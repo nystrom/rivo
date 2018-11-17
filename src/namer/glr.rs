@@ -21,15 +21,18 @@ use std::collections::VecDeque;
 
 use syntax::loc::*;
 use syntax::names::*;
-use syntax::trees::NodeId;
 use namer::symbols::MixfixTree;
 use namer::symbols::Decl;
 use namer::symbols::Prio;
+use namer::symbols::Scope;
+
+#[allow(non_upper_case_globals)]
+static mut depth: u32 = 0;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Exp(MixfixTree),
-    Name(Part, Vec<Decl>),
+    Name(Part, Vec<Located<Decl>>),
     End,
 }
 
@@ -41,7 +44,7 @@ pub enum Symbol {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Nonterm {
-    S, E, M(NodeId, usize), Pr, Br,
+    S, E, M(Scope, usize), Pr, Br,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -235,12 +238,21 @@ struct Stack {
 // and since the inputs are small (typically 3-4 tokens), the lack of sharing
 // should not hurt performance.
 
+#[trace]
 impl GLR {
     pub fn new(parser: LR, state: State) -> GLR {
         GLR {
             parser,
             stacks: vec![Stack { top: state, stack: vec![] }]
         }
+    }
+
+    pub fn rules_size(&self) -> usize {
+        self.parser.rules.len()
+    }
+
+    pub fn states_size(&self) -> usize {
+        self.parser.states.len()
     }
 
     pub fn parse(&mut self, input: Vec<Token>) -> Vec<MixfixTree> {
@@ -293,31 +305,36 @@ impl GLR {
     // this will just make the list of stacks grow; we do not remove stacks
     // that cannot reduce (they would be removed by do_shifts).
     fn do_reductions(&mut self, t: &Token) {
-        let mut new_stacks = Vec::new();
+        let mut changed = true;
+        let mut i = 0;
 
-        // We need to borrow self.stacks to iterate over it.
-        // And we need to call reduce_with_rule which mutates parser.
-        // We have to borrow the stacks and parser separately since
-        // we can't mutably borrow self at the same time we're borrowing
-        // it to iterate over the stacks.
+        // Repeat until we hit a fixpoint.
+        while changed {
+            changed = false;
+            i += 1;
 
-        let parser = &mut self.parser;
+            let mut new_stacks = Vec::new();
 
-        for Stack { ref top, ref stack } in &self.stacks {
-            for rule in parser.reductions(&top) {
-                if let Some(new_stack) = GLR::reduce_with_rule(parser, top, stack, &rule) {
-                    new_stacks.push(new_stack);
+            // We need to borrow self.stacks to iterate over it.
+            // And we need to call reduce_with_rule which mutates parser.
+            // We have to borrow the stacks and parser separately since
+            // we can't mutably borrow self at the same time we're borrowing
+            // it to iterate over the stacks.
+
+            let parser = &mut self.parser;
+
+            for Stack { ref top, ref stack } in &self.stacks {
+                for rule in parser.reductions(&top) {
+                    if let Some(new_stack) = GLR::reduce_with_rule(parser, top, stack, &rule) {
+                        new_stacks.push(new_stack);
+                    }
                 }
             }
-        }
 
-        let mut changed = false;
-
-        {
             let stacks = &mut self.stacks;
 
-            // println!("do_reductions: stacks before = {:#?}", stacks);
-            // println!("do_reductions: new stacks    = {:#?}", new_stacks);
+            println!("do_reductions({}): stacks before = {:#?}", i, stacks);
+            println!("do_reductions({}): new stacks    = {:#?}", i, new_stacks);
 
             for new_stack in &new_stacks {
                 let mut j = 0;
@@ -339,12 +356,6 @@ impl GLR {
                     changed = true;
                 }
             }
-        }
-
-        // Repeat until we hit a fixpoint.
-        // Infinite loop! FIXME
-        if changed {
-            self.do_reductions(t);
         }
     }
 
@@ -421,7 +432,12 @@ impl GLR {
                 (Token::Name(x, xdecls), Symbol::Term(Term::Name(y))) if x == y => {
                     parts.push(x.clone());
                     for xd in xdecls {
-                        decls.push(xd);
+                        match &xd.value {
+                            Decl::MixfixPart { orig, .. } => {
+                                decls.push(Located::new(xd.loc, *orig.clone()));
+                            },
+                            _ => {},
+                        }
                     }
                 },
                 _ => {
@@ -436,10 +452,11 @@ impl GLR {
             }
         }
         else {
+            let new_name = Name::Mixfix(parts);
             return Some(
                 Token::Exp(
                     GLR::make_call(
-                        GLR::make_var(Name::Mixfix(parts)),
+                        GLR::make_var(new_name.clone(), decls.iter().filter(|decl| decl.name() == new_name).cloned().collect()),
                         args.as_slice()
                     )
                 ));
@@ -448,19 +465,12 @@ impl GLR {
         None
     }
 
-    fn make_var(name: Name) -> MixfixTree {
-        MixfixTree::Name(name, vec![])
+    pub(super) fn make_var(name: Name, decls: Vec<Located<Decl>>) -> MixfixTree {
+        MixfixTree::Name(name, decls)
     }
 
-    fn make_call(e: MixfixTree, es: &[MixfixTree]) -> MixfixTree {
-        if let Some((arg, args)) = es.split_first() {
-            GLR::make_call(
-                MixfixTree::Apply(Box::new(e), Box::new(arg.clone())),
-                args)
-        }
-        else {
-            e
-        }
+    pub(super) fn make_call(e: MixfixTree, es: &[MixfixTree]) -> MixfixTree {
+        MixfixTree::make_call(e, es)
     }
 
     fn merge_values(t1: &Token, t2: &Token) -> Option<Token> {
@@ -470,6 +480,8 @@ impl GLR {
                 let mut decls = Vec::new();
                 decls.extend(decls1.iter().cloned());
                 decls.extend(decls2.iter().cloned());
+                decls.sort();
+                decls.dedup();
                 Some(Token::Name(s1.clone(), decls))
             },
             (Token::Exp(ref e1), Token::Exp(ref e2)) if e1 == e2 => Some(t1.clone()),
@@ -514,11 +526,11 @@ impl GLR {
 
 #[cfg(test)]
 mod tests {
-    use namer::glr::*;
-    use syntax::trees::NodeId;
+    use super::*;
     use syntax::names::Part;
     use syntax::names::Name;
     use namer::symbols::*;
+    use namer::graph::EnvIndex;
 
     struct OneRule;
     impl OneRule {
@@ -556,14 +568,14 @@ mod tests {
             let rules = vec![
                 start_rule.clone(),
                 Rule { lhs: Nonterm::E, rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0)),
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 0))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 0)),
                     Symbol::Term(Term::Name(Part::Op(String::from("+")))),
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 1), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 1))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 1))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 1), rhs: vec![
                     Symbol::Term(Term::Primary)] },
             ];
             let mut lr = LR::new(rules);
@@ -585,14 +597,14 @@ mod tests {
             let rules = vec![
                 start_rule.clone(),
                 Rule { lhs: Nonterm::E, rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1)),
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 0))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 1)),
                     Symbol::Term(Term::Name(Part::Op(String::from("+")))),
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 1), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 0))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 1))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 1), rhs: vec![
                     Symbol::Term(Term::Primary)] },
             ];
             let mut lr = LR::new(rules);
@@ -614,14 +626,14 @@ mod tests {
             let rules = vec![
                 start_rule.clone(),
                 Rule { lhs: Nonterm::E, rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 0))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1)),
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 0))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 1)),
                     Symbol::Term(Term::Name(Part::Op(String::from("+")))),
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 0), rhs: vec![
-                    Symbol::Nonterm(Nonterm::M(NodeId(0), 1))] },
-                Rule { lhs: Nonterm::M(NodeId(0), 1), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 1))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 0), rhs: vec![
+                    Symbol::Nonterm(Nonterm::M(Scope::Env(EnvIndex(0)), 1))] },
+                Rule { lhs: Nonterm::M(Scope::Env(EnvIndex(0)), 1), rhs: vec![
                     Symbol::Term(Term::Primary)] },
             ];
             let mut lr = LR::new(rules);

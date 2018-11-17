@@ -1,5 +1,4 @@
 use crate::namer::glr::*;
-use crate::syntax::trees::NodeId;
 
 use syntax::loc::*;
 use syntax::names::*;
@@ -8,22 +7,16 @@ use syntax::trees;
 use namer::symbols::*;
 use namer::glr;
 
-use driver;
-use driver::*;
-use driver::bundle::*;
-
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::collections::VecDeque;
-use rpds::HashTrieSet;
 
 pub(super) struct GLRAdapter;
 
 impl GLRAdapter {
-    fn make_rhs_from_name(x: &Name, assoc: Option<usize>, prio: Prio, id: NodeId) -> Vec<Symbol> {
+    fn make_rhs_from_name(x: &Name, assoc: Option<usize>, prio: Prio, scope: Scope) -> Vec<Symbol> {
         let lowest = Symbol::Nonterm(Nonterm::E);
-        let current = Symbol::Nonterm(Nonterm::M(id, prio.0));
-        let next = Symbol::Nonterm(Nonterm::M(id, prio.0 + 1));
+        let current = Symbol::Nonterm(Nonterm::M(scope, prio.0));
+        let next = Symbol::Nonterm(Nonterm::M(scope, prio.0 + 1));
         let highest = Symbol::Nonterm(Nonterm::Br);
 
         match x {
@@ -127,13 +120,13 @@ impl GLRAdapter {
     fn make_rhs_from_decl(decl: &Decl) -> Rule {
         let name = decl.name();
         let assoc = decl.assoc();
-        let prio = Prio(0);
-        let id = NodeId(0);
+        let id = decl.scope();
+        let prio = decl.prio();
         let rhs = GLRAdapter::make_rhs_from_name(&name, assoc, prio, id);
         Rule { lhs: Nonterm::M(id, prio.0), rhs: rhs }
     }
 
-    pub fn glr_from_decls(decls: &Vec<Decl>) -> glr::GLR {
+    pub fn glr_from_decls(decls: &Vec<Located<Decl>>) -> glr::GLR {
         // S -> E $
         let start_rule = Rule { lhs: Nonterm::S, rhs: vec![Symbol::Nonterm(Nonterm::E), Symbol::Term(Term::End)] };
         // Pr -> Br
@@ -152,7 +145,24 @@ impl GLRAdapter {
             pr_pr_br,
         ];
 
-        let decl_rules = decls.iter().map(|decl| GLRAdapter::make_rhs_from_decl(decl));
+        // Take the first decl of each (scope, name) pair -- that is, the one with lowest prio.
+        let mut first_decls: HashMap<(Name, Scope), &Decl> = HashMap::new();
+
+        for decl in decls {
+            let key = (decl.value.name(), decl.value.scope());
+            match first_decls.get(&key) {
+                Some(existing) => {
+                    if existing.prio().0 < decl.prio().0 {
+                        first_decls.insert(key, &decl.value);
+                    }
+                },
+                None => {
+                    first_decls.insert(key, &decl.value);
+                }
+            }
+        }
+
+        let decl_rules = first_decls.values().map(|&decl| GLRAdapter::make_rhs_from_decl(decl));
         rules.extend(decl_rules);
 
         let mut min_prio = HashMap::new();
@@ -169,8 +179,8 @@ impl GLRAdapter {
                         _ => {},
                     }
                     match max_prio.get(&id) {
-                        Some(i) if prio > *i => { max_prio.insert(id, prio); },
-                        None => { max_prio.insert(id, prio); },
+                        Some(i) if prio > *i => { max_prio.insert(id, prio+1); },
+                        None => { max_prio.insert(id, prio+1); },
                         _ => {},
                     }
                 }

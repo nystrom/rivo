@@ -170,10 +170,20 @@ impl<'a> Prenamer<'a> {
                 }
             },
             Exp::Select { exp, name } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &exp, defined_names, scope);
+                match **exp {
+                    Located { ref loc, value: Exp::Name { .. } } => {},
+                    Located { ref loc, value: Exp::Var { .. } } => {},
+                    Located { ref loc, value: Exp::MixfixPart { .. } } => {},
+                    _ => { Prenamer::add_unknowns_for_exp(decls, flag, &exp, defined_names, scope); }
+                }
             },
             Exp::Within { id, e1, e2 } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope);
+                match **e1 {
+                    Located { ref loc, value: Exp::Name { .. } } => {},
+                    Located { ref loc, value: Exp::Var { .. } } => {},
+                    Located { ref loc, value: Exp::MixfixPart { .. } } => {},
+                    _ => { Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope); }
+                }
             },
             Exp::Apply { fun, arg } => {
                 Prenamer::add_unknowns_for_exp(decls, flag, &fun, defined_names, scope);
@@ -185,6 +195,8 @@ impl<'a> Prenamer<'a> {
             Exp::Unknown { id, name } => {
                 Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
             },
+            Exp::Var { id, name } => {},
+            Exp::MixfixPart { id, name } => {},
             Exp::MixfixApply { es, id } => {
                 for e in es {
                     Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
@@ -278,7 +290,7 @@ impl<'a> Prenamer<'a> {
         names
     }
 
-    fn add_imports(&mut self, import_into_scope: Scope, cmds: &Vec<Located<Cmd>>, is_root: bool) {
+    fn add_imports(&mut self, import_into_scope: Scope, parent_scope: Scope, cmds: &Vec<Located<Cmd>>, is_root: bool) {
         // FIXME cloning!
         let defs = cmds.iter().filter_map(|cmd|
             match cmd {
@@ -286,10 +298,10 @@ impl<'a> Prenamer<'a> {
                 _ => None,
             }
         );
-        self.add_imports_from_defs(import_into_scope, defs, is_root);
+        self.add_imports_from_defs(import_into_scope, parent_scope, defs, is_root);
     }
 
-    fn add_imports_from_defs<T>(&mut self, import_into_scope: Scope, defs: T, is_root: bool)
+    fn add_imports_from_defs<T>(&mut self, import_into_scope: Scope, parent_scope: Scope, defs: T, is_root: bool)
         where T : Iterator<Item = Located<Def>>
     {
         let mut imports_none = false;
@@ -304,7 +316,7 @@ impl<'a> Prenamer<'a> {
                         _ => {},
                     }
 
-                    self.add_import(import_into_scope, import_into_scope, &opt_path.map(|bx| *bx), selector, loc);
+                    self.add_import(import_into_scope, import_into_scope, parent_scope, &opt_path.map(|bx| *bx), selector, loc);
                 },
                 _ => {},
             }
@@ -321,30 +333,30 @@ impl<'a> Prenamer<'a> {
     }
 
     #[cfg_attr(debug_assertions, trace)]
-    fn add_import(&mut self, import_into_scope: Scope, lookup_scope: Scope, opt_path: &Option<Located<Exp>>, selector: Selector, loc: Loc) {
+    fn add_import(&mut self, import_into_scope: Scope, lookup_scope: Scope, parent_scope: Scope, opt_path: &Option<Located<Exp>>, selector: Selector, loc: Loc) {
         match opt_path {
             None => {
                 match selector {
                     Selector::All => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::All { path: lookup_scope } });
+                        self.graph.import(import_into_scope, &Located { loc, value: Import::All { path: parent_scope } });
                     },
                     Selector::Nothing => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::None { path: lookup_scope } });
+                        self.graph.import(import_into_scope, &Located { loc, value: Import::None { path: parent_scope } });
                     },
                     Selector::Including { name } => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: lookup_scope, name: name } });
+                        self.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: parent_scope, name: name } });
                     },
                     Selector::Excluding { name } => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: lookup_scope, name: name } });
+                        self.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: parent_scope, name: name } });
                     },
                     Selector::Renaming { name, rename } => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: lookup_scope, name: name, rename: rename } });
+                        self.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: parent_scope, name: name, rename: rename } });
                     },
                 }
             },
             Some(e) => {
                 let inner_scope = self.lookup_frame(lookup_scope, e);
-                self.add_import(import_into_scope, inner_scope, &None, selector, loc)
+                self.add_import(import_into_scope, inner_scope, inner_scope, &None, selector, loc)
             },
         }
     }
@@ -547,7 +559,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Add imports.
                 match new_node {
                     Root::Bundle { ref cmds, .. } => {
-                        self.add_imports(scope, cmds, true);
+                        self.add_imports(scope, Scope::Global, cmds, true);
                     },
                 }
 
@@ -787,7 +799,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Add imports.
                 match new_node {
                     Exp::Layout { ref cmds, .. } => {
-                        self.add_imports(scope, cmds, false);
+                        self.add_imports(scope, ctx.scope, cmds, false);
                     },
                     _ => {},
                 }
@@ -820,7 +832,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Add imports.
                 match new_node {
                     Exp::Record { ref defs, .. } => {
-                        self.add_imports_from_defs(scope, defs.iter().cloned(), false);
+                        self.add_imports_from_defs(scope, ctx.scope, defs.iter().cloned(), false);
                     },
                     _ => {},
                 }
