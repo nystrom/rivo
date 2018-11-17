@@ -6,12 +6,10 @@
 
 // Import nothing to avoid a self-loop.
 import ()
-
-// To clarify the semantics, we write the Prelude without using any
-// syntactic sugar.
+import Prim
 
 // Module for converting a primitive number to a Boolean.
-trait PrimBoolean = {
+trait _PrimBoolean = {
   import Boolean._
 
   fun fromI32 (Prim.i32._0) = False
@@ -20,66 +18,6 @@ trait PrimBoolean = {
   fun fromI64 (Prim.i64._0) = False
   fun fromI64 (x: Prim.i64.I64) = True
 }
-
-// Trait used to resolve precedences in the Prelude.
-// We use ⊤ for all arguments to ensure no functions
-// actually match. The function bodies are empty, which
-// would cause an error if the function actually ran.
-trait ResolvePrecedences = {
-  fun ((Prim.⊤)) || {Prim.⊤}
-
-  fun ((Prim.⊤)) && {Prim.⊤}
-
-  {
-    fun (Prim.⊤) == (Prim.⊤)
-    fun (Prim.⊤) != (Prim.⊤)
-  }
-
-  {
-    fun (Prim.⊤) < (Prim.⊤)
-    fun (Prim.⊤) > (Prim.⊤)
-    fun (Prim.⊤) <= (Prim.⊤)
-    fun (Prim.⊤) >= (Prim.⊤)
-  }
-
-  // builtin for unions and overloaded for collections
-  fun (Prim.⊤) in (Prim.⊤)
-
-  fun (Prim.⊤) ++ ((Prim.⊤))
-  fun (Prim.⊤) :: ((Prim.⊤))
-
-  fun ((Prim.⊤)) | (Prim.⊤)
-  fun ((Prim.⊤)) ^ (Prim.⊤)
-  fun ((Prim.⊤)) & (Prim.⊤)
-
-  {
-    fun ((Prim.⊤)) << (Prim.⊤)
-    fun ((Prim.⊤)) >> (Prim.⊤)
-  }
-
-  {
-    fun ((Prim.⊤)) + (Prim.⊤)
-    fun ((Prim.⊤)) - (Prim.⊤)
-  }
-
-  {
-    fun ((Prim.⊤)) * (Prim.⊤)
-    fun ((Prim.⊤)) / (Prim.⊤)
-    fun ((Prim.⊤)) % (Prim.⊤)
-    fun ((Prim.⊤)) div (Prim.⊤)
-    fun ((Prim.⊤)) mod (Prim.⊤)
-    fun ((Prim.⊤)) quot (Prim.⊤)
-    fun ((Prim.⊤)) rem (Prim.⊤)
-  }
-
-  fun - (Prim.⊤)
-  fun ~ (Prim.⊤)
-  fun ! (Prim.⊤)
-}
-
-////////////////////////////////////////////////////////////////
-// First we define the modules to be used throughout the Prelude.
-////////////////////////////////////////////////////////////////
 
 trait Eq (a) = {
   import Boolean._
@@ -90,14 +28,11 @@ trait Eq (a) = {
   }
 }
 
-trait Ordering = (Eq Ordering.Ordering) with {
-  import Boolean._
-
-  trait Ordering = EQ with LT with GT
-
+trait Ordering = {
   trait EQ
   trait LT
   trait GT
+  trait Ordering = EQ with LT with GT
 }
 
 trait Eq (Ordering.Ordering) = {
@@ -115,13 +50,13 @@ trait Ord (a) = (Eq a) with {
   import Control._
 
   {
-    fun (x: a) == (y: a) = compare x y == EQ
+    fun (x: a) == (y: a) = (compare x y) == EQ
     fun (x: a) != (y: a) = ! (x == y)
   }
 
   {
-    fun (x: a) < (y: a) = compare x y == LT
-    fun (x: a) > (y: a) = compare x y == GT
+    fun (x: a) < (y: a) = (compare x y) == LT
+    fun (x: a) > (y: a) = (compare x y) == GT
     fun (x: a) <= (y: a) = ! (x > y)
     fun (x: a) >= (y: a) = ! (x < y)
   }
@@ -153,10 +88,10 @@ trait Enum (a) = {
 }
 
 trait Range = {
-  trait InclusiveRange (lo: a) (hi: a)
-  trait ExclusiveRange (lo: a) (hi: a)
+  trait InclusiveRange (lo) (hi)
+  trait ExclusiveRange (lo) (hi)
 
-  trait (lo) .. (hi) = InclusiveRange lo hi
+  trait (lo) ..= (hi) = InclusiveRange lo hi
   trait (lo) ..< (hi) = ExclusiveRange lo hi
 
   fun toList (InclusiveRange x y) = {
@@ -248,19 +183,14 @@ trait Bounded (Boolean.Boolean) = {
   val Max = True
 }
 
-////////////////////////////////////////////////////////////////
-// Modules and datas are open. Redeclaring merges with the
-// prior version.
-////////////////////////////////////////////////////////////////
-
 trait Num (a) = {
   import Int._
   import Control._
-  import ResolvePrecedences._
+  import GlobalOperators._
   import (Ord a)._
 
   {
-    fun ((Prim.⊤)) + (Prim.⊤)
+    fun ((Prim.fail)) + (Prim.fail)
     fun ((x: Int)) + (y: a) = (fromInt x) + y
     fun ((x: a)) + (y: Int) = x + (fromInt y)
 
@@ -279,7 +209,7 @@ trait Num (a) = {
       // translation:
       // fun (z: a) = (Prim.backward a) >>- fun (x) -> let y = z - x in Logic.return (x, y)
 
-    fun ((Prim.⊤)) - (Prim.⊤)
+    fun ((Prim.fail)) - (Prim.fail)
     fun ((x: Int)) - (y: a) = (fromInt x) - y
     fun ((x: a)) - (y: Int) = x - (fromInt y)
 
@@ -289,7 +219,7 @@ trait Num (a) = {
   }
 
   {
-    fun ((Prim.⊤)) * (Prim.⊤)
+    fun ((Prim.fail)) * (Prim.fail)
     fun ((x: Int)) * (y: a) = (fromInt x) * y
     fun ((x: a)) * (y: Int) = x * (fromInt y)
 
@@ -484,17 +414,17 @@ trait Integral (Int.Int) = {
 trait Ord (Int.Int) = {
   import Int._
 
-  fun (Int x) < (Int y) = PrimBoolean.(fromI32 Prim.int.(lt x y))
-  fun (Int x) > (Int y) = PrimBoolean.(fromI32 Prim.int.(gt x y))
-  fun (Int x) <= (Int y) = PrimBoolean.(fromI32 Prim.int.(le x y))
-  fun (Int x) >= (Int y) = PrimBoolean.(fromI32 Prim.int.(ge x y))
+  fun (Int x) < (Int y) = _PrimBoolean.(fromI32 Prim.int.(lt_s x y))
+  fun (Int x) > (Int y) = _PrimBoolean.(fromI32 Prim.int.(gt_s x y))
+  fun (Int x) <= (Int y) = _PrimBoolean.(fromI32 Prim.int.(le_s x y))
+  fun (Int x) >= (Int y) = _PrimBoolean.(fromI32 Prim.int.(ge_s x y))
 }
 
 trait Eq (Int.Int) = {
   import Int._
 
-  fun (Int x) == (Int y) = PrimBoolean.(fromI32 Prim.int.(eq x y))
-  fun (Int x) != (Int y) = PrimBoolean.(fromI32 Prim.int.(ne x y))
+  fun (Int x) == (Int y) = _PrimBoolean.(fromI32 Prim.int.(eq x y))
+  fun (Int x) != (Int y) = _PrimBoolean.(fromI32 Prim.int.(ne x y))
 }
 
 trait Enum (Int.Int) = {
@@ -541,17 +471,17 @@ trait Integral (Nat.Nat) = {
 trait Ord (Nat.Nat) = {
   import Nat._
 
-  fun (Nat x) < (Nat y) = PrimBoolean.(fromI32 Prim.int.(lt x y))
-  fun (Nat x) > (Nat y) = PrimBoolean.(fromI32 Prim.int.(gt x y))
-  fun (Nat x) <= (Nat y) = PrimBoolean.(fromI32 Prim.int.(le x y))
-  fun (Nat x) >= (Nat y) = PrimBoolean.(fromI32 Prim.int.(ge x y))
+  fun (Nat x) < (Nat y) = _PrimBoolean.(fromI32 Prim.int.(lt_u x y))
+  fun (Nat x) > (Nat y) = _PrimBoolean.(fromI32 Prim.int.(gt_u x y))
+  fun (Nat x) <= (Nat y) = _PrimBoolean.(fromI32 Prim.int.(le_u x y))
+  fun (Nat x) >= (Nat y) = _PrimBoolean.(fromI32 Prim.int.(ge_u x y))
 }
 
 trait Eq (Nat.Nat) = {
   import Nat._
 
-  fun (Nat x) == (Nat y) = PrimBoolean.(fromI32 Prim.int.(eq x y))
-  fun (Nat x) != (Nat y) = PrimBoolean.(fromI32 Prim.int.(ne x y))
+  fun (Nat x) == (Nat y) = _PrimBoolean.(fromI32 Prim.int.(eq x y))
+  fun (Nat x) != (Nat y) = _PrimBoolean.(fromI32 Prim.int.(ne x y))
 }
 
 trait LowerBounded (Nat.Nat) = {
@@ -621,17 +551,17 @@ trait Bitwidth (Int32.Int32) = {
 trait Eq (Int32.Int32) = {
   import Int32._
 
-  fun (Int32 x) == (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(eq x y))
-  fun (Int32 x) != (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(ne x y))
+  fun (Int32 x) == (Int32 y) = _PrimBoolean.(fromI32 Prim.i32.(eq x y))
+  fun (Int32 x) != (Int32 y) = _PrimBoolean.(fromI32 Prim.i32.(ne x y))
 }
 
 trait Ord (Int32.Int32) = {
   import Int32._
 
-  fun (Int32 x) < (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(lt_s x y))
-  fun (Int32 x) > (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(gt_s x y))
-  fun (Int32 x) <= (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(le_s x y))
-  fun (Int32 x) >= (Int32 y) = PrimBoolean.(fromI32 Prim.i32.(ge_s x y))
+  fun (Int32 x) < (Int32 y) = _PrimBoolean.(fromI32 Prim.i32.(lt_s x y))
+  fun (Int32 x) > (Int32 y) = _PrimBoolean.(fromI32 Prim.i32.(gt_s x y))
+  fun (Int32 x) <= (Int32 y) = _PrimBoolean.(fromI32 Prim.i32.(le_s x y))
+  fun (Int32 x) >= (Int32 y) = _PrimBoolean.(fromI32 Prim.i32.(ge_s x y))
 
   // Fast min and max without branching
   fun min (x: Int32) (y: Int32) = y ^ ((x ^ y) & (-(x < y)))
@@ -706,17 +636,17 @@ trait Bitwidth (Int64.Int64) = {
 trait Eq (Int64.Int64) = {
   import Int64._
 
-  fun (Int64 x) == (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(eq x y))
-  fun (Int64 x) != (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(ne x y))
+  fun (Int64 x) == (Int64 y) = _PrimBoolean.(fromI64 Prim.i64.(eq x y))
+  fun (Int64 x) != (Int64 y) = _PrimBoolean.(fromI64 Prim.i64.(ne x y))
 }
 
 trait Ord (Int64.Int64) = {
   import Int64._
 
-  fun (Int64 x) < (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(lt_s x y))
-  fun (Int64 x) > (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(gt_s x y))
-  fun (Int64 x) <= (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(le_s x y))
-  fun (Int64 x) >= (Int64 y) = PrimBoolean.(fromI64 Prim.i64.(ge_s x y))
+  fun (Int64 x) < (Int64 y) = _PrimBoolean.(fromI64 Prim.i64.(lt_s x y))
+  fun (Int64 x) > (Int64 y) = _PrimBoolean.(fromI64 Prim.i64.(gt_s x y))
+  fun (Int64 x) <= (Int64 y) = _PrimBoolean.(fromI64 Prim.i64.(le_s x y))
+  fun (Int64 x) >= (Int64 y) = _PrimBoolean.(fromI64 Prim.i64.(ge_s x y))
 
   // Fast min and max without branching
   fun min (x: Int64) (y: Int64) = y ^ ((x ^ y) & (-(x < y)))
@@ -795,17 +725,17 @@ trait Bitwidth (Nat32.Nat32) = {
 trait Eq (Nat32.Nat32) = {
   import Nat32._
 
-  fun (Nat32 x) == (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(eq x y))
-  fun (Nat32 x) != (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(ne x y))
+  fun (Nat32 x) == (Nat32 y) = _PrimBoolean.(fromI32 Prim.i32.(eq x y))
+  fun (Nat32 x) != (Nat32 y) = _PrimBoolean.(fromI32 Prim.i32.(ne x y))
 }
 
 trait Ord (Nat32.Nat32) = {
   import Nat32._
 
-  fun (Nat32 x) < (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(lt_u x y))
-  fun (Nat32 x) > (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(gt_u x y))
-  fun (Nat32 x) <= (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(le_u x y))
-  fun (Nat32 x) >= (Nat32 y) = PrimBoolean.(fromI32 Prim.i32.(ge_u x y))
+  fun (Nat32 x) < (Nat32 y) = _PrimBoolean.(fromI32 Prim.i32.(lt_u x y))
+  fun (Nat32 x) > (Nat32 y) = _PrimBoolean.(fromI32 Prim.i32.(gt_u x y))
+  fun (Nat32 x) <= (Nat32 y) = _PrimBoolean.(fromI32 Prim.i32.(le_u x y))
+  fun (Nat32 x) >= (Nat32 y) = _PrimBoolean.(fromI32 Prim.i32.(ge_u x y))
 }
 
 trait Bounded (Nat32.Nat32) = {
@@ -834,7 +764,6 @@ trait Num (Nat64.Nat64) = {
   import Nat64._
 
   import Int.Int
-  import ResolvePrecedences._
   import (Ord Nat64.Nat64)._
   import (Eq Nat64.Nat64)._
 
@@ -881,17 +810,17 @@ trait Bitwidth (Nat64.Nat64) = {
 trait Eq (Nat64.Nat64) = {
   import Nat64._
 
-  fun (Nat64 x) == (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(eq x y))
-  fun (Nat64 x) != (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(ne x y))
+  fun (Nat64 x) == (Nat64 y) = _PrimBoolean.(fromI64 Prim.i64.(eq x y))
+  fun (Nat64 x) != (Nat64 y) = _PrimBoolean.(fromI64 Prim.i64.(ne x y))
 }
 
 trait Ord (Nat64.Nat64) = {
   import Nat64._
 
-  fun (Nat64 x) < (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(lt_u x y))
-  fun (Nat64 x) > (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(gt_u x y))
-  fun (Nat64 x) <= (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(le_u x y))
-  fun (Nat64 x) >= (Nat64 y) = PrimBoolean.(fromI64 Prim.i64.(ge_u x y))
+  fun (Nat64 x) < (Nat64 y) = _PrimBoolean.(fromI64 Prim.i64.(lt_u x y))
+  fun (Nat64 x) > (Nat64 y) = _PrimBoolean.(fromI64 Prim.i64.(gt_u x y))
+  fun (Nat64 x) <= (Nat64 y) = _PrimBoolean.(fromI64 Prim.i64.(le_u x y))
+  fun (Nat64 x) >= (Nat64 y) = _PrimBoolean.(fromI64 Prim.i64.(ge_u x y))
 }
 
 trait Bounded (Nat64.Nat64) = {
@@ -1296,9 +1225,78 @@ trait Set = {
   fun Set (xs: List _) = fromList xs
 }
 
+// Trait used to resolve precedences in the Prelude.
+// We use fail for all arguments to ensure no functions
+// actually match. The function bodies are empty, which
+// would cause an error if the function actually ran.
+trait GlobalOperators = {
+  fun match (_) (_)
+
+  {
+    fun cond (_) else {{_}}
+    fun cond (_) = f True
+  }
+
+  {
+    fun repeat {_} while {{_}}
+    fun while {_} {{_}}
+  }
+
+  fun if (_) {{_}}
+  fun if (_) {_} else {{_}}
+
+  fun ((Prim.fail)) && {Prim.fail}
+
+  {
+    fun (Prim.fail) == (Prim.fail)
+    fun (Prim.fail) != (Prim.fail)
+  }
+
+  {
+    fun (Prim.fail) < (Prim.fail)
+    fun (Prim.fail) > (Prim.fail)
+    fun (Prim.fail) <= (Prim.fail)
+    fun (Prim.fail) >= (Prim.fail)
+  }
+
+  // builtin for unions and overloaded for collections
+  fun (Prim.fail) in (Prim.fail)
+
+  fun (Prim.fail) ++ ((Prim.fail))
+  fun (Prim.fail) :: ((Prim.fail))
+
+  fun ((Prim.fail)) | (Prim.fail)
+  fun ((Prim.fail)) ^ (Prim.fail)
+  fun ((Prim.fail)) & (Prim.fail)
+
+  {
+    fun ((Prim.fail)) << (Prim.fail)
+    fun ((Prim.fail)) >> (Prim.fail)
+  }
+
+  {
+    fun ((Prim.fail)) + (Prim.fail)
+    fun ((Prim.fail)) - (Prim.fail)
+  }
+
+  {
+    fun ((Prim.fail)) * (Prim.fail)
+    fun ((Prim.fail)) / (Prim.fail)
+    fun ((Prim.fail)) % (Prim.fail)
+    fun ((Prim.fail)) div (Prim.fail)
+    fun ((Prim.fail)) mod (Prim.fail)
+    fun ((Prim.fail)) quot (Prim.fail)
+    fun ((Prim.fail)) rem (Prim.fail)
+  }
+
+  fun - (Prim.fail)
+  fun ~ (Prim.fail)
+  fun ! (Prim.fail)
+}
+
 // The prelude proper.
 trait Prelude
-     = ResolvePrecedences
+     = GlobalOperators
   with Boolean
   with Unsigned
   with Int

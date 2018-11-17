@@ -38,19 +38,20 @@ trait Prim = {
   // fun ⊔ fun' is an overloaded function
   fun (_) ⊔ ((_)) = native
 
-  // top is the union of all values and acts like unit
-  fun ⊤ = native
+  // the fail value causes a match to fail
+  fun fail = native
   // the top pattern matches nothing
-  fun ⊤ = (? _) where native
+  fun fail = (? _) where native
 
   // bottom is the intersection of all values and acts like null
-  fun ⊥ = native
+  fun any = native
   // the bottom pattern matches everything
-  fun ⊥ = (? _) where native
+  fun any = (? _) where native
 
   // Ivo will support exceptions
   // For now, it just supports the Result type.
-  trait exceptions = { }
+  trait exceptions = {
+  }
 
   // Ivo supports X10-style concurrency.
   // The VM links to the X10 library.
@@ -121,10 +122,14 @@ trait Prim = {
 
     fun eq (Int) (Int) = native
     fun ne (Int) (Int) = native
-    fun lt (Int) (Int) = native
-    fun le (Int) (Int) = native
-    fun gt (Int) (Int) = native
-    fun ge (Int) (Int) = native
+    fun lt_s (Int) (Int) = native
+    fun le_s (Int) (Int) = native
+    fun gt_s (Int) (Int) = native
+    fun ge_s (Int) (Int) = native
+    fun lt_u (Int) (Int) = native
+    fun le_u (Int) (Int) = native
+    fun gt_u (Int) (Int) = native
+    fun ge_u (Int) (Int) = native
 
     fun shl (Int) (Int) = native
     fun shr_s (Int) (Int) = native
