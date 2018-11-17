@@ -189,8 +189,13 @@ impl<'a> Namer<'a> {
     pub fn lookup(&mut self, r: &LookupRef) -> NamerResult<Decls> {
         if let Some(results) = self.cache.lookup_cache.get(r) {
             trace!("lookup {:?} cached", r);
+            self.driver.stats.accum("root lookup_cache hit", 1);
             return Ok(results.clone());
         }
+
+        // Stats
+        let timer = self.driver.stats.start_timer();
+        let mut iters = 0;
 
         let mut worklist = Worklist::new();
         worklist.push_back(r.clone());
@@ -200,11 +205,23 @@ impl<'a> Namer<'a> {
 
         while let Some(r) = worklist.pop_front() {
             trace!("lookup loop {:?}", r);
+            iters += 1;
             worklist.reset_changed();
             results = self.try_lookup_ref(r, &mut worklist, &mut visited, &HashTrieSet::new())?;
         }
 
+        // Update the cache with the visited nodes.
+        // This might not be needed...
         self.cache.lookup_cache.extend(visited.drain());
+
+        if iters > 10 {
+            println!("iters for {:?} = {}", r, iters);
+            println!("time for {:?} = {} ms", r, timer.elapsed().as_millis());
+        }
+
+        self.driver.stats.end_timer("lookup time", timer);
+        self.driver.stats.accum("lookup loop iters", iters);
+
         Ok(results)
     }
 
@@ -215,21 +232,37 @@ impl<'a> Namer<'a> {
             return Ok(results.clone());
         }
 
+        let timer = self.driver.stats.start_timer();
+        let mut inner_iters = 0;
+        let mut outer_iters = 0;
+
         let mut visited = HashMap::new();
 
         loop {
             let mut worklist = Worklist::new();
 
+            outer_iters += 1;
+
             let results = self.try_mixfix_ref(m.clone(), &mut worklist, &mut visited, &HashTrieSet::new())?;
 
             if worklist.is_empty() {
+                // Update the cache with the visited nodes.
+                // This might not be needed...
                 self.cache.lookup_cache.extend(visited.drain());
+
+                // Update the tree cache.
                 self.cache.tree_cache.insert(m.clone(), results.clone());
+
+                self.driver.stats.end_timer("parse_mixfix time", timer);
+                self.driver.stats.accum("parse_mixfix outer iters", outer_iters);
+                self.driver.stats.accum("parse_mixfix inner iters", inner_iters);
+
                 return Ok(results)
             }
 
             while let Some(r) = worklist.pop_front() {
                 worklist.reset_changed();
+                inner_iters += 1;
                 self.try_lookup_ref(r, &mut worklist, &mut visited, &HashTrieSet::new())?;
             }
         }
@@ -365,9 +398,9 @@ impl<'a> Namer<'a> {
                 }
             }
 
-            println!("parts {:?}", r.parts);
-            println!("tokens {:?}", tokens);
-            println!("decls {:?}", decls);
+            trace!("parts {:?}", r.parts);
+            trace!("tokens {:?}", tokens);
+            trace!("decls {:?}", decls);
 
             self.driver.stats.accum("mixfix decls size", decls.len() as u64);
 
@@ -508,7 +541,7 @@ impl<'a> Namer<'a> {
         self.driver.stats.accum("lookup_in_trees", 1);
 
         for index in to_name {
-            println!("naming bundle {:?} to find {:?}", index, name);
+            trace!("naming bundle {:?} to find {:?}", index, name);
 
             self.driver.stats.accum("naming in lookup_in_trees", 1);
 

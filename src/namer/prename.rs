@@ -322,7 +322,7 @@ impl<'a> Prenamer<'a> {
                         _ => {},
                     }
 
-                    self.add_import(import_into_scope, import_into_scope, parent_scope, &opt_path.map(|bx| *bx), selector, loc);
+                    self.add_import(import_into_scope, import_into_scope.without_imports(), parent_scope, &opt_path.map(|bx| *bx), selector, loc);
                 },
                 _ => {},
             }
@@ -752,10 +752,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Swap the environment with the weaker import env.
                 // This prevents import resolution from searching the frame with
                 // the imports themselves.
-                let new_scope = match ctx.scope {
-                    Scope::Env(index) => Scope::EnvWithoutImports(index),
-                    scope => scope,
-                };
+                let new_scope = ctx.scope.without_imports();
 
                 let child_ctx = PrenameCtx {
                     scope: new_scope,

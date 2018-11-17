@@ -34,6 +34,13 @@ impl Scope {
             scope => scope,
         }
     }
+    pub fn without_imports(&self) -> Scope {
+        match *self {
+            Scope::Env(i) => Scope::EnvWithoutImports(i),
+            Scope::EnvWithoutImports(i) => Scope::EnvWithoutImports(i),
+            scope => scope,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

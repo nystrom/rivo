@@ -7,6 +7,7 @@
 #![allow(unreachable_code)]
 // #![allow(unused_must_use)]
 
+#![feature(duration_as_u128)]
 #![feature(vec_resize_default)]
 #![feature(vec_remove_item)]
 #![feature(nll)]
