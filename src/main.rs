@@ -95,6 +95,8 @@ fn main() {
                             // driver.error(Located::new(loc, "Compilation failed."));
                         },
                     }
+
+                    // TODO: iterate over all the bundles and finish naming.
                 }
             },
             Err(msg) => {

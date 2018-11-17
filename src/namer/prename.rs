@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 #[cfg(debug_assertions)]
 #[allow(non_upper_case_globals)]
-static mut depth: u32 = 0;
+static mut depth: usize = 0;
 
 #[derive(Clone)]
 pub struct PrenameCtx {
@@ -48,7 +48,6 @@ impl PrenameCtx {
 }
 
 pub struct Prenamer<'a> {
-    pub graph: &'a mut ScopeGraph,
     pub scopes: &'a mut HashMap<NodeId, Scope>,
     pub lookups: &'a mut HashMap<NodeId, LookupIndex>,
     pub mixfixes: &'a mut HashMap<NodeId, MixfixIndex>,
@@ -104,6 +103,8 @@ impl<'a> Prenamer<'a> {
     fn add_unknowns_for_exp(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, e: &Located<Exp>, defined_names: &Vec<Name>, scope: Scope) {
         match &e.value {
             Exp::Union { es } => {
+                // TODO: we need to verify that all members of the union bind the same unknowns
+                // because we don't know which member will match.
                 for e in es {
                     Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
                 }
@@ -125,7 +126,12 @@ impl<'a> Prenamer<'a> {
             },
             Exp::Ascribe { exp, pat } => {
                 Prenamer::add_unknowns_for_exp(decls, flag, &exp, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &pat, defined_names, scope);
+                // x: t -- t is evaluated in forward mode so should not have unknowns
+                // Prenamer::add_unknowns_for_exp(decls, flag, &pat, defined_names, scope);
+            },
+            Exp::Arrow { id, arg, ret } => {
+                Prenamer::add_unknowns_for_exp(decls, flag, &arg, defined_names, scope);
+                Prenamer::add_unknowns_for_exp(decls, flag, &ret, defined_names, scope);
             },
             Exp::Assign { lhs, rhs } => {
                 Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
@@ -326,9 +332,9 @@ impl<'a> Prenamer<'a> {
         // FIXME: should we just make the parent of the top-level scope include an import of Prelude.
         // import () will prevent following the parent link.
         if is_root && ! imports_none {
-            let lookup = self.graph.lookup(Scope::Global, Name::Id(Interned::new("Prelude")));
-            let scope = self.graph.get_scope_of_lookup(lookup);
-            self.graph.import(import_into_scope, &Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
+            let lookup = self.driver.graph.lookup(Scope::Global, Name::Id(Interned::new("Prelude")));
+            let scope = self.driver.graph.get_scope_of_lookup(lookup);
+            self.driver.graph.import(import_into_scope, &Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
         }
     }
 
@@ -338,19 +344,19 @@ impl<'a> Prenamer<'a> {
             None => {
                 match selector {
                     Selector::All => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::All { path: parent_scope } });
+                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::All { path: parent_scope } });
                     },
                     Selector::Nothing => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::None { path: parent_scope } });
+                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::None { path: parent_scope } });
                     },
                     Selector::Including { name } => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: parent_scope, name: name } });
+                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: parent_scope, name: name } });
                     },
                     Selector::Excluding { name } => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: parent_scope, name: name } });
+                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: parent_scope, name: name } });
                     },
                     Selector::Renaming { name, rename } => {
-                        self.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: parent_scope, name: name, rename: rename } });
+                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: parent_scope, name: name, rename: rename } });
                     },
                 }
             },
@@ -362,7 +368,7 @@ impl<'a> Prenamer<'a> {
     }
 
     pub fn lookup(&mut self, id: NodeId, scope: Scope, name: Name) -> LookupIndex {
-        let lookup = self.graph.lookup(scope, name);
+        let lookup = self.driver.graph.lookup(scope, name);
         self.lookups.insert(id, lookup);
         lookup
     }
@@ -383,7 +389,7 @@ impl<'a> Prenamer<'a> {
             }
         ).collect();
 
-        let lookup = self.graph.parse_mixfix(parts);
+        let lookup = self.driver.graph.parse_mixfix(parts);
         self.mixfixes.insert(id, lookup);
         lookup
     }
@@ -392,15 +398,15 @@ impl<'a> Prenamer<'a> {
         match &e.value {
             Exp::Name { name, id } => {
                 let lookup = self.lookup(*id, scope, *name);
-                self.graph.get_scope_of_lookup(lookup)
+                self.driver.graph.get_scope_of_lookup(lookup)
             },
             Exp::Var { name, id } => {
                 let lookup = self.lookup(*id, scope, *name);
-                self.graph.get_scope_of_lookup(lookup)
+                self.driver.graph.get_scope_of_lookup(lookup)
             },
             Exp::MixfixApply { es, id } => {
                 let lookup = self.parse_mixfix(*id, scope, es);
-                self.graph.get_scope_of_mixfix(lookup)
+                self.driver.graph.get_scope_of_mixfix(lookup)
             },
             Exp::Apply { fun, arg } => {
                 // When looking up (`List _` Int) it's sufficient to just lookup
@@ -417,14 +423,26 @@ impl<'a> Prenamer<'a> {
                 assert!(scope.is_some());
                 *scope.unwrap_or(&Scope::Empty)
             }
+            Exp::Select { exp, name } => {
+                let inner_scope = self.lookup_frame(scope, &*exp);
+                let id = self.node_id_generator.new_id();  // FIXME: id shouldn't be needed
+                let lookup = self.lookup(id, inner_scope, *name);
+                self.driver.graph.get_scope_of_lookup(lookup)
+            }
             Exp::Union { es } => {
-                let env = self.graph.new_env_here();
-                for e in es {
-                    let s = self.lookup_frame(scope, e);
-                    // self.graph.import(env, &Located::new(e.loc, Import::All { path: s }));
-                    self.graph.include(env, s);
+                match es.as_slice() {
+                    [] => Scope::Empty,
+                    [e] => self.lookup_frame(scope, e),
+                    es => {
+                        let env = self.driver.graph.new_env_here();
+                        for e in es {
+                            let s = self.lookup_frame(scope, e);
+                            // self.driver.graph.import(env, &Located::new(e.loc, Import::All { path: s }));
+                            self.driver.graph.include(env, s);
+                        }
+                        env
+                    },
                 }
-                env
             },
             e => {
                 // unimplemented!("{:?}", e);
@@ -454,7 +472,7 @@ impl<'a> Prenamer<'a> {
 
                     for decl in &unknowns {
                         new_names.push(decl.name());
-                        self.graph.declare(ctx1.scope, decl);
+                        self.driver.graph.declare(ctx1.scope, decl);
                     }
 
                     let cmd1 = self.visit_cmd(&cmd.value, &ctx1, &cmd.loc);
@@ -490,7 +508,7 @@ impl<'a> Prenamer<'a> {
 
                     for decl in &unknowns {
                         new_names.push(decl.name());
-                        self.graph.declare(ctx1.scope, decl);
+                        self.driver.graph.declare(ctx1.scope, decl);
                     }
 
                     let def1 = self.visit_def(&def.value, &ctx1, &def.loc);
@@ -513,8 +531,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
     fn visit_root(&mut self, s: &'a Root, ctx: &PrenameCtx, loc: &Loc) -> Root {
         match s {
             Root::Bundle { id, cmds } => {
-                let scope = self.graph.new_env();
-                self.graph.set_parent(scope, Scope::Global);
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, Scope::Global);
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
@@ -547,7 +565,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                                     value: Cmd::Exp(Exp::Record { id, .. })
                                 } => {
                                     if let Some(inner_scope) = self.scopes.get(&id) {
-                                        self.graph.include(scope, *inner_scope);
+                                        self.driver.graph.include(scope, *inner_scope);
                                     }
                                 },
                                 _ => {},
@@ -571,10 +589,10 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
     fn visit_def(&mut self, s: &'a Def, ctx: &PrenameCtx, loc: &Loc) -> Def {
         match s {
             Def::MixfixDef { id, flag, name, opt_guard, params, ret } => {
-                let scope = self.graph.new_env();
+                let scope = self.driver.graph.new_env();
                 self.scopes.insert(*id, scope);
 
-                self.graph.set_parent(scope, ctx.scope);
+                self.driver.graph.set_parent(scope, ctx.scope);
 
                 let mut unknowns = Vec::new();
 
@@ -591,7 +609,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 for decl in &unknowns {
                     new_names.push(decl.name());
-                    self.graph.declare(scope, decl);
+                    self.driver.graph.declare(scope, decl);
                 }
 
                 let child_ctx = PrenameCtx {
@@ -702,7 +720,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     },
                 };
 
-                self.graph.declare(ctx.scope, &decl);
+                self.driver.graph.declare(ctx.scope, &decl);
 
                 // TODO: declare mixfix parts
                 match name {
@@ -712,11 +730,11 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                             match part {
                                 Part::Id(x) => {
                                     let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Id(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
-                                    self.graph.declare(ctx.scope, &mixfix_decl);
+                                    self.driver.graph.declare(ctx.scope, &mixfix_decl);
                                 },
                                 Part::Op(x) => {
                                     let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Op(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
-                                    self.graph.declare(ctx.scope, &mixfix_decl);
+                                    self.driver.graph.declare(ctx.scope, &mixfix_decl);
                                 },
                                 _ => {},
                             }
@@ -749,12 +767,12 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
         }
     }
 
-
-    fn visit_exp(&mut self, s: &'a Exp, ctx: &PrenameCtx, loc: &Loc) -> Exp {
-        match s {
+    #[cfg_attr(debug_assertions, trace(disable(ctx)))]
+    fn visit_exp(&mut self, e: &'a Exp, ctx: &PrenameCtx, loc: &Loc) -> Exp {
+        match e {
             Exp::Layout { id, cmds } => {
-                let scope = self.graph.new_env();
-                self.graph.set_parent(scope, ctx.scope);
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, ctx.scope);
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
@@ -773,7 +791,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     ..ctx.clone()
                 };
 
-                let new_node = self.walk_exp(s, &child_ctx, &loc);
+                let new_node = self.walk_exp(e, &child_ctx, &loc);
 
                 // Include nested records in the scope.
                 match new_node {
@@ -785,7 +803,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                                     value: Cmd::Exp(Exp::Record { id, .. })
                                 } => {
                                     if let Some(inner_scope) = self.scopes.get(&id) {
-                                        self.graph.include(scope, *inner_scope);
+                                        self.driver.graph.include(scope, *inner_scope);
                                     }
                                 },
                                 _ => {},
@@ -807,8 +825,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 new_node
             },
             Exp::Record { id, defs } => {
-                let scope = self.graph.new_env();
-                self.graph.set_parent(scope, ctx.scope);
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, ctx.scope);
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
@@ -827,7 +845,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     ..ctx.clone()
                 };
 
-                let new_node = self.walk_exp(s, &child_ctx, &loc);
+                let new_node = self.walk_exp(e, &child_ctx, &loc);
 
                 // Add imports.
                 match new_node {
@@ -841,22 +859,20 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
             },
             Exp::Union { .. } => {
                 let scope = ctx.scope;
-                let new_node = self.walk_exp(s, &ctx, &loc);
+                let new_node = self.walk_exp(e, &ctx, &loc);
 
-                // FIXME: remove this clone
-                let scopes = self.scopes.clone();
-
-                // Import the other frames into the traits in the union.
+                // Import the other frames into the records in the union.
                 match &new_node {
                     Exp::Union { es } => {
                         for (i, ei) in es.iter().enumerate() {
                             match ei.value {
                                 Exp::Record { id, .. } => {
-                                    if let Some(scope_i) = scopes.get(&id) {
+                                    if let Some(s) = self.scopes.get(&id) {
+                                        let scope_i = *s; // copy out so we stop borrowing self.
                                         for (j, ej) in es.iter().enumerate() {
                                             if i != j {
                                                 let scope_j = self.lookup_frame(scope, ej);
-                                                self.graph.import(*scope_i, &Located::new(ej.loc, Import::All { path: scope_j }))
+                                                self.driver.graph.import(scope_i, &Located::new(ej.loc, Import::All { path: scope_j }))
                                             }
                                         }
                                     }
@@ -871,8 +887,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 new_node
             }
             Exp::Lambda { id, opt_guard, params, ret } => {
-                let scope = self.graph.new_env();
-                self.graph.set_parent(scope, ctx.scope);
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, ctx.scope);
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
@@ -882,7 +898,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 for decl in &unknowns {
                     new_names.push(decl.name());
-                    self.graph.declare(scope, decl);
+                    self.driver.graph.declare(scope, decl);
                 }
 
                 let child_ctx = PrenameCtx {
@@ -912,8 +928,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 Exp::Lambda { id: *id, opt_guard: opt_guard1, params: params1, ret: ret1 }
             },
             Exp::For { id, generator, body } => {
-                let scope = self.graph.new_env();
-                self.graph.set_parent(scope, ctx.scope);
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, ctx.scope);
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
@@ -923,7 +939,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 for decl in &unknowns {
                     new_names.push(decl.name());
-                    self.graph.declare(scope, decl);
+                    self.driver.graph.declare(scope, decl);
                 }
 
                 let child_ctx = PrenameCtx {
@@ -945,8 +961,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 Exp::For { id: *id, generator: generator1, body: body1 }
             },
             Exp::Arrow { id, arg, ret } => {
-                let scope = self.graph.new_env();
-                self.graph.set_parent(scope, ctx.scope);
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, ctx.scope);
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
@@ -956,7 +972,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 for decl in &unknowns {
                     new_names.push(decl.name());
-                    self.graph.declare(scope, decl);
+                    self.driver.graph.declare(scope, decl);
                 }
 
                 let child_ctx = PrenameCtx {
@@ -990,7 +1006,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let e1_1 = self.visit_exp(&e1.value, &ctx, &e1.loc);
                 let e1_2 = Located { loc: e1.loc, value: e1_1 };
 
-                let scope = self.graph.new_env();
+                let scope = self.driver.graph.new_child_scope(ctx.scope);
                 self.scopes.insert(*id, scope);
 
                 let child_ctx = PrenameCtx {
@@ -1000,7 +1016,9 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 };
 
                 let e1_scope = self.lookup_frame(ctx.scope, &e1_2);
-                self.graph.import(scope, &Located { loc: e1.loc, value: Import::All { path: e1_scope } });
+                println!("e1_2 = {:?}", e1_2);
+                println!("e1_scope = {:?}", e1_scope);
+                self.driver.graph.import(scope, &Located { loc: e1.loc, value: Import::All { path: e1_scope } });
 
                 let e2_1 = self.visit_exp(&e2.value, &child_ctx, &e2.loc);
 
@@ -1013,7 +1031,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
             Exp::Name { name, id } => {
                 self.scopes.insert(*id, ctx.scope);
 
-                let new_node = self.walk_exp(s, &ctx, &loc);
+                let new_node = self.walk_exp(e, &ctx, &loc);
 
                 match &new_node {
                     Exp::Name { name, id } => {
@@ -1024,7 +1042,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                         // Record that the name is an unknown.
                         for unk in &ctx.unknowns {
                             if unk.value.name() == *name {
-                                self.graph.resolve(&lookup, &unk);
+                                self.driver.graph.resolve(&lookup, &unk);
                                 is_unknown = true;
                             }
                         }
@@ -1049,7 +1067,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     ..ctx.clone()
                 };
 
-                let new_node = self.walk_exp(s, &child_ctx, &loc);
+                let new_node = self.walk_exp(e, &child_ctx, &loc);
 
                 match &new_node {
                     Exp::MixfixApply { es, id } => {
@@ -1065,7 +1083,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
             },
 
             _ => {
-                self.walk_exp(s, ctx, loc)
+                self.walk_exp(e, ctx, loc)
             },
         }
     }

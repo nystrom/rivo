@@ -16,12 +16,11 @@ pub enum Bundle {
     Read { source: Source, input: Input },
     Parsed { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root> },
     Prenamed { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>,
-        graph: ScopeGraph,
         scopes: HashMap<NodeId, Scope>,
         lookups: HashMap<NodeId, LookupIndex>,
         mixfixes: HashMap<NodeId, MixfixIndex>,
     },
-    Named { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>, graph: ScopeGraph, scopes: HashMap<NodeId, Scope> },
+    Named { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>, scopes: HashMap<NodeId, Scope> },
     Core { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, root_scope: Scope }
 }
 

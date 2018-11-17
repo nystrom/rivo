@@ -1514,7 +1514,15 @@ impl<'a> Parser<'a> {
                         // All the commands are arrows.
                         // Create a union of functions.
                         let arrows: Vec<Located<Exp>> = filter_collect_loc!(cmds, Cmd::Exp(e), e);
-                        Ok(Exp::Union { es: arrows })
+                        if arrows.len() == 0 {
+                            Ok(Exp::Lit { lit: Lit::Nothing })
+                        }
+                        else if arrows.len() == 1 {
+                            Ok(arrows.get(0).unwrap().clone().value)
+                        }
+                        else {
+                            Ok(Exp::Union { es: arrows })
+                        }
                     }
                     else if all_defs {
                         // All the cmds are defs.

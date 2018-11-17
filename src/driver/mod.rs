@@ -35,6 +35,7 @@ pub struct Driver {
     pub loader: Loader,
     pub stats: Stats,
     pub errors: Vec<Vec<Located<String>>>,
+    pub graph: ScopeGraph,
 }
 
 impl Driver {
@@ -45,6 +46,7 @@ impl Driver {
             loader: Loader::new(),
             stats: Stats::new(),
             errors: vec![],
+            graph: ScopeGraph::new(),
         }
     }
 
@@ -279,6 +281,10 @@ impl Driver {
 
         let bundle = &self.bundles[index.0];
 
+        // TODO:
+        // Rather than borrow the bundle from the driver, take ownership (removing it from the driver)
+        // Then give it back to the driver.
+
         match bundle {
             Bundle::Read { .. } => {
                 self.parse_bundle(index)?;
@@ -301,7 +307,6 @@ impl Driver {
 
                 {
                     let mut prenamer = Prenamer {
-                        graph: &mut ScopeGraph::new(),
                         scopes: &mut HashMap::new(),
                         lookups: &mut HashMap::new(),
                         mixfixes: &mut HashMap::new(),
@@ -311,19 +316,20 @@ impl Driver {
 
                     let tree2 = prenamer.visit_root(&tree1.value, &PrenameCtx::new(), &tree1.loc);
 
-                    println!("scopes {:#?}", prenamer.scopes);
-                    println!("graph {:#?}", prenamer.graph);
-
                     let new_bundle = Bundle::Prenamed {
                         source: source1,
                         line_map: line_map1,
                         node_id_generator: *prenamer.node_id_generator,
                         tree: Located::new(tree1.loc, tree2),
-                        graph: prenamer.graph.clone(),
                         scopes: prenamer.scopes.clone(),
                         lookups: prenamer.lookups.clone(),
                         mixfixes: prenamer.mixfixes.clone(),
                     };
+
+                    println!("scopes {:#?}", prenamer.scopes);
+                    // We can't print the graph until after the last use of the prenamer (which mutably borrows self)
+                    println!("graph {:#?}", self.graph);
+
                     self.set_bundle(index, new_bundle);
                 }
 
@@ -354,7 +360,7 @@ impl Driver {
                 self.name_bundle(index)?;
                 Ok(())
             },
-            Bundle::Prenamed { source, line_map, node_id_generator, tree, graph, scopes, lookups, mixfixes } => {
+            Bundle::Prenamed { source, line_map, node_id_generator, tree, scopes, lookups, mixfixes } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
 
@@ -362,7 +368,6 @@ impl Driver {
 
                 // FIXME: avoid the cloning
                 // We clone so that after the cloning we're no longer borrowing &self immutably.
-                let graph1 = graph.clone();
                 let tree1 = tree.clone();
                 let scopes1 = scopes.clone();
                 let source1 = source.clone();
@@ -381,7 +386,6 @@ impl Driver {
                 };
 
                 let mut namer = Namer {
-                    graph: &graph1,
                     driver: self,
                     cache: &mut cache,
                 };
@@ -397,7 +401,7 @@ impl Driver {
 
                     let tree2 = renamer.visit_root(&tree1.value, &RenamerCtx::new(), &tree1.loc);
 
-                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, node_id_generator: *renamer.node_id_generator, tree: Located::new(tree1.loc, tree2), graph: graph1, scopes: scopes1 };
+                    let new_bundle = Bundle::Named { source: source1, line_map: line_map1, node_id_generator: *renamer.node_id_generator, tree: Located::new(tree1.loc, tree2), scopes: scopes1 };
                     self.set_bundle(index, new_bundle);
                 }
 

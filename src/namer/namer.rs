@@ -49,7 +49,6 @@ pub struct Cache<'a> {
 
 // TODO: make driver a trait for loading files.
 pub struct Namer<'a> {
-    pub graph: &'a ScopeGraph,
     pub driver: &'a mut driver::Driver,
     pub cache: &'a mut Cache<'a>,
 }
@@ -250,7 +249,7 @@ impl<'a> Namer<'a> {
         for part in &r.parts {
             match part.name_ref {
                 Some(LookupIndex(index)) => {
-                    let r = self.graph.lookups.get(index);
+                    let r = self.driver.graph.lookups.get(index);
                     match r {
                         Some(r) => refs.push(Some(r.clone())),
                         None => refs.push(None),
@@ -447,21 +446,25 @@ impl<'a> Namer<'a> {
 // Or make the graph global.
 // The returned decls have inner scopes referring to the graph in the bundle, not the current bundle.
                     match self.driver.get_bundle(index) {
-                        Some(Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. }) => {
+                        Some(Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
                             if let Some(Scope::Env(env_index)) = scopes.get(&id) {
-                                return Namer::lookup_here_in_env(&mut self.driver.stats, &graph, *env_index, name, &mut HashMap::new());
+                                return Namer::lookup_here_in_env(&mut self.driver.stats, &self.driver.graph, *env_index, name, &mut HashMap::new());
                                 // return self.try_lookup_ref(LookupRef { scope: scope.to_here(), name }, worklist, visited, &stack.insert(r));
                             }
                             self.driver.error(Located::new(loc, "root scope of bundle not found".to_owned()))
                         },
-                        Some(Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. }) => {
+                        Some(Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
                             if let Some(Scope::Env(env_index)) = scopes.get(&id) {
-                                return Namer::lookup_here_in_env(&mut self.driver.stats, &graph, *env_index, name, &mut HashMap::new());
+                                return Namer::lookup_here_in_env(&mut self.driver.stats, &self.driver.graph, *env_index, name, &mut HashMap::new());
                                 // return self.try_lookup_ref(LookupRef { scope: scope.to_here(), name }, worklist, visited, &stack.insert(r));
                             }
                             self.driver.error(Located::new(loc, "root scope of bundle not found".to_owned()))
                         },
                         Some(Bundle::Core { root_scope, .. }) => {
+                            if let Scope::Env(env_index) = &root_scope {
+                                return Namer::lookup_here_in_env(&mut self.driver.stats, &self.driver.graph, *env_index, name, &mut HashMap::new());
+                            }
+                            self.driver.error(Located::new(Loc::no_loc(), "root scope of bundle is not an env".to_owned()))
                             // return self.try_lookup_ref(LookupRef { scope: root_scope.to_here(), name }, worklist, visited, &stack.insert(r));
                         },
                         _ => {},
@@ -542,22 +545,23 @@ impl<'a> Namer<'a> {
 
         let mut results = Vec::new();
 
+        let graph = &self.driver.graph;
+
         for bundle in &self.driver.bundles {
             match bundle {
-                Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
+                Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. } => {
                     if let Some(Scope::Env(env)) = scopes.get(&id) {
-                        let vs = Namer::lookup_here_in_env(stats, graph, *env, name, &mut self.cache.lookup_cache)?;
+                        let vs = Namer::lookup_here_in_env(stats, &graph, *env, name, &mut self.cache.lookup_cache)?;
                         results.extend(vs.iter().cloned());
                     }
                 },
-                Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, graph, .. } => {
+                Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. } => {
                     if let Some(Scope::Env(env)) = scopes.get(&id) {
-                        let vs = Namer::lookup_here_in_env(stats, graph, *env, name, &mut self.cache.lookup_cache)?;
+                        let vs = Namer::lookup_here_in_env(stats, &graph, *env, name, &mut self.cache.lookup_cache)?;
                         results.extend(vs.iter().cloned());
                     }
                 },
-                // Bundle::Core { root_scope, graph, .. } => {
-                //     to_search.push(*root_scope);
+                // Bundle::Core { root_scope, .. } => {
                 // },
                 _ => {},
             }
@@ -730,7 +734,7 @@ impl<'a> Namer<'a> {
                 self.lookup_in_root(name, worklist, visited, &stack.insert(r))
             },
             Scope::Lookup(LookupIndex(index)) => {
-                let s = self.graph.lookups.get(index).unwrap();
+                let s = self.driver.graph.lookups.get(index).unwrap();
                 if let Some(vs) = self.cache.lookup_cache.get(s) {
                     trace!("cache hit");
                     let (c, rs) = self.get_inner_decls(name, &vs.clone(), worklist, visited, &stack.insert(r))?;
@@ -746,7 +750,7 @@ impl<'a> Namer<'a> {
                 }
             },
             Scope::Mixfix(MixfixIndex(index)) => {
-                let s = self.graph.mixfixes.get(index).unwrap();
+                let s = self.driver.graph.mixfixes.get(index).unwrap();
                 if let Some(ts) = self.cache.tree_cache.get(s) {
                     trace!("cache hit");
                     let vs = ts.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
@@ -764,19 +768,19 @@ impl<'a> Namer<'a> {
                 }
             },
             Scope::EnvHere(EnvIndex(index)) => {
-                let env = self.graph.envs.get(index).unwrap();
+                let env = self.driver.graph.envs.get(index).unwrap();
                 let (c, rs) = self.lookup_in_env(&r, env.clone(), name, false, false, worklist, visited, &stack.insert(r))?;
                 all_cached &= c;
                 Ok(rs)
             }
             Scope::EnvWithoutImports(EnvIndex(index)) => {
-                let env = self.graph.envs.get(index).unwrap();
+                let env = self.driver.graph.envs.get(index).unwrap();
                 let (c, rs) = self.lookup_in_env(&r, env.clone(), name, true, false, worklist, visited, &stack.insert(r))?;
                 all_cached &= c;
                 Ok(rs)
             }
             Scope::Env(EnvIndex(index)) => {
-                let env = self.graph.envs.get(index).unwrap();
+                let env = self.driver.graph.envs.get(index).unwrap();
                 let (c, rs) = self.lookup_in_env(&r, env.clone(), name, true, true, worklist, visited, &stack.insert(r))?;
                 all_cached &= c;
                 Ok(rs)
@@ -837,12 +841,10 @@ impl<'a> Namer<'a> {
 
             // x here is usually the same as x, unless there's a renaming import.
             for s in paths {
-                if let Some(vs) = self.cache.lookup_cache.get(&s) {
-                    rs.extend(vs.iter().cloned());
-                }
-                else {
-                    let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                    rs.extend(vs.iter().cloned());
+                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
+                rs.extend(vs.iter().cloned());
+
+                if let None = self.cache.lookup_cache.get(&s) {
                     all_cached = false;
                 }
             }
@@ -865,12 +867,10 @@ impl<'a> Namer<'a> {
 
                 let s = LookupRef { scope: *parent, name };
 
-                if let Some(vs) = self.cache.lookup_cache.get(&s) {
-                    rs.extend(vs.iter().cloned());
-                }
-                else {
-                    let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                    rs.extend(vs.iter().cloned());
+                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
+                rs.extend(vs.iter().cloned());
+
+                if let None = self.cache.lookup_cache.get(&s) {
                     all_cached = false;
                 }
             }
@@ -896,12 +896,10 @@ impl<'a> Namer<'a> {
 
             let s = LookupRef { scope, name };
 
-            if let Some(vs) = self.cache.lookup_cache.get(&s) {
-                results.extend(vs.iter().cloned());
-            }
-            else {
-                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                results.extend(vs.iter().cloned());
+            let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
+            results.extend(vs.iter().cloned());
+
+            if let None = self.cache.lookup_cache.get(&s) {
                 all_cached = false;
             }
         }

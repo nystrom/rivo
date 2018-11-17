@@ -132,8 +132,8 @@ impl ScopeGraph {
     }
 
     pub fn declare(&mut self, scope: Scope, decl: &Located<Decl>) {
-        match scope {
-            Scope::Env(EnvIndex(index)) => {
+        match scope.to_here() {
+            Scope::EnvHere(EnvIndex(index)) => {
                 if let Some(ref mut env) = self.envs.get_mut(index) {
                     match env.decls.get_mut(&decl.name()) {
                         Some(decls) => {
@@ -153,8 +153,8 @@ impl ScopeGraph {
         if parent == Scope::Empty {
             return;
         }
-        match scope {
-            Scope::Env(EnvIndex(index)) => {
+        match scope.to_here() {
+            Scope::EnvHere(EnvIndex(index)) => {
                 if let Some(ref mut env) = self.envs.get_mut(index) {
                     env.parents.push(parent)
                 }
@@ -167,8 +167,8 @@ impl ScopeGraph {
         if import.value.path() == Scope::Empty {
             return;
         }
-        match scope {
-            Scope::Env(EnvIndex(index)) => {
+        match scope.to_here() {
+            Scope::EnvHere(EnvIndex(index)) => {
                 if let Some(ref mut env) = self.envs.get_mut(index) {
                     env.imports.push(import.clone())
                 }
@@ -181,8 +181,8 @@ impl ScopeGraph {
         if include == Scope::Empty {
             return;
         }
-        match scope {
-            Scope::Env(EnvIndex(index)) => {
+        match scope.to_here() {
+            Scope::EnvHere(EnvIndex(index)) => {
                 if let Some(ref mut env) = self.envs.get_mut(index) {
                     env.includes.push(include)
                 }

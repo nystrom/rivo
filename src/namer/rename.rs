@@ -79,7 +79,7 @@ impl<'a> Renamer<'a> {
                 Exp::Name { name, id } => {
                     // return false if mixfix part
                     let lookup = self.lookups.get(id).unwrap();
-                    let lookup_ref = self.namer.graph.get_lookup(lookup);
+                    let lookup_ref = self.namer.driver.graph.get_lookup(lookup);
 
                     match self.namer.lookup(&lookup_ref) {
                         Ok(decls) => ! Namer::all_mixfix(&decls),
@@ -101,13 +101,13 @@ impl<'a> Renamer<'a> {
         let lookup = self.lookups.get(&id).unwrap();
         println!("lookup = {:?}", lookup);
 
-        match self.namer.graph.get_pre_resolved(lookup) {
+        match self.namer.driver.graph.get_pre_resolved(lookup) {
             Some(decls) => {
                 println!("pre_resolved = {:?}", decls);
                 Ok(decls.clone())
             },
             None => {
-                let lookup_ref = self.namer.graph.get_lookup(lookup);
+                let lookup_ref = self.namer.driver.graph.get_lookup(lookup);
                 println!("lookup_ref = {:?}", lookup_ref);
                 self.namer.lookup(&lookup_ref)
             },
@@ -162,7 +162,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                 match &new_node {
                     Exp::MixfixApply { es, id } => {
                         let lookup = self.mixfixes.get(id).unwrap();
-                        let lookup_ref = self.namer.graph.get_mixfix(lookup);
+                        let lookup_ref = self.namer.driver.graph.get_mixfix(lookup);
 
                         match self.namer.parse_mixfix(&lookup_ref) {
                             Ok(trees) => {
