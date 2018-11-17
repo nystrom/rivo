@@ -10,10 +10,6 @@ repository = "https://github.com/nystrom/rivo.git"
 homepage = "https://github.com/nystrom/rivo"
 # build = "build.rs"
 
-[lib]
-name = "ivo"
-path = "src/lib.rs"
-
 [profile.release]
 opt-level = 3
 lto = true
