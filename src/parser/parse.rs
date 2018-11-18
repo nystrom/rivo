@@ -1642,7 +1642,8 @@ mod tests {
     macro_rules! test_parse_ok {
         ($input: expr, $ast: expr) => {
             let source = Source::FileSource(PathBuf::from("foo.ivo"));
-            let mut p = Parser::new(&source, $input, &mut NodeIdGenerator::new());
+            let mut n = NodeIdGenerator::new();
+            let mut p = Parser::new(&source, $input, &mut n);
             match p.parse_bundle() {
                 Ok(t) => {
                     assert_eq!(*t, $ast);
@@ -1678,11 +1679,11 @@ mod tests {
                             params: vec![
                                 Located {
                                     loc: Loc::new(4, 6),
-                                    value: Exp::Name { name: Name::Id(String::from("x")), id: NodeId(1) }
+                                    value: Exp::Name { name: Name::Id(Interned::new("x")), id: NodeId(1) }
                                 }],
                             ret: Box::new(Located {
                                 loc: Loc::new(11, 11),
-                                value: Exp::Name { name: Name::Id(String::from("x")), id: NodeId(2) }
+                                value: Exp::Name { name: Name::Id(Interned::new("x")), id: NodeId(2) }
                             })
                         })
                     }
@@ -1703,7 +1704,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(1),
                                 flag: MixfixFlag::Trait,
-                                name: Name::Id("T".to_string()),
+                                name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
                                 params: vec![],
                                 ret: Located {
@@ -1732,31 +1733,31 @@ mod tests {
             Root::Bundle {
                 id: NodeId(0),
                 cmds: vec![
-                   Located {
-                       loc: Loc::new(0, 11),
-                       value: Cmd::Def(
-                           Def::MixfixDef {
-                               id: NodeId(1),
-                               flag: MixfixFlag::Trait,
-                               name: Name::Id("T".to_string()),
-                               opt_guard: None,
-                               params: vec![],
-                               ret: Located {
-                                   loc: Loc::new(10, 11),
-                                   value: Param {
-                                       assoc: Assoc::NonAssoc,
-                                       by_name: CallingConv::ByValue,
-                                       mode: CallingMode::Output,
-                                       pat: Box::new(Located {
-                                           loc: Loc::new(10, 11),
-                                           value: Exp::Lit { lit: Lit::Nothing }
-                                       })
-                                   }
-                               }
-                           }
-                       )
-                   }
-               ]
+                    Located {
+                        loc: Loc::new(0, 11),
+                        value: Cmd::Def(
+                            Def::MixfixDef {
+                                id: NodeId(1),
+                                flag: MixfixFlag::Trait,
+                                name: Name::Id(Interned::new("T")),
+                                opt_guard: None,
+                                params: vec![],
+                                ret: Located {
+                                    loc: Loc::new(10, 11),
+                                    value: Param {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                        pat: Box::new(Located {
+                                            loc: Loc::new(10, 11),
+                                            value: Exp::Lit { lit: Lit::Nothing }
+                                        })
+                                    }
+                                }
+                            }
+                        )
+                    }
+                ]
             }
         );
     }
@@ -1767,48 +1768,48 @@ mod tests {
             Root::Bundle {
                 id: NodeId(0),
                 cmds: vec![
-                   Located {
-                       loc: Loc::new(0, 17),
-                       value: Cmd::Def(
-                           Def::MixfixDef {
-                               id: NodeId(1),
-                               flag: MixfixFlag::Trait,
-                               name: Name::Id("T".to_string()),
-                               opt_guard: None,
-                               params: vec![],
-                               ret: Located {
-                                   loc: Loc::new(10, 17),
-                                   value: Param {
-                                       assoc: Assoc::NonAssoc,
-                                       by_name: CallingConv::ByValue,
-                                       mode: CallingMode::Output,
-                                       pat: Box::new(Located {
-                                           loc: Loc::new(10, 17),
-                                           value: Exp::Union {
-                                               es: vec![
-                                                   Located {
-                                                       loc: Loc::new(10, 10),
-                                                       value: Exp::Name {
-                                                           name: Name::Id("A".to_string()),
-                                                           id: NodeId(2),
-                                                       }
-                                                   },
-                                                   Located {
-                                                       loc: Loc::new(17, 17),
-                                                       value: Exp::Name {
-                                                           name: Name::Id("B".to_string()),
-                                                           id: NodeId(3),
-                                                       }
-                                                   }
-                                               ]
-                                           }
-                                       })
-                                   }
-                               }
-                           }
-                       )
-                   }
-               ]
+                    Located {
+                        loc: Loc::new(0, 17),
+                        value: Cmd::Def(
+                            Def::MixfixDef {
+                                id: NodeId(1),
+                                flag: MixfixFlag::Trait,
+                                name: Name::Id(Interned::new("T")),
+                                opt_guard: None,
+                                params: vec![],
+                                ret: Located {
+                                    loc: Loc::new(10, 17),
+                                    value: Param {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                        pat: Box::new(Located {
+                                            loc: Loc::new(10, 17),
+                                            value: Exp::Union {
+                                                es: vec![
+                                                    Located {
+                                                        loc: Loc::new(10, 10),
+                                                        value: Exp::Name {
+                                                            name: Name::Id(Interned::new("A")),
+                                                            id: NodeId(2),
+                                                        }
+                                                    },
+                                                    Located {
+                                                        loc: Loc::new(17, 17),
+                                                        value: Exp::Name {
+                                                            name: Name::Id(Interned::new("B")),
+                                                            id: NodeId(3),
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+                        )
+                    }
+                ]
             }
         );
     }
@@ -1825,7 +1826,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(2),
                                 flag: MixfixFlag::Trait,
-                                name: Name::Mixfix(&vec![Part::Id(String::from("T")), Part::Placeholder]),
+                                name: Name::Mixfix(Name::encode_parts(&vec![Part::Id(Interned::new("T")), Part::Placeholder])),
                                 opt_guard: None,
                                 params: vec!(
                                     Located::new(
@@ -1838,7 +1839,7 @@ mod tests {
                                                 Located::new(
                                                     Loc::new(9, 9),
                                                     Exp::Name {
-                                                        name: Name::Id(String::from("x")),
+                                                        name: Name::Id(Interned::new("x")),
                                                         id: NodeId(1),
                                                     }
                                                 )
@@ -1874,45 +1875,45 @@ mod tests {
             Root::Bundle {
                 id: NodeId(0),
                 cmds: vec![
-                   Located {
-                       loc: Loc::new(0, 18),
-                       value: Cmd::Def(
-                           Def::MixfixDef {
-                               id: NodeId(1),
-                               flag: MixfixFlag::Trait,
-                               name: Name::Id("T".to_string()),
-                               opt_guard: None,
-                               params: vec![],
-                               ret: Located {
-                                   loc: Loc::new(10, 18),
-                                   value: Param {
-                                       assoc: Assoc::NonAssoc,
-                                       by_name: CallingConv::ByValue,
-                                       mode: CallingMode::Output,
-                                       pat: Box::new(Located {
-                                           loc: Loc::new(10, 18),
-                                           value: Exp::Union {
-                                               es: vec![
-                                                   Located {
-                                                       loc: Loc::new(10, 10),
-                                                       value: Exp::Name {
-                                                           name: Name::Id("A".to_string()),
-                                                           id: NodeId(2),
-                                                       }
-                                                   },
-                                                   Located {
-                                                       loc: Loc::new(17, 18),
-                                                       value: Exp::Lit { lit: Lit::Nothing }
-                                                   }
-                                               ]
-                                           }
-                                       })
-                                   }
-                               }
-                           }
-                       )
-                   }
-               ]
+                    Located {
+                        loc: Loc::new(0, 18),
+                        value: Cmd::Def(
+                            Def::MixfixDef {
+                                id: NodeId(1),
+                                flag: MixfixFlag::Trait,
+                                name: Name::Id(Interned::new("T")),
+                                opt_guard: None,
+                                params: vec![],
+                                ret: Located {
+                                    loc: Loc::new(10, 18),
+                                    value: Param {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                        pat: Box::new(Located {
+                                            loc: Loc::new(10, 18),
+                                            value: Exp::Union {
+                                                es: vec![
+                                                    Located {
+                                                        loc: Loc::new(10, 10),
+                                                        value: Exp::Name {
+                                                            name: Name::Id(Interned::new("A")),
+                                                            id: NodeId(2),
+                                                        }
+                                                    },
+                                                    Located {
+                                                        loc: Loc::new(17, 18),
+                                                        value: Exp::Lit { lit: Lit::Nothing }
+                                                    }
+                                                ]
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+                        )
+                    }
+                ]
             }
         );
     }
@@ -1929,13 +1930,13 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(3),
                                 flag: MixfixFlag::Trait,
-                                name: Name::Mixfix(&vec![Part::Id(String::from("T")), Part::Placeholder]),
+                                name: Name::Mixfix(Name::encode_parts(&vec![Part::Id(Interned::new("T")), Part::Placeholder])),
                                 opt_guard: Some(
                                     Box::new(
                                         Located::new(
                                             Loc::new(18,18),
                                             Exp::Name {
-                                                name: Name::Id(String::from("x")),
+                                                name: Name::Id(Interned::new("x")),
                                                 id: NodeId(2),
                                             }
                                         )
@@ -1952,7 +1953,7 @@ mod tests {
                                                 Located::new(
                                                     Loc::new(9, 9),
                                                     Exp::Name {
-                                                        name: Name::Id(String::from("x")),
+                                                        name: Name::Id(Interned::new("x")),
                                                         id: NodeId(1),
                                                     }
                                                 )
