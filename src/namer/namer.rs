@@ -275,6 +275,8 @@ impl<'a> Namer<'a> {
             return Ok(result.clone());
         }
 
+        let mut all_cached = true;
+
         self.driver.stats.accum("mixfix expression size", r.parts.len() as u64);
 
         let mut refs: Vec<Option<LookupRef>> = vec![];
@@ -301,6 +303,10 @@ impl<'a> Namer<'a> {
             match r {
                 Some(r) => {
                     let decls = self.try_lookup_ref(r, worklist, visited, stack)?;
+
+                    if let None = self.cache.lookup_cache.get(&r) {
+                        all_cached = false;
+                    }
 
                     if ! decls.is_empty() && Namer::all_mixfix(&decls) {
                         match &r.name {
@@ -407,6 +413,9 @@ impl<'a> Namer<'a> {
             // The names in the expression did not resolve into anything we can possibly parse.
             // Return early.
             if decls.is_empty() {
+                if all_cached {
+                    self.cache.tree_cache.insert(r, vec![]);
+                }
                 return Ok(vec![]);
             }
 
@@ -444,6 +453,10 @@ impl<'a> Namer<'a> {
             };
 
             results.append(&mut trees);
+        }
+
+        if all_cached {
+            self.cache.tree_cache.insert(r, results.clone());
         }
 
         Ok(results)
@@ -620,12 +633,10 @@ impl<'a> Namer<'a> {
 
         for scope in frames {
             let s = LookupRef { scope: scope.to_here(), name };
-            if let Some(vs) = self.cache.lookup_cache.get(&s) {
-                results.extend(vs.iter().cloned());
-            }
-            else {
-                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                results.extend(vs.iter().cloned());
+            let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
+            results.extend(vs.iter().cloned());
+
+            if let None = self.cache.lookup_cache.get(&s) {
                 all_cached = false;
             }
         }
@@ -766,38 +777,30 @@ impl<'a> Namer<'a> {
                 self.lookup_in_root(name, worklist, visited, &stack.insert(r))
             },
             Scope::Lookup(LookupIndex(index)) => {
-                let s = self.driver.graph.lookups.get(index).unwrap();
-                if let Some(vs) = self.cache.lookup_cache.get(s) {
-                    trace!("cache hit");
-                    let (c, rs) = self.get_inner_decls(name, &vs.clone(), worklist, visited, &stack.insert(r))?;
-                    all_cached &= c;
-                    Ok(rs)
-                }
-                else {
-                    trace!("cache miss");
-                    let vs = self.try_lookup_ref(s.clone(), worklist, visited, &stack.insert(r))?;
-                    let (_, rs) = self.get_inner_decls(name, &vs, worklist, visited, &stack.insert(r))?;
+                let s = self.driver.graph.lookups.get(index).unwrap().clone();
+
+                let vs = self.try_lookup_ref(s.clone(), worklist, visited, &stack.insert(r))?;
+                let (c, rs) = self.get_inner_decls(name, &vs, worklist, visited, &stack.insert(r))?;
+
+                all_cached &= c;
+                if let None = self.cache.lookup_cache.get(&s) {
                     all_cached = false;
-                    Ok(rs)
                 }
+
+                Ok(rs)
             },
             Scope::Mixfix(MixfixIndex(index)) => {
-                let s = self.driver.graph.mixfixes.get(index).unwrap();
-                if let Some(ts) = self.cache.tree_cache.get(s) {
-                    trace!("cache hit");
-                    let vs = ts.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
-                    let (c, rs) = self.get_inner_decls(name, &vs, worklist, visited, &stack.insert(r))?;
-                    all_cached &= c;
-                    Ok(rs)
-                }
-                else {
-                    trace!("cache miss");
-                    let ts = self.try_mixfix_ref(s.clone(), worklist, visited, &stack.insert(r))?;
-                    let vs = ts.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
-                    let (_, rs) = self.get_inner_decls(name, &vs, worklist, visited, &stack.insert(r))?;
+                let s = self.driver.graph.mixfixes.get(index).unwrap().clone();
+
+                let ts = self.try_mixfix_ref(s.clone(), worklist, visited, &stack.insert(r))?;
+                let vs = ts.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
+                let (c, rs) = self.get_inner_decls(name, &vs, worklist, visited, &stack.insert(r))?;
+
+                all_cached &= c;
+                if let None = self.cache.tree_cache.get(&s) {
                     all_cached = false;
-                    Ok(rs)
                 }
+                Ok(rs)
             },
             Scope::EnvHere(EnvIndex(index)) => {
                 let env = self.driver.graph.envs.get(index).unwrap();
