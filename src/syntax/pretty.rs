@@ -109,7 +109,7 @@ impl ToDoc for Cmd {
 impl ToDoc for Def {
     fn to_doc(&self) -> Doc<BoxDoc<()>> {
         match *self {
-            Def::FormulaDef { ref flag, ref formula } => {
+            Def::FormulaDef { ref attrs, ref flag, ref formula } => {
                 let doc = match *flag {
                     FormulaFlag::Val => Doc::text("val"),
                     FormulaFlag::Var => Doc::text("var"),
@@ -117,7 +117,7 @@ impl ToDoc for Def {
                 doc.append(Doc::space())
                    .append(show_located_box!(formula))
             },
-            Def::MixfixDef { id, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
+            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
                 let doc = match *flag {
                     MixfixFlag::Trait => Doc::text("trait"),
                     MixfixFlag::Fun => Doc::text("fun"),

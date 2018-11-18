@@ -450,6 +450,56 @@ impl<'a> Prenamer<'a> {
             },
         }
     }
+
+    pub fn prio(c: &Located<Cmd>) -> Option<usize> {
+        match &c.value {
+            Cmd::Def(Def::MixfixDef { attrs, .. }) => {
+                Prenamer::get_prio_from_attributes(attrs)
+            },
+            Cmd::Def(Def::FormulaDef { attrs, .. }) => {
+                Prenamer::get_prio_from_attributes(attrs)
+            },
+            _ => None
+        }
+    }
+
+    fn get_prio_from_attributes(attrs: &Vec<Located<Attr>>) -> Option<usize> {
+        use num::ToPrimitive;
+
+        for attr in attrs {
+            match Prenamer::get_prio_from_attribute(attr) {
+                Some(n) => { return Some(n); },
+                None => {},
+            }
+        }
+
+        None
+    }
+
+    fn get_prio_from_attribute(attr: &Located<Attr>) -> Option<usize> {
+        use num::ToPrimitive;
+
+        match &attr.value {
+            Attr::Parens(attr) => Prenamer::get_prio_from_attribute(attr),
+            Attr::Braces(attr) => Prenamer::get_prio_from_attribute(attr),
+            Attr::Brackets(attr) => Prenamer::get_prio_from_attribute(attr),
+            Attr::Seq(attrs) => {
+                match attrs.as_slice() {
+                    [Located { value: Attr::Name { name: Name::Id(x) }, .. },
+                     Located { value: Attr::Lit { lit: Lit::Int { value } }, .. }] => {
+                         if x == &Interned::new("prio") {
+                             value.to_usize()
+                         }
+                         else {
+                             None
+                         }
+                    },
+                    _ => None,
+                }
+            },
+            _ => None,
+        }
+    }
 }
 
 impl<'a> Prenamer<'a> {
@@ -459,6 +509,11 @@ impl<'a> Prenamer<'a> {
         let mut new_names = ctx.names.clone();
 
         for cmd in body {
+            // Reset the prio from the attribute, if any.
+            if let Some(p) = Prenamer::prio(&cmd) {
+                prio = p;
+            }
+
             let ctx1 = PrenameCtx {
                 prio: Prio(prio),
                 names: new_names.clone(),
@@ -466,7 +521,7 @@ impl<'a> Prenamer<'a> {
             };
 
             match cmd {
-                Located { loc, value: Cmd::Def(Def::FormulaDef { flag, formula }) } => {
+                Located { loc, value: Cmd::Def(Def::FormulaDef { attrs, flag, formula }) } => {
                     let names = &ctx1.names;
                     let unknowns = Prenamer::get_unknowns_from_exp(*flag, &*formula, names, ctx1.scope);
 
@@ -502,7 +557,7 @@ impl<'a> Prenamer<'a> {
             };
 
             match def {
-                Located { loc, value: Def::FormulaDef { flag, formula } } => {
+                Located { loc, value: Def::FormulaDef { attrs, flag, formula } } => {
                     let names = &ctx1.names;
                     let unknowns = Prenamer::get_unknowns_from_exp(*flag, &*formula, names, ctx1.scope);
 
@@ -588,7 +643,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
     fn visit_def(&mut self, s: &'a Def, ctx: &PrenameCtx, loc: &Loc) -> Def {
         match s {
-            Def::MixfixDef { id, flag, name, opt_guard, params, ret } => {
+            Def::MixfixDef { id, attrs, flag, name, opt_guard, params, ret } => {
                 let scope = self.driver.graph.new_env();
                 self.scopes.insert(*id, scope);
 
@@ -743,7 +798,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     _ => {},
                 }
 
-                Def::MixfixDef { id: *id, flag: *flag, name: *name, opt_guard: opt_guard1, params: params1, ret: ret1 }
+                Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, params: params1, ret: ret1 }
             },
             Def::FormulaDef { .. } => {
                 self.walk_def(s, ctx, loc)

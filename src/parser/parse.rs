@@ -11,8 +11,8 @@ use parser::lex::Lexer;
 use parser::lex::LexError;
 
 // #[cfg(debug_assertions)]
-// #[allow(non_upper_case_globals)]
-// static mut depth: u32 = 0;
+#[allow(non_upper_case_globals)]
+static mut depth: usize = 0;
 
 // TODO: parse groups of definitions directly rather than building a dummy trait.
 // TODO: rename Trait to Record and add a tag, generate by the parser.
@@ -124,15 +124,7 @@ pub struct Parser<'a> {
 // #[cfg_attr(debug_assertions, cfg_attr(not(test), trace))]
 impl<'a> Parser<'a> {
     pub fn new(source: &'a Source, input: &'a str, node_id_generator: &'a mut NodeIdGenerator) -> Parser<'a> {
-        Parser {
-            lex: Lexer::new(source, input),
-            last_token: Located {
-                loc: NO_LOC,
-                value: Token::EOF
-            },
-            errors: vec![],
-            node_id_generator,
-        }
+        Parser::new_from_lexer(Lexer::new(source, input), node_id_generator)
     }
 
     pub fn new_from_lexer(lex: Lexer<'a>, node_id_generator: &'a mut NodeIdGenerator) -> Parser<'a> {
@@ -312,29 +304,168 @@ impl<'a> Parser<'a> {
         Ok(cmds)
     }
 
+    fn parse_attr(&mut self) -> PResult<Located<Attr>> {
+        located_ok!(self, {
+            match *self.lookahead()? {
+                Token::Arrow => { self.eat(); Ok(Attr::Arrow) },
+                Token::Assign => { self.eat(); Ok(Attr::Assign) },
+                Token::At => { self.eat(); Ok(Attr::At) },
+                Token::BackArrow => { self.eat(); Ok(Attr::BackArrow) },
+                Token::Bang => { self.eat(); Ok(Attr::Bang) },
+                Token::Colon => { self.eat(); Ok(Attr::Colon) },
+                Token::Comma => { self.eat(); Ok(Attr::Comma) },
+                Token::Dot => { self.eat(); Ok(Attr::Dot) },
+                Token::Eq => { self.eat(); Ok(Attr::Eq) },
+                Token::Hash => { self.eat(); Ok(Attr::Hash) },
+                Token::Question => { self.eat(); Ok(Attr::Question) },
+                Token::Semi => { self.eat(); Ok(Attr::Semi) },
+
+                Token::For => { self.eat(); Ok(Attr::For) },
+                Token::Fun => { self.eat(); Ok(Attr::Fun) },
+                Token::Import => { self.eat(); Ok(Attr::Import) },
+                Token::Native => { self.eat(); Ok(Attr::Native) },
+                Token::Val => { self.eat(); Ok(Attr::Val) },
+                Token::Var => { self.eat(); Ok(Attr::Var) },
+                Token::Trait => { self.eat(); Ok(Attr::Trait) },
+                Token::With => { self.eat(); Ok(Attr::With) },
+                Token::Where => { self.eat(); Ok(Attr::Where) },
+
+                Token::Tick => { let x = self.parse_mixfix_name()?; Ok(Attr::Name { name: x }) },
+                Token::Id(ref s) => { self.eat(); Ok(Attr::Name { name: Name::Id(Interned::new(&s)) }) },
+                Token::Op(ref s) => { self.eat(); Ok(Attr::Name { name: Name::Op(Interned::new(&s)) }) },
+
+                Token::Char(ref v) => { self.eat(); Ok(Attr::Lit { lit: Lit::Char { value: v.clone() } }) },
+                Token::Rat(ref v, _) => { self.eat(); Ok(Attr::Lit { lit: Lit::Rat { value: v.clone() } }) },
+                Token::Int(ref v, _) => { self.eat(); Ok(Attr::Lit { lit: Lit::Int { value: v.clone() } }) },
+                Token::String(ref v) => { self.eat(); Ok(Attr::Lit { lit: Lit::String { value: v.clone() } }) },
+                Token::Underscore => { self.eat(); Ok(Attr::Lit { lit: Lit::Wildcard }) },
+
+                Token::Lb => {
+                    consume!(self, Token::Lb)?;
+                    let first_loc = self.lookahead()?.loc;
+                    let es = self.parse_attr_tuple(Token::Rb)?;
+                    consume!(self, Token::Rb)?;
+                    let last_loc = self.last_token.loc;
+                    let loc = Loc::span(first_loc, last_loc);
+                    match es.as_slice() {
+                        [] => Ok(Attr::Brackets(Box::new(Located::new(loc, Attr::CommaSeq(vec![]))))),
+                        [e] => Ok(Attr::Brackets(Box::new(e.clone()))),
+                        es => Ok(Attr::Brackets(Box::new(Located::new(loc, Attr::CommaSeq(es.to_vec()))))),
+                    }
+                },
+                Token::Lc => {
+                    consume!(self, Token::Lc)?;
+                    let first_loc = self.lookahead()?.loc;
+                    let es = self.parse_attr_tuple(Token::Rc)?;
+                    consume!(self, Token::Rc)?;
+                    let last_loc = self.last_token.loc;
+                    let loc = Loc::span(first_loc, last_loc);
+                    match es.as_slice() {
+                        [] => Ok(Attr::Braces(Box::new(Located::new(loc, Attr::CommaSeq(vec![]))))),
+                        [e] => Ok(Attr::Braces(Box::new(e.clone()))),
+                        es => Ok(Attr::Braces(Box::new(Located::new(loc, Attr::CommaSeq(es.to_vec()))))),
+                    }
+                },
+                Token::Lp => {
+                    consume!(self, Token::Lp)?;
+                    if *self.lookahead()? == Token::Rp {
+                        self.eat();
+                        Ok(Attr::Lit { lit: Lit::Nothing })
+                    }
+                    else {
+                        let first_loc = self.lookahead()?.loc;
+                        let es = self.parse_attr_tuple(Token::Rp)?;
+                        consume!(self, Token::Rp)?;
+                        let last_loc = self.last_token.loc;
+                        let loc = Loc::span(first_loc, last_loc);
+                        match es.as_slice() {
+                            [] => Ok(Attr::Parens(Box::new(Located::new(loc, Attr::CommaSeq(vec![]))))),
+                            [e] => Ok(Attr::Parens(Box::new(e.clone()))),
+                            es => Ok(Attr::Parens(Box::new(Located::new(loc, Attr::CommaSeq(es.to_vec()))))),
+                        }
+                    }
+                },
+
+                Token::EOF => { self.error_here("Unexpected end of file.") }
+                ref t => { self.error_here(&format!("Unexpected token {}.", t)) }
+            }
+        })
+    }
+
+    fn parse_attrs(&mut self) -> PResult<Located<Attr>> {
+        let e = located_ok!(self, {
+            let mut attrs = Vec::new();
+
+            loop {
+                match *self.lookahead()? {
+                    Token::Rb | Token::Rc | Token::Rp | Token::Comma => { break; },
+                    _ => {},
+                }
+                let attr = self.parse_attr()?;
+                attrs.push(attr);
+            }
+
+            if attrs.len() == 1 {
+                Ok(attrs.first().unwrap().value.clone())
+            }
+            else {
+                Ok(Attr::Seq(attrs))
+            }
+        })?;
+
+        Ok(e)
+    }
+
     fn parse_cmd(&mut self) -> PResult<Vec<Located<Cmd>>> {
+        let mut attrs = Vec::new();
+
+        while let Token::Hash = *self.lookahead()? {
+            self.eat();
+            let t = self.lookahead()?;
+            match *t {
+                Token::Lb | Token::Lc | Token::Lp => {
+                    let attr = self.parse_attr()?;
+                    attrs.push(attr);
+                }
+                _ => {
+                    self.error_unexpected(vec![Token::Lb, Token::Lc, Token::Lp], &t)?;
+                }
+            }
+
+            // Eat optional semicolons before the attributed command.
+            while let Token::Semi = *self.lookahead()? {
+                self.eat();
+            }
+        }
+
         match *self.lookahead()? {
             Token::Fun => {
-                let cmd = self.parse_fun_cmd()?;
+                let cmd = self.parse_fun_cmd(attrs)?;
                 Ok(vec![cmd])
             },
+            Token::Trait => {
+                let r = self.parse_trait_def(attrs)?;
+                Ok(vec![r.map(|d| Cmd::Def(d))])
+            },
             Token::Val => {
-                let r = self.parse_val_def()?;
+                let r = self.parse_val_def(attrs)?;
                 Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Var => {
-                let r = self.parse_var_def()?;
+                let r = self.parse_var_def(attrs)?;
                 Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Import => {
+                if ! attrs.is_empty() {
+                    self.error_here("Unexpected token `import`: import statements cannot have attributes.")?;
+                }
                 let r = self.parse_import_def()?;
                 Ok(r.iter().map(|Located { loc, value }| Located { loc: *loc, value: Cmd::Def(value.clone()) }).collect())
             },
-            Token::Trait => {
-                let r = self.parse_trait_def()?;
-                Ok(vec![r.map(|d| Cmd::Def(d))])
-            },
             _ => {
+                if ! attrs.is_empty() {
+                    self.error_here("Unexpected token. Expressions cannot have attributes.")?;
+                }
                 let r = self.parse_exp()?;
                 Ok(vec![r.map(|e| Cmd::Exp(e))])
             },
@@ -705,7 +836,7 @@ impl<'a> Parser<'a> {
         return Ok((mode_given, elements))
     }
 
-    fn parse_fun_cmd(&mut self) -> PResult<Located<Cmd>> {
+    fn parse_fun_cmd(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Cmd>> {
         located_ok!(self, {
             consume_without_check!(self, Token::Fun);
 
@@ -782,6 +913,7 @@ impl<'a> Parser<'a> {
 
                             Ok(Cmd::Def(Def::MixfixDef {
                                 id,
+                                attrs,
                                 flag: MixfixFlag::Fun,
                                 name,
                                 opt_guard: opt_guard2.map(|e| Box::new(e)),
@@ -792,6 +924,7 @@ impl<'a> Parser<'a> {
                         else {
                             Ok(Cmd::Def(Def::MixfixDef {
                                 id,
+                                attrs,
                                 flag: MixfixFlag::Fun,
                                 name,
                                 opt_guard: opt_guard.map(|e| Box::new(e)),
@@ -817,6 +950,7 @@ impl<'a> Parser<'a> {
 
                         Ok(Cmd::Def(Def::MixfixDef {
                             id,
+                            attrs,
                             flag: MixfixFlag::Fun,
                             name,
                             opt_guard: opt_guard2.map(|e| Box::new(e)),
@@ -829,24 +963,26 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_val_def(&mut self) -> PResult<Located<Def>> {
+    fn parse_val_def(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Def>> {
         located_ok!(self, {
             assert_eq!(*self.lookahead()?, Token::Val);
             self.eat();
             let e = self.parse_exp()?;
             Ok(Def::FormulaDef {
+                attrs,
                 flag: FormulaFlag::Val,
                 formula: Box::new(e)
             })
         })
     }
 
-    fn parse_var_def(&mut self) -> PResult<Located<Def>> {
+    fn parse_var_def(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Def>> {
         located_ok!(self, {
             assert_eq!(*self.lookahead()?, Token::Var);
             self.eat();
             let e = self.parse_exp()?;
             Ok(Def::FormulaDef {
+                attrs,
                 flag: FormulaFlag::Var,
                 formula: Box::new(e)
             })
@@ -964,7 +1100,7 @@ impl<'a> Parser<'a> {
         Ok(r)
     }
 
-    fn parse_trait_def(&mut self) -> PResult<Located<Def>> {
+    fn parse_trait_def(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Def>> {
         located_ok!(self, {
             consume_without_check!(self, Token::Trait);
 
@@ -1006,6 +1142,7 @@ impl<'a> Parser<'a> {
 
                             Ok(Def::MixfixDef {
                                 id,
+                                attrs,
                                 flag: MixfixFlag::Trait,
                                 name,
                                 opt_guard: opt_guard2.map(|e| Box::new(e)),
@@ -1016,6 +1153,7 @@ impl<'a> Parser<'a> {
                         else {
                             Ok(Def::MixfixDef {
                                 id,
+                                attrs,
                                 flag: MixfixFlag::Trait,
                                 name,
                                 opt_guard: opt_guard.map(|e| Box::new(e)),
@@ -1038,6 +1176,7 @@ impl<'a> Parser<'a> {
 
                         Ok(Def::MixfixDef {
                             id,
+                            attrs,
                             flag: MixfixFlag::Trait,
                             name,
                             opt_guard: opt_guard.map(|e| Box::new(e)),
@@ -1406,6 +1545,44 @@ impl<'a> Parser<'a> {
         })
     }
 
+    // () is nothing
+    // (e) is just e
+    // (e1, e2) is a tuple
+    fn parse_attr_tuple(&mut self, end_token: Token) -> PResult<Vec<Located<Attr>>> {
+        if *self.lookahead()? == end_token {
+            return Ok(vec![]);
+        }
+
+        let first = self.parse_attrs()?;
+
+        match *self.lookahead()? {
+            Token::Comma => {
+                // (e1, e2)
+                self.eat();
+
+                let mut es = Vec::new();
+                es.push(first);
+
+                loop {
+                    let e = self.parse_attrs()?;
+                    es.push(e);
+
+                    if *self.lookahead()? == Token::Comma {
+                        self.eat();
+                    }
+                    else {
+                        break;
+                    }
+                }
+
+                Ok(es)
+            },
+            ref t => {
+                Ok(vec![first])
+            },
+        }
+    }
+
     fn parse_list_exp(&mut self) -> PResult<Exp> {
         consume_without_check!(self, Token::Lb);
 
@@ -1703,6 +1880,7 @@ mod tests {
                         value: Cmd::Def(
                             Def::MixfixDef {
                                 id: NodeId(1),
+                                attrs: vec![],
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
@@ -1738,6 +1916,7 @@ mod tests {
                         value: Cmd::Def(
                             Def::MixfixDef {
                                 id: NodeId(1),
+                                attrs: vec![],
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
@@ -1773,6 +1952,7 @@ mod tests {
                         value: Cmd::Def(
                             Def::MixfixDef {
                                 id: NodeId(1),
+                                attrs: vec![],
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
@@ -1825,6 +2005,7 @@ mod tests {
                         Cmd::Def(
                             Def::MixfixDef {
                                 id: NodeId(2),
+                                attrs: vec![],
                                 flag: MixfixFlag::Trait,
                                 name: Name::Mixfix(Name::encode_parts(&vec![Part::Id(Interned::new("T")), Part::Placeholder])),
                                 opt_guard: None,
@@ -1880,6 +2061,7 @@ mod tests {
                         value: Cmd::Def(
                             Def::MixfixDef {
                                 id: NodeId(1),
+                                attrs: vec![],
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
@@ -1929,6 +2111,7 @@ mod tests {
                         Cmd::Def(
                             Def::MixfixDef {
                                 id: NodeId(3),
+                                attrs: vec![],
                                 flag: MixfixFlag::Trait,
                                 name: Name::Mixfix(Name::encode_parts(&vec![Part::Id(Interned::new("T")), Part::Placeholder])),
                                 opt_guard: Some(

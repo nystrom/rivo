@@ -1,5 +1,6 @@
 use num::bigint::BigInt;
 use num::rational::BigRational;
+use std::fmt;
 
 use syntax::loc::Located;
 use syntax::names::Name;
@@ -20,6 +21,12 @@ use namer::graph::MixfixIndex;
 // by the namer, replacing MixfixApply with Apply.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct NodeId(pub usize);
+
+impl fmt::Display for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "node {}", self.0)
+    }
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct NodeIdGenerator {
@@ -94,8 +101,8 @@ pub enum Cmd {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Def {
-    FormulaDef { flag: FormulaFlag, formula: Box<Located<Exp>> },
-    MixfixDef { id: NodeId, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
+    FormulaDef { attrs: Vec<Located<Attr>>, flag: FormulaFlag, formula: Box<Located<Exp>> },
+    MixfixDef { id: NodeId, attrs: Vec<Located<Attr>>, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
     ImportDef { opt_path: Option<Box<Located<Exp>>>, selector: Selector },
 }
 
@@ -106,6 +113,43 @@ pub enum Selector {
     Including { name: Name },
     Excluding { name: Name },
     Renaming { name: Name, rename: Name },
+}
+
+// An attribute tree is basically just a token tree.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Attr {
+    // Sequences of token trees.
+    Brackets(Box<Located<Attr>>),
+    Braces(Box<Located<Attr>>),
+    Parens(Box<Located<Attr>>),
+    CommaSeq(Vec<Located<Attr>>),
+    Seq(Vec<Located<Attr>>),
+
+    Arrow,
+    Assign,
+    At,
+    BackArrow,
+    Bang,
+    Colon,
+    Comma,
+    Dot,
+    Eq,
+    Hash,
+    Question,
+    Semi,
+
+    For,
+    Fun,
+    Import,
+    Native,
+    Val,
+    Var,
+    Trait,
+    With,
+    Where,
+
+    Lit { lit: Lit },
+    Name { name: Name },
 }
 
 #[derive(Clone, Debug, PartialEq)]
