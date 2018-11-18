@@ -748,7 +748,6 @@ impl<'a> Namer<'a> {
         else {
             // Cache an initial value so we can compute the fixed point.
             visited.insert(r.clone(), vec![]);
-
             old_results = vec![];
         }
 
@@ -820,29 +819,31 @@ impl<'a> Namer<'a> {
             }
         }?;
 
-        results.append(&mut old_results.clone());
+        results.extend(old_results.iter().cloned());
         results.sort();
         results.dedup();
 
-        // If the value changed, we should add the node back to the worklist.
-        // We don't need to add callers explicitly, because they should do the same check.
-        if old_results.len() < results.len() {
-            trace!("changed: {} -> {}", old_results.len(), results.len());
-            trace!("changed: {:?} -> {:?}", old_results, results);
-            // Namer::add_stack_to_worklist(worklist, stack);
-            worklist.push_back(r);
-        }
-        else if old_results.len() > results.len() {
-            panic!("results size should not shrink! {:?} -> {:?}", old_results, results);
-        }
-
-        // Update the cache with the new resultss.
-        visited.insert(r, results.clone());
-
+        // Update the cache with the new results.
         if all_cached {
             trace!("caching!");
             trace!("worklist = {:?}", worklist);
             self.cache.lookup_cache.insert(r, results.clone());
+        }
+
+        visited.insert(r, results.clone());
+
+        // If the value changed, we should add the node back to the worklist.
+        // We don't need to add callers explicitly, because they should do the same check.
+        if old_results.len() < results.len() {
+            trace!("changed {:?}: {} -> {}", r, old_results.len(), results.len());
+            trace!("changed {:?}: {:?} -> {:?}", r, old_results, results);
+            if let None = self.cache.lookup_cache.get(&r) {
+                // add back to the worklist if changed and not stabilized
+                worklist.push_back(r);
+            }
+        }
+        else if old_results.len() > results.len() {
+            panic!("results size should not shrink for {:?}: {:?} -> {:?}", r, old_results, results);
         }
 
         Ok(results)
@@ -861,8 +862,10 @@ impl<'a> Namer<'a> {
 
         let mut all_cached = true;
 
-        let tmp = vec![]; // shut up borrow checker. The vec! has to live as long as found_here
+        let tmp = vec![]; // Shut up borrow checker. The vec has to live as long as found_here
+
         found_here = decls.get(&name).unwrap_or(&tmp);
+
         trace!("found_here = {:?}", found_here);
 
         if follow_imports && Namer::all_mixfix(&found_here) {
@@ -920,8 +923,11 @@ impl<'a> Namer<'a> {
         results.extend(found_parents.iter().cloned());
 
         for include in &includes {
-            let scope = if follow_parents {
+            let scope = if follow_parents && follow_imports {
                 *include
+            }
+            else if follow_parents {
+                include.without_imports()
             }
             else {
                 include.to_here()

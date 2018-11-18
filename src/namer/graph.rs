@@ -65,18 +65,6 @@ impl ScopeGraph {
         Scope::Env(EnvIndex(index))
     }
 
-    pub fn new_env_here(&mut self) -> Scope {
-        let index = self.envs.len();
-        self.envs.push(Env {
-            index: EnvIndex(index),
-            decls: BTreeMap::new(),
-            imports: Vec::new(),
-            parents: Vec::new(),
-            includes: Vec::new(),
-        });
-        Scope::EnvHere(EnvIndex(index))
-    }
-
     pub fn get_lookup(&self, index: &LookupIndex) -> LookupRef {
         match index {
             LookupIndex(i) => self.lookups.get(*i).unwrap().clone()

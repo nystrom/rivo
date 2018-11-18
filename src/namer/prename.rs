@@ -434,13 +434,13 @@ impl<'a> Prenamer<'a> {
                     [] => Scope::Empty,
                     [e] => self.lookup_frame(scope, e),
                     es => {
-                        let env = self.driver.graph.new_env_here();
+                        let env = self.driver.graph.new_env();
                         for e in es {
                             let s = self.lookup_frame(scope, e);
                             // self.driver.graph.import(env, &Located::new(e.loc, Import::All { path: s }));
                             self.driver.graph.include(env, s);
                         }
-                        env
+                        env.to_here()
                     },
                 }
             },
@@ -565,7 +565,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                                     value: Cmd::Exp(Exp::Record { id, .. })
                                 } => {
                                     if let Some(inner_scope) = self.scopes.get(&id) {
-                                        self.driver.graph.include(scope, *inner_scope);
+                                        self.driver.graph.include(scope.to_here(), *inner_scope);
                                     }
                                 },
                                 _ => {},
@@ -800,7 +800,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                                     value: Cmd::Exp(Exp::Record { id, .. })
                                 } => {
                                     if let Some(inner_scope) = self.scopes.get(&id) {
-                                        self.driver.graph.include(scope, *inner_scope);
+                                        self.driver.graph.include(scope.to_here(), *inner_scope);
                                     }
                                 },
                                 _ => {},
@@ -1013,8 +1013,6 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 };
 
                 let e1_scope = self.lookup_frame(ctx.scope, &e1_2);
-                println!("e1_2 = {:?}", e1_2);
-                println!("e1_scope = {:?}", e1_scope);
                 self.driver.graph.import(scope, &Located { loc: e1.loc, value: Import::All { path: e1_scope } });
 
                 let e2_1 = self.visit_exp(&e2.value, &child_ctx, &e2.loc);
