@@ -33,9 +33,13 @@ cfg = "*"
 
 [patch.crates-io]
 trace = { git = "https://github.com/nystrom/trace.git" }
+quickcheck = { git = "https://github.com/nystrom/quickcheck.git" }
+quickcheck_macros = { git = "https://github.com/nystrom/quickcheck.git" }
 
 [dev-dependencies]
-pretty_assertions = "0.3.4"
+pretty_assertions = "*"
+quickcheck = "*"
+quickcheck_macros = "*"
 
 # [build-dependencies]
 # menhir = "*"

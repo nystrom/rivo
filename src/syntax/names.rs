@@ -94,15 +94,15 @@ impl Name {
                 '@' => {
                     match state {
                         State::Init => { state = State::Op; },
-                        State::Id => {},
-                        State::Op => {},
+                        State::Id => { t.push('@') },
+                        State::Op => { t.push('@') },
                     }
                 }
                 '$' => {
                     match state {
                         State::Init => { state = State::Id; },
-                        State::Id => {},
-                        State::Op => {},
+                        State::Id => { t.push('$') },
+                        State::Op => { t.push('$') },
                     }
                 }
                 ch => {
@@ -124,25 +124,6 @@ impl Name {
         parts
     }
 }
-
- /*
-// To support copy, we can't store a vector in the
-impl Name {
-    pub fn parts(&self) -> Vec<Part> {
-        match self {
-            Name::Id(x) => vec![Part::Id(x)],
-            Name::Op(x) => vec![Part::Op(x)],
-            Name::Mixfix(x) => { x.split(" ").map(|y| Name::string_to_part(y)).collect() },
-        }
-    }
-
-    fn to_part(s: &String) -> Part {
-        match s {
-        }
-        }
-}
-*/
-
 
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
 pub enum Part {
@@ -289,5 +270,35 @@ impl Name {
             Name::Mixfix(_) => true,
             _ => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use quickcheck::*;
+
+    impl Arbitrary for Part {
+        fn arbitrary<G: Gen>(g: &mut G) -> Part {
+            if Arbitrary::arbitrary(g) {
+                let v = vec!["x", "y", "+", "@", "$", "*", "hello", "ciao"];
+                let n: usize = Arbitrary::arbitrary(g);
+                let s = v.get(n % v.len()).unwrap();
+                if Arbitrary::arbitrary(g) {
+                    Part::Id(Interned::new(&s))
+                }
+                else {
+                    Part::Op(Interned::new(&s))
+                }
+            }
+            else {
+                Part::Placeholder
+            }
+        }
+    }
+
+    #[quickcheck]
+    fn encode_decode(parts: Vec<Part>) -> bool {
+        Name::decode_parts(Name::encode_parts(&parts)) == parts
     }
 }
