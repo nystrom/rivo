@@ -258,12 +258,37 @@ impl<'a> Lexer<'a> {
                 self.read_char();
                 self.locate(Token::Comma, 1)
             },
+            Some('#') => {
+                self.read_char();
+                if let Some(&ch) = self.peek_char() {
+                    if Lexer::is_op_char(ch) {
+                        self.read_operator('#')
+                    }
+                    else {
+                        self.locate(Token::Hash, 1)
+                    }
+                }
+                else {
+                    self.locate(Token::Hash, 1)
+                }
+            },
             Some('@') => {
                 self.read_char();
-                self.locate(Token::At, 1)
+                if let Some(&ch) = self.peek_char() {
+                    if Lexer::is_op_char(ch) {
+                        self.read_operator('@')
+                    }
+                    else {
+                        self.locate(Token::At, 1)
+                    }
+                }
+                else {
+                    self.locate(Token::At, 1)
+                }
             },
             Some('.') => {
                 self.read_char();
+                // operators can start with .., but a . alone is a selector
                 if self.peek_char_eq('.') {
                     self.read_operator('.')
                 }
