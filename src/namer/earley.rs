@@ -186,9 +186,8 @@ impl Earley {
         // This SHOULD be true since the tokens are all created by looking up the names in the
         // same environment.
         for token in tokens {
-            match token {
-                Token::Name(part, decls) => { decls_map.insert(part.clone(), decls); },
-                _ => {},
+            if let Token::Name(part, decls) = token {
+                decls_map.insert(part.clone(), decls);
             }
         }
 
@@ -238,7 +237,14 @@ impl Earley {
 
         let mut traversal = Traversal::new(&bocage, NullOrder::new());
 
-        evaluator.traverse(&mut traversal, recognizer.finished_node()).iter().filter_map(|o| o.clone()).collect()
+        let mut result: Vec<MixfixTree>;
+        result = evaluator.traverse(&mut traversal, recognizer.finished_node())
+                          .iter()
+                          .filter_map(|o| o.clone())
+                          .collect();
+        result.sort();
+        result.dedup();
+        result
     }
 
     /// Convert a scope and priority into a nonterminal symbol.
@@ -315,6 +321,11 @@ impl<'a> EarleyBuilder<'a> {
             let scope = decl.scope();
             let prio = decl.prio().0;
 
+            // Skip prefix and bracket names.
+            if decl.name().is_prefix_name() || decl.name().is_brackets_name() {
+                continue;
+            }
+
             match min_prio.get(&scope) {
                 Some(i) if prio < *i => { min_prio.insert(scope, prio); },
                 None => { min_prio.insert(scope, prio); },
@@ -331,10 +342,8 @@ impl<'a> EarleyBuilder<'a> {
             let scope = decl.scope();
             let prio = decl.prio().0;
 
-            let lhs = self.nonterm_name(scope, prio);
             let rhs = self.make_rule_from_decl(decl);
 
-            // FIXME
             if decl.name().is_prefix_name() {
                 self.grammar.rule(self.prefix).rhs(rhs);
             }
@@ -342,6 +351,7 @@ impl<'a> EarleyBuilder<'a> {
                 self.grammar.rule(self.brackets).rhs(rhs);
             }
             else {
+                let lhs = self.nonterm_name(scope, prio);
                 self.grammar.rule(lhs).rhs(rhs);
             }
         }
@@ -352,25 +362,22 @@ impl<'a> EarleyBuilder<'a> {
         }
 
         for scope in min_prio.keys() {
-            match (min_prio.get(scope), max_prio.get(scope)) {
-                (Some(min), Some(max)) => {
-                    // M{min} -> M{n} -> M{n+1} -> ... -> M{max}
-                    for k in *min .. *max {
-                        let lhs = self.nonterm_name(*scope, k);
-                        let rhs = self.nonterm_name(*scope, k+1);
-                        self.grammar.rule(lhs).rhs([rhs]);
-                    }
+            if let (Some(min), Some(max)) = (min_prio.get(scope), max_prio.get(scope)) {
+                // M{min} -> M{n} -> M{n+1} -> ... -> M{max}
+                for k in *min .. *max {
+                    let lhs = self.nonterm_name(*scope, k);
+                    let rhs = self.nonterm_name(*scope, k+1);
+                    self.grammar.rule(lhs).rhs([rhs]);
+                }
 
-                    let min = self.nonterm_name(*scope, *min);
-                    let max = self.nonterm_name(*scope, *max);
+                let min = self.nonterm_name(*scope, *min);
+                let max = self.nonterm_name(*scope, *max);
 
-                    // E -> M{min}
-                    self.grammar.rule(self.exp).rhs([min]);
+                // E -> M{min}
+                self.grammar.rule(self.exp).rhs([min]);
 
-                    // M{max} -> Br
-                    self.grammar.rule(max).rhs([self.prefix]);
-                },
-                _ => {},
+                // M{max} -> Br
+                self.grammar.rule(max).rhs([self.prefix]);
             }
         }
 
