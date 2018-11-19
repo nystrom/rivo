@@ -56,15 +56,7 @@ pub struct Prenamer<'a> {
 }
 
 impl<'a> Prenamer<'a> {
-    fn get_unknowns_from_params(flag: FormulaFlag, params: &Vec<Located<Param>>, defined_names: &Vec<Name>, scope: Scope) -> Vec<Located<Decl>> {
-        let mut decls = Vec::new();
-        for Located { loc, value: Param { pat: e, .. } } in params {
-            Prenamer::add_unknowns_for_exp(&mut decls, flag, e, defined_names, scope);
-        }
-        decls
-    }
-
-    fn get_unknowns(flag: FormulaFlag, params: &Vec<Located<Exp>>, defined_names: &Vec<Name>, scope: Scope) -> Vec<Located<Decl>> {
+    fn get_unknowns_from_exps(flag: FormulaFlag, params: &Vec<Located<Exp>>, defined_names: &Vec<Name>, scope: Scope) -> Vec<Located<Decl>> {
         let mut decls = Vec::new();
         for e in params {
             Prenamer::add_unknowns_for_exp(&mut decls, flag, e, defined_names, scope);
@@ -78,17 +70,18 @@ impl<'a> Prenamer<'a> {
         decls
     }
 
-    fn add_unknown_for_name(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, name: Name, defined_names: &Vec<Name>, scope: Scope, loc: &Loc) {
+    #[trace]
+    fn add_unknown_for_name(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, name: Name, defined_names: &Vec<Name>, scope: Scope, loc: &Loc) -> Vec<Located<Decl>> {
         for decl in decls.iter() {
             if decl.name() == name {
                 // already declared here
-                return;
+                return vec![];
             }
         }
         for defined in defined_names {
             if *defined == name {
                 // already declared in outer scope
-                return;
+                return vec![];
             }
         }
 
@@ -98,8 +91,11 @@ impl<'a> Prenamer<'a> {
         };
 
         decls.push(Located { loc: *loc, value: decl });
+
+        decls.clone()
     }
 
+#[trace]
     fn add_unknowns_for_exp(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, e: &Located<Exp>, defined_names: &Vec<Name>, scope: Scope) {
         match &e.value {
             Exp::Union { es } => {
@@ -649,6 +645,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 self.driver.graph.set_parent(scope, ctx.scope);
 
+                // Collect the unknowns in the input parameters.
                 let mut unknowns = Vec::new();
 
                 for Located { loc, value: Param { pat, mode, .. } } in params {
@@ -657,6 +654,16 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     }
                 }
 
+                if let Located { loc, value: Param { pat, mode: CallingMode::Input, .. } } = ret {
+                    Prenamer::add_unknowns_for_exp(&mut unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
+                }
+
+                if let Some(guard) = opt_guard {
+                    Prenamer::add_unknowns_for_exp(&mut unknowns, FormulaFlag::Val, &*guard, &ctx.names, scope);
+                }
+
+                // Declare the unknowns in the new scope here.
+                // Add the names of the unknowns to the child scope.
                 let mut new_names = ctx.names.clone();
 
                 for decl in &unknowns {
@@ -675,6 +682,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     ..child_ctx.clone()
                 };
 
+                // The output parameters are logically a child of the guard scope.
                 let opt_guard1 = opt_guard.clone().map(|x|
                     match *x {
                         Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &child_ctx, &loc) })
@@ -917,7 +925,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
-                let unknowns = Prenamer::get_unknowns(FormulaFlag::Val, params, names, scope);
+                let unknowns = Prenamer::get_unknowns_from_exps(FormulaFlag::Val, params, names, scope);
 
                 let mut new_names = names.clone();
 
