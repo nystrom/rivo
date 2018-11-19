@@ -652,11 +652,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut unknowns = Vec::new();
 
                 for Located { loc, value: Param { pat, mode, .. } } in params {
-                    match mode {
-                        CallingMode::Input => {
-                            Prenamer::add_unknowns_for_exp(&mut unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
-                        },
-                        _ => {},
+                    if let CallingMode::Input = mode {
+                        Prenamer::add_unknowns_for_exp(&mut unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
                     }
                 }
 
@@ -726,19 +723,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut inner_frames = vec![];
 
                 for param in params {
-                    match param {
-                        Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
-                            inner_frames.push(self.lookup_frame(scope, e));
-                        },
-                        _ => {},
+                    if let Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } = param {
+                        inner_frames.push(self.lookup_frame(scope, e));
                     }
                 }
 
-                match ret {
-                    Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
-                        inner_frames.push(self.lookup_frame(scope, e));
-                    },
-                    _ => {},
+                if let Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } = ret {
+                    inner_frames.push(self.lookup_frame(scope, e));
                 }
 
                 let decl = match flag {
@@ -778,24 +769,22 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 self.driver.graph.declare(ctx.scope, &decl);
 
                 // TODO: declare mixfix parts
-                match name {
-                    Name::Mixfix(s) => {
-                        let parts = Name::decode_parts(*s);
-                        for (i, part) in parts.iter().enumerate() {
-                            match part {
-                                Part::Id(x) => {
-                                    let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Id(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
-                                    self.driver.graph.declare(ctx.scope, &mixfix_decl);
-                                },
-                                Part::Op(x) => {
-                                    let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Op(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
-                                    self.driver.graph.declare(ctx.scope, &mixfix_decl);
-                                },
-                                _ => {},
-                            }
+                if let Name::Mixfix(s) = name {
+                    let parts = Name::decode_parts(*s);
+
+                    for (i, part) in parts.iter().enumerate() {
+                        match part {
+                            Part::Id(x) => {
+                                let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Id(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
+                                self.driver.graph.declare(ctx.scope, &mixfix_decl);
+                            },
+                            Part::Op(x) => {
+                                let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Op(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
+                                self.driver.graph.declare(ctx.scope, &mixfix_decl);
+                            },
+                            _ => {},
                         }
-                    },
-                    _ => {},
+                    }
                 }
 
                 Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, params: params1, ret: ret1 }
@@ -846,32 +835,19 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let new_node = self.walk_exp(e, &child_ctx, &loc);
 
                 // Include nested records in the scope.
-                match new_node {
-                    Exp::Layout { ref cmds, .. } => {
-                        for cmd in cmds {
-                            match cmd {
-                                Located {
-                                    loc,
-                                    value: Cmd::Exp(Exp::Record { id, .. })
-                                } => {
-                                    if let Some(inner_scope) = self.scopes.get(&id) {
-                                        self.driver.graph.include(scope.to_here(), *inner_scope);
-                                    }
-                                },
-                                _ => {},
+                if let Exp::Layout { ref cmds, .. } = new_node {
+                    for cmd in cmds {
+                        if let Located { loc, value: Cmd::Exp(Exp::Record { id, .. }) } = cmd {
+                            if let Some(inner_scope) = self.scopes.get(&id) {
+                                self.driver.graph.include(scope.to_here(), *inner_scope);
                             }
                         }
-
-                    },
-                    _ => {},
+                    }
                 }
 
                 // Add imports.
-                match new_node {
-                    Exp::Layout { ref cmds, .. } => {
-                        self.add_imports(scope, ctx.scope, cmds, false);
-                    },
-                    _ => {},
+                if let Exp::Layout { ref cmds, .. } = new_node {
+                    self.add_imports(scope, ctx.scope, cmds, false);
                 }
 
                 new_node
@@ -900,11 +876,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let new_node = self.walk_exp(e, &child_ctx, &loc);
 
                 // Add imports.
-                match new_node {
-                    Exp::Record { ref defs, .. } => {
-                        self.add_imports_from_defs(scope, ctx.scope, defs.iter().cloned(), false);
-                    },
-                    _ => {},
+                if let Exp::Record { ref defs, .. } = new_node {
+                    self.add_imports_from_defs(scope, ctx.scope, defs.iter().cloned(), false);
                 }
 
                 new_node
