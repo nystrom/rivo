@@ -11,6 +11,25 @@ macro_rules! show_located {
 }
 
 #[macro_export]
+macro_rules! show_located_exp_vec {
+    ($list: expr, $sep: expr) => {
+        Doc::intersperse(
+            $list.into_iter().map(
+                |located| {
+                    match located {
+                        Located { loc, value: Exp::Name { .. } } => show_located!(located),
+                        Located { loc, value: Exp::Lit { .. } } => show_located!(located),
+                        _ => Doc::text("(")
+                                .append(show_located!(located))
+                                .append(Doc::text(")")),
+                    }
+                }
+            ),
+            $sep
+        ).group()
+    };
+}
+#[macro_export]
 macro_rules! show_located_vec {
     ($list: expr, $sep: expr) => {
         Doc::intersperse(
@@ -52,7 +71,7 @@ impl ToDoc for Name {
         match self {
             Name::Id(x) => Doc::text(x.to_string()),
             Name::Op(x) => Doc::text(x.to_string()),
-            Name::Mixfix(s) => Doc::text(s.to_string()),
+            Name::Mixfix(s) => Doc::text("`").append(Doc::text(s.to_string())).append(Doc::text("`")),
             //     let parts = Name::decode_parts(*s);
             //     let docs: Vec<Doc<BoxDoc<()>>> = parts.iter().cloned().map(|part| part.to_doc()).collect();
             //     Doc::text("`")
@@ -255,7 +274,9 @@ impl ToDoc for Exp {
 
             Exp::Apply { ref fun, ref arg } =>
                 Doc::nil()
+                .append(Doc::text("("))
                 .append(show_located_box!(fun))
+                .append(Doc::text(")"))
                 .append(Doc::space())
                 .append(show_located_box!(arg)),
 
@@ -273,7 +294,7 @@ impl ToDoc for Exp {
 
             Exp::MixfixApply { ref es, .. } =>
                 Doc::text("(")
-                    .append(show_located_vec!(es, Doc::space()))
+                    .append(show_located_exp_vec!(es, Doc::space()))
                     .append(Doc::text(")")),
         }
     }
