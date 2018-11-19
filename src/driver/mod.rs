@@ -142,9 +142,8 @@ impl Driver {
         }
     }
 
-    #[cfg_attr(debug_assertions, trace)]
     pub fn set_bundle(&mut self, index: BundleIndex, bundle: Bundle) {
-        // println!("set_bundle {:?} {:?}", index, &bundle);
+        println!("set_bundle {:?} {:#?}", index, &bundle);
         self.bundles[index.0] = bundle;
     }
 
