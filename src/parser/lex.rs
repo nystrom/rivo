@@ -465,7 +465,6 @@ impl<'a> Lexer<'a> {
             "trait"  => self.locate(Token::Trait, text.len() as u32),
             "val"    => self.locate(Token::Val, text.len() as u32),
             "var"    => self.locate(Token::Var, text.len() as u32),
-            "native" => self.locate(Token::Native, text.len() as u32),
             "for"    => self.locate(Token::For, text.len() as u32),
             "with"   => self.locate(Token::With, text.len() as u32),
             "where"  => self.locate(Token::Where, text.len() as u32),
@@ -1223,12 +1222,11 @@ mod tests {
     #[test]
     fn test_keywords() {
         assert_tokens!(
-            "_ for fun import native val var trait with where"
+            "_ for fun import val var trait with where"
             , Ok(Token::Underscore)
             , Ok(Token::For)
             , Ok(Token::Fun)
             , Ok(Token::Import)
-            , Ok(Token::Native)
             , Ok(Token::Val)
             , Ok(Token::Var)
             , Ok(Token::Trait)
@@ -1241,7 +1239,7 @@ mod tests {
     #[test]
     fn test_identifiers_and_keywords() {
         assert_tokens!(
-            "xyzzy foo _1 _ for fun import native val var x x0 ⊥ ⊤ trait with"
+            "xyzzy foo _1 _ for fun import val var x x0 ⊥ ⊤ trait with"
             , Ok(Token::Id(String::from("xyzzy")))
             , Ok(Token::Id(String::from("foo")))
             , Ok(Token::Id(String::from("_1")))
@@ -1249,7 +1247,6 @@ mod tests {
             , Ok(Token::For)
             , Ok(Token::Fun)
             , Ok(Token::Import)
-            , Ok(Token::Native)
             , Ok(Token::Val)
             , Ok(Token::Var)
             , Ok(Token::Id(String::from("x")))

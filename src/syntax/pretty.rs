@@ -262,9 +262,6 @@ impl ToDoc for Exp {
             Exp::Lit { ref lit } =>
                 lit.to_doc(),
 
-            Exp::Native =>
-                Doc::text("native"),
-
             Exp::Name { ref name, .. } =>
                 name.to_doc(),
             Exp::Unknown { ref name, .. } =>

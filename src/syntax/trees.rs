@@ -141,7 +141,6 @@ pub enum Attr {
     For,
     Fun,
     Import,
-    Native,
     Val,
     Var,
     Trait,
@@ -184,8 +183,6 @@ pub enum Exp {
     Apply { fun: Box<Located<Exp>>, arg: Box<Located<Exp>> },
 
     Lit { lit: Lit },
-
-    Native,
 
     // ambiguous names -- might resolve to variable names or parts of function names
     // or _ or ? or = as part of a function name or partial application

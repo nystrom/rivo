@@ -323,7 +323,6 @@ impl<'a> Parser<'a> {
                 Token::For => { self.eat(); Ok(Attr::For) },
                 Token::Fun => { self.eat(); Ok(Attr::Fun) },
                 Token::Import => { self.eat(); Ok(Attr::Import) },
-                Token::Native => { self.eat(); Ok(Attr::Native) },
                 Token::Val => { self.eat(); Ok(Attr::Val) },
                 Token::Var => { self.eat(); Ok(Attr::Var) },
                 Token::Trait => { self.eat(); Ok(Attr::Trait) },
@@ -1628,10 +1627,6 @@ impl<'a> Parser<'a> {
     fn parse_primary(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
             match *self.lookahead()? {
-                Token::Native => {
-                    self.eat();
-                    Ok(Exp::Native)
-                },
                 Token::Underscore => {
                     self.eat();
                     Ok(Exp::Lit { lit: Lit::Wildcard })
