@@ -161,12 +161,13 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                         let lookup = self.mixfixes.get(id).unwrap();
                         let lookup_ref = self.namer.driver.graph.get_mixfix(lookup);
 
+                        use crate::syntax::pretty::*;
+
                         match self.namer.parse_mixfix(&lookup_ref) {
                             Ok(trees) => {
                                 match trees.first() {
                                     Some(tree) => {
                                         if trees.len() > 1 {
-                                            use crate::syntax::pretty::*;
                                             let mut trees_clone = trees.clone();
                                             trees_clone.sort();
                                             self.namer.driver.error(Located::new(*loc, format!("Ambiguous mixfix expression: {}; resolves to one of {}. ({})", new_node.pretty(1000), MixfixTreeVec(&trees_clone), id)));
@@ -176,6 +177,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                             match self.apply_mixfix(tree, es) {
                                                 Some(e) => e,
                                                 None => {
+                                                    // This should only happen if there were other errors.
                                                     assert!(self.namer.driver.has_errors());
                                                     // self.namer.driver.error(Located::new(loc.clone(), "cannot resolve mixfix expression (internal error too)".to_owned()));
                                                     new_node
@@ -184,13 +186,13 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                         }
                                     },
                                     None => {
-                                        self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression: {:?}. ({})", &new_node, id)));
+                                        self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression: {}. ({})", new_node.pretty(1000), id)));
                                         new_node
                                     },
                                 }
                             }
                             Err(msg) => {
-                                self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression. {}: {:?}. ({})", msg.value, &new_node, id)));
+                                self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression: {}. {}. ({})", new_node.pretty(1000), msg.value, id)));
                                 new_node
                             },
                         }
