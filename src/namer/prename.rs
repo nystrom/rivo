@@ -803,8 +803,25 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, opt_body: opt_body1, params: params1, ret: ret1 }
             },
-            Def::FormulaDef { .. } => {
-                self.walk_def(s, ctx, loc)
+            Def::FormulaDef { attrs, flag, formula } => {
+                let mut unknowns = Vec::new();
+
+                Prenamer::add_unknowns_for_exp(&mut unknowns, *flag, &*formula, &ctx.names, ctx.scope);
+
+                // Declare the unknowns.
+                for decl in &unknowns {
+                    self.driver.graph.declare(ctx.scope, decl);
+                }
+
+                let new_names: Vec<Name> = ctx.names.iter().cloned().chain(unknowns.iter().map(|decl| decl.name())).collect();
+
+                let child_ctx = PrenameCtx {
+                    unknowns,
+                    names: new_names,
+                    ..ctx.clone()
+                };
+
+                self.walk_def(s, &child_ctx, loc)
             },
             Def::ImportDef { .. } => {
                 // Swap the environment with the weaker import env.
