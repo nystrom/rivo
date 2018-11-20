@@ -122,7 +122,7 @@ trait Prim = {
     #[native] fun div (Int) (Int)
     #[native] fun rem (Int) (Int)
 
-    #[native] fun and (Int) (Int) 
+    #[native] fun and (Int) (Int)
     #[native] fun or (Int) (Int)
     #[native] fun xor (Int) (Int)
     #[native] fun complement (Int)
