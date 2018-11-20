@@ -74,12 +74,6 @@ pub struct ParamAttr {
     pub mode: CallingMode,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Param {
-    pub attr: ParamAttr,
-    pub pat: Box<Located<Exp>>,
-}
-
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum CallingMode {
     Input,
@@ -96,6 +90,12 @@ pub enum Assoc {
 pub enum CallingConv {
     ByValue,
     ByName,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Param {
+    pub attr: ParamAttr,
+    pub pat: Box<Located<Exp>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
