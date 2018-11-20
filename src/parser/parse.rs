@@ -431,7 +431,7 @@ impl<'a> Parser<'a> {
                 }
             }
 
-            // Eat optional semicolons before the attributed command.
+            // Eat optional semicolons between attributes and before the command.
             while let Token::Semi = *self.lookahead()? {
                 self.eat();
             }
@@ -486,9 +486,11 @@ impl<'a> Parser<'a> {
                             (
                                 true,
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByValue,
-                                    mode: CallingMode::Input,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Input,
+                                    },
                                     pat: Box::new(e),
                                 }
                             )
@@ -502,9 +504,11 @@ impl<'a> Parser<'a> {
                             (
                                 true,
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByValue,
-                                    mode: CallingMode::Output,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                    },
                                     pat: Box::new(e),
                                 }
                             )
@@ -526,9 +530,11 @@ impl<'a> Parser<'a> {
                             (
                                 false,
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByValue,
-                                    mode: CallingMode::Output,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                    },
                                     pat: Box::new(e),
                                 }
                             )
@@ -547,9 +553,11 @@ impl<'a> Parser<'a> {
                             (
                                 true,
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByName,
-                                    mode: CallingMode::Input,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByName,
+                                        mode: CallingMode::Input,
+                                    },
                                     pat: Box::new(e),
                                 }
                             )
@@ -570,9 +578,11 @@ impl<'a> Parser<'a> {
                             (
                                 false,
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByValue,
-                                    mode: CallingMode::Output,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                    },
                                     pat: Box::new(e),
                                 }
                             )
@@ -591,9 +601,11 @@ impl<'a> Parser<'a> {
                     (
                         false,
                         Param {
-                            assoc: Assoc::NonAssoc,
-                            by_name: CallingConv::ByValue,
-                            mode: CallingMode::Output,
+                            attr: ParamAttr {
+                                assoc: Assoc::NonAssoc,
+                                by_name: CallingConv::ByValue,
+                                mode: CallingMode::Output,
+                            },
                             pat: Box::new(e),
                         }
                     )
@@ -660,9 +672,11 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
-                                            assoc: Assoc::Assoc,
-                                            by_name: CallingConv::ByValue,
-                                            mode: CallingMode::Output,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::Assoc,
+                                                by_name: CallingConv::ByValue,
+                                                mode: CallingMode::Output,
+                                            },
                                             pat: Box::new(e),
                                         }
                                     },
@@ -673,9 +687,11 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
-                                            assoc: Assoc::Assoc,
-                                            by_name: CallingConv::ByValue,
-                                            mode: CallingMode::Input,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::Assoc,
+                                                by_name: CallingConv::ByValue,
+                                                mode: CallingMode::Input,
+                                            },
                                             pat: Box::new(e),
                                         }
                                     },
@@ -687,9 +703,11 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
-                                            assoc: Assoc::Assoc,
-                                            by_name: CallingConv::ByValue,
-                                            mode: CallingMode::Input,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::Assoc,
+                                                by_name: CallingConv::ByValue,
+                                                mode: CallingMode::Input,
+                                            },
                                             pat: Box::new(e),
                                         }
                                     },
@@ -701,9 +719,11 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByValue,
-                                    mode: CallingMode::Output,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Output,
+                                    },
                                     pat: Box::new(e),
                                 }
                             },
@@ -713,9 +733,11 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByValue,
-                                    mode: CallingMode::Input,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Input,
+                                    },
                                     pat: Box::new(e),
                                 }
                             },
@@ -726,9 +748,11 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByValue,
-                                    mode: CallingMode::Input,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByValue,
+                                        mode: CallingMode::Input,
+                                    },
                                     pat: Box::new(e),
                                 }
                             },
@@ -750,9 +774,11 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
-                                            assoc: Assoc::Assoc,
-                                            by_name: CallingConv::ByName,
-                                            mode: CallingMode::Output,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::Assoc,
+                                                by_name: CallingConv::ByName,
+                                                mode: CallingMode::Output,
+                                            },
                                             pat: Box::new(e),
                                         }
                                     },
@@ -763,9 +789,11 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
-                                            assoc: Assoc::Assoc,
-                                            by_name: CallingConv::ByName,
-                                            mode: CallingMode::Input,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::Assoc,
+                                                by_name: CallingConv::ByName,
+                                                mode: CallingMode::Input,
+                                            },
                                             pat: Box::new(e),
                                         }
                                     },
@@ -777,9 +805,11 @@ impl<'a> Parser<'a> {
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
-                                            assoc: Assoc::Assoc,
-                                            by_name: CallingConv::ByName,
-                                            mode: CallingMode::Input,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::Assoc,
+                                                by_name: CallingConv::ByName,
+                                                mode: CallingMode::Input,
+                                            },
                                             pat: Box::new(e),
                                         }
                                     },
@@ -791,9 +821,11 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByName,
-                                    mode: CallingMode::Output,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByName,
+                                        mode: CallingMode::Output,
+                                    },
                                     pat: Box::new(e),
                                 }
                             },
@@ -803,9 +835,11 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByName,
-                                    mode: CallingMode::Input,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByName,
+                                        mode: CallingMode::Input,
+                                    },
                                     pat: Box::new(e),
                                 }
                             },
@@ -816,9 +850,11 @@ impl<'a> Parser<'a> {
                                 let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
-                                    assoc: Assoc::NonAssoc,
-                                    by_name: CallingConv::ByName,
-                                    mode: CallingMode::Input,
+                                    attr: ParamAttr {
+                                        assoc: Assoc::NonAssoc,
+                                        by_name: CallingConv::ByName,
+                                        mode: CallingMode::Input,
+                                    },
                                     pat: Box::new(e),
                                 }
                             },
@@ -859,13 +895,13 @@ impl<'a> Parser<'a> {
 
                 for param in params {
                     match *param {
-                        Param { assoc: Assoc::Assoc, .. } => {
+                        Param { attr: ParamAttr { assoc: Assoc::Assoc, .. }, .. } => {
                             return self.error(param.loc.clone(), "Anonymous function parameter cannot be associative.")
                         },
-                        Param { by_name: CallingConv::ByName, .. } => {
+                        Param { attr: ParamAttr { by_name: CallingConv::ByName, .. }, .. } => {
                             return self.error(param.loc.clone(), "Anonymous function parameter cannot be call-by-name.")
                         },
-                        Param { mode: CallingMode::Output, .. } => {
+                        Param { attr: ParamAttr { mode: CallingMode::Output, .. }, .. } => {
                             return self.error(param.loc.clone(), "Anonymous function parameter cannot be an output parameter.")
                         },
                         Param { pat: ref exp, .. } => {
@@ -901,23 +937,21 @@ impl<'a> Parser<'a> {
                     Token::Eq => {
                         self.eat();
 
-                        let (mode_given2, e) = self.parse_mixfix_return(mode_given)?;
+                        let (mode_given_in_ret, e) = self.parse_mixfix_return(mode_given)?;
 
                         // If a mode was given or there are no parameters, we require a mode.
-                        if mode_given || mode_given2 {
-                            let opt_guard2 = match opt_guard {
-                                Some(g) => Some(g),
-                                None => self.parse_opt_guard()?
-                            };
+                        if mode_given || mode_given_in_ret {
+                            let opt_body = self.parse_opt_guard()?;
 
                             Ok(Cmd::Def(Def::MixfixDef {
                                 id,
                                 attrs,
                                 flag: MixfixFlag::Fun,
                                 name,
-                                opt_guard: opt_guard2.map(|e| Box::new(e)),
+                                opt_guard: opt_guard.map(|e| Box::new(e)),
                                 params,
                                 ret: e,
+                                opt_body: opt_body.map(|e| Box::new(e)),
                             }))
                         }
                         else {
@@ -929,6 +963,7 @@ impl<'a> Parser<'a> {
                                 opt_guard: opt_guard.map(|e| Box::new(e)),
                                 params,
                                 ret: e,
+                                opt_body: None,
                             }))
                         }
                     },
@@ -955,6 +990,7 @@ impl<'a> Parser<'a> {
                             opt_guard: opt_guard2.map(|e| Box::new(e)),
                             params,
                             ret: Parser::make_param_from_exp(nothing, CallingMode::Output),
+                            opt_body: None,
                         }))
                     },
                 }
@@ -1130,26 +1166,12 @@ impl<'a> Parser<'a> {
                     Token::Eq => {
                         self.eat();
 
-                        let (mode_given2, e) = self.parse_mixfix_return(mode_given)?;
+                        let (mode_given_in_return, e) = self.parse_mixfix_return(mode_given)?;
 
-                        // If a mode was given, we require a mode.
-                        if mode_given || mode_given2 {
-                            let opt_guard2 = match opt_guard {
-                                Some(g) => Some(g),
-                                None => self.parse_opt_guard()?
-                            };
+                        // If a mode was given, we can have an optional guard, to bind the output parameters.
+                        if mode_given || mode_given_in_return {
+                            let opt_body = self.parse_opt_guard()?;
 
-                            Ok(Def::MixfixDef {
-                                id,
-                                attrs,
-                                flag: MixfixFlag::Trait,
-                                name,
-                                opt_guard: opt_guard2.map(|e| Box::new(e)),
-                                params,
-                                ret: e,
-                            })
-                        }
-                        else {
                             Ok(Def::MixfixDef {
                                 id,
                                 attrs,
@@ -1158,6 +1180,20 @@ impl<'a> Parser<'a> {
                                 opt_guard: opt_guard.map(|e| Box::new(e)),
                                 params,
                                 ret: e,
+                                opt_body: opt_body.map(|e| Box::new(e)),
+                            })
+                        }
+                        else {
+                            // If there was no mode given, this is a forward mode trait.
+                            Ok(Def::MixfixDef {
+                                id,
+                                attrs,
+                                flag: MixfixFlag::Trait,
+                                name,
+                                opt_guard: opt_guard.map(|e| Box::new(e)),
+                                params,
+                                ret: e,
+                                opt_body: None,
                             })
                         }
                     },
@@ -1169,6 +1205,7 @@ impl<'a> Parser<'a> {
                             value:
                                 Exp::Record {
                                     id: self.alloc_node_id(),
+                                    tag: Box::new(Located::new(Loc::from(&self.last_token), Exp::Outer)),
                                     defs: vec![],
                                 }
                         };
@@ -1181,6 +1218,7 @@ impl<'a> Parser<'a> {
                             opt_guard: opt_guard.map(|e| Box::new(e)),
                             params,
                             ret: Parser::make_param_from_exp(tr, CallingMode::Output),
+                            opt_body: None,
                         })
                     },
                 }
@@ -1654,6 +1692,8 @@ impl<'a> Parser<'a> {
                     self.parse_list_exp()
                 }
                 Token::Lc => {
+                    let loc = self.lookahead()?.loc;
+
                     let cmds = self.parse_block()?;
 
                     let mut all_arrows = true;
@@ -1700,7 +1740,7 @@ impl<'a> Parser<'a> {
                         // All the cmds are defs.
                         // Create a trait.
                         let defs: Vec<Located<Def>> = filter_collect_loc!(cmds, Cmd::Def(d), d);
-                        Ok(Exp::Record { id: self.alloc_node_id(), defs: defs })
+                        Ok(Exp::Record { id: self.alloc_node_id(), tag: Box::new(Located::new(loc, Exp::Outer)), defs: defs })
                     }
                     else {
                         // At least some of the cmds are expressions.
@@ -1794,9 +1834,11 @@ impl<'a> Parser<'a> {
     fn make_param_from_exp(e: Located<Exp>, mode: CallingMode) -> Located<Param> {
         e.map_with_loc(
             |loc, e| Param {
-                assoc: Assoc::NonAssoc,
-                by_name: CallingConv::ByValue,
-                mode: mode,
+                attr: ParamAttr {
+                    assoc: Assoc::NonAssoc,
+                    by_name: CallingConv::ByValue,
+                    mode: mode,
+                },
                 pat: Box::new(Located{ loc: loc, value: e })
             }
         )
@@ -1879,16 +1921,26 @@ mod tests {
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
+                                opt_body: None,
                                 params: vec![],
                                 ret: Located {
                                     loc: Loc::new(6, 6),
                                     value: Param {
-                                        assoc: Assoc::NonAssoc,
-                                        by_name: CallingConv::ByValue,
-                                        mode: CallingMode::Output,
+                                        attr: ParamAttr {
+                                            assoc: Assoc::NonAssoc,
+                                            by_name: CallingConv::ByValue,
+                                            mode: CallingMode::Output,
+                                        },
                                         pat: Box::new(Located {
                                             loc: Loc::new(6, 6),
-                                            value: Exp::Record { id: NodeId(2), defs: vec![] }
+                                            value: Exp::Record {
+                                                id: NodeId(2),
+                                                tag: Box::new(Located {
+                                                    loc: Loc::new(6, 6),
+                                                    value: Exp::Outer
+                                                }),
+                                                defs: vec![]
+                                            }
                                         })
                                     }
                                 }
@@ -1915,13 +1967,16 @@ mod tests {
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
+                                opt_body: None,
                                 params: vec![],
                                 ret: Located {
                                     loc: Loc::new(10, 11),
                                     value: Param {
-                                        assoc: Assoc::NonAssoc,
-                                        by_name: CallingConv::ByValue,
-                                        mode: CallingMode::Output,
+                                        attr: ParamAttr {
+                                            assoc: Assoc::NonAssoc,
+                                            by_name: CallingConv::ByValue,
+                                            mode: CallingMode::Output,
+                                        },
                                         pat: Box::new(Located {
                                             loc: Loc::new(10, 11),
                                             value: Exp::Lit { lit: Lit::Nothing }
@@ -1951,13 +2006,16 @@ mod tests {
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
+                                opt_body: None,
                                 params: vec![],
                                 ret: Located {
                                     loc: Loc::new(10, 17),
                                     value: Param {
-                                        assoc: Assoc::NonAssoc,
-                                        by_name: CallingConv::ByValue,
-                                        mode: CallingMode::Output,
+                                        attr: ParamAttr {
+                                            assoc: Assoc::NonAssoc,
+                                            by_name: CallingConv::ByValue,
+                                            mode: CallingMode::Output,
+                                        },
                                         pat: Box::new(Located {
                                             loc: Loc::new(10, 17),
                                             value: Exp::Union {
@@ -2004,13 +2062,16 @@ mod tests {
                                 flag: MixfixFlag::Trait,
                                 name: Name::Mixfix(Name::encode_parts(&vec![Part::Id(Interned::new("T")), Part::Placeholder])),
                                 opt_guard: None,
+                                opt_body: None,
                                 params: vec!(
                                     Located::new(
                                         Loc::new(8, 10),
                                         Param {
-                                            assoc: Assoc::NonAssoc,
-                                            by_name: CallingConv::ByValue,
-                                            mode: CallingMode::Input,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::NonAssoc,
+                                                by_name: CallingConv::ByValue,
+                                                mode: CallingMode::Input,
+                                            },
                                             pat: Box::new(
                                                 Located::new(
                                                     Loc::new(9, 9),
@@ -2026,13 +2087,22 @@ mod tests {
                                 ret: Located::new(
                                     Loc::new(10,10),
                                     Param {
-                                        assoc: Assoc::NonAssoc,
-                                        by_name: CallingConv::ByValue,
-                                        mode: CallingMode::Output,
+                                        attr: ParamAttr {
+                                            assoc: Assoc::NonAssoc,
+                                            by_name: CallingConv::ByValue,
+                                            mode: CallingMode::Output,
+                                        },
                                         pat: Box::new(
                                             Located::new(
                                                 Loc::new(10,10),
-                                                Exp::Record { id: NodeId(3), defs: vec![] }
+                                                Exp::Record {
+                                                    id: NodeId(3),
+                                                    tag: Box::new(Located {
+                                                        loc: Loc::new(10, 10),
+                                                        value: Exp::Outer
+                                                    }),
+                                                    defs: vec![]
+                                                }
                                             )
                                         )
                                     }
@@ -2060,13 +2130,16 @@ mod tests {
                                 flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
+                                opt_body: None,
                                 params: vec![],
                                 ret: Located {
                                     loc: Loc::new(10, 18),
                                     value: Param {
-                                        assoc: Assoc::NonAssoc,
-                                        by_name: CallingConv::ByValue,
-                                        mode: CallingMode::Output,
+                                        attr: ParamAttr {
+                                            assoc: Assoc::NonAssoc,
+                                            by_name: CallingConv::ByValue,
+                                            mode: CallingMode::Output,
+                                        },
                                         pat: Box::new(Located {
                                             loc: Loc::new(10, 18),
                                             value: Exp::Union {
@@ -2120,13 +2193,16 @@ mod tests {
                                         )
                                     )
                                 ),
+                                opt_body: None,
                                 params: vec!(
                                     Located::new(
                                         Loc::new(8, 10),
                                         Param {
-                                            assoc: Assoc::NonAssoc,
-                                            by_name: CallingConv::ByValue,
-                                            mode: CallingMode::Input,
+                                            attr: ParamAttr {
+                                                assoc: Assoc::NonAssoc,
+                                                by_name: CallingConv::ByValue,
+                                                mode: CallingMode::Input,
+                                            },
                                             pat: Box::new(
                                                 Located::new(
                                                     Loc::new(9, 9),
@@ -2142,9 +2218,11 @@ mod tests {
                                 ret: Located::new(
                                     Loc::new(22,23),
                                     Param {
-                                        assoc: Assoc::NonAssoc,
-                                        by_name: CallingConv::ByValue,
-                                        mode: CallingMode::Output,
+                                        attr: ParamAttr {
+                                            assoc: Assoc::NonAssoc,
+                                            by_name: CallingConv::ByValue,
+                                            mode: CallingMode::Output,
+                                        },
                                         pat: Box::new(
                                             Located::new(
                                                 Loc::new(22,23),

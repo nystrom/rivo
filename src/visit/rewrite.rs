@@ -86,8 +86,8 @@ pub trait Rewriter<'a, Ctx>: Sized {
             Def::FormulaDef { ref attrs, ref flag, ref formula } => {
                 Def::FormulaDef { attrs: attrs.clone(), flag: *flag, formula: walk_located_box!(self, visit_exp, formula, ctx) }
             },
-            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
-                Def::MixfixDef { id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), params: walk_located_vec!(self, visit_param, params, ctx), ret: walk_located!(self, visit_param, ret, ctx) }
+            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret } => {
+                Def::MixfixDef { id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), opt_body: walk_located_opt!(self, visit_exp, opt_body, ctx), params: walk_located_vec!(self, visit_param, params, ctx), ret: walk_located!(self, visit_param, ret, ctx) }
             },
             Def::ImportDef { ref opt_path, ref selector } => {
                 Def::ImportDef { opt_path: walk_located_opt!(self, visit_exp, opt_path, ctx), selector: selector.clone() }
@@ -99,8 +99,10 @@ pub trait Rewriter<'a, Ctx>: Sized {
         match *s {
             Exp::Layout { id, ref cmds } =>
                 Exp::Layout { id, cmds: walk_located_vec!(self, visit_cmd, cmds, ctx) },
-            Exp::Record { id, ref defs } =>
-                Exp::Record { id, defs: walk_located_vec!(self, visit_def, defs, ctx) },
+            Exp::Record { id, ref tag, ref defs } =>
+                Exp::Record { id, tag: walk_located_box!(self, visit_exp, tag, ctx), defs: walk_located_vec!(self, visit_def, defs, ctx) },
+            Exp::Outer =>
+                Exp::Outer,
 
             Exp::Union { ref es } =>
                 Exp::Union { es: walk_located_vec!(self, visit_exp, es, ctx) },
@@ -156,9 +158,9 @@ pub trait Rewriter<'a, Ctx>: Sized {
 
     fn walk_param(&mut self, s: &'a Param, ctx: &Ctx, loc: &Loc) -> Param {
         match *s {
-            Param { assoc, by_name, mode, ref pat } => {
+            Param { ref attr, ref pat } => {
                 let pat1 = walk_located!(self, visit_exp, pat, ctx);
-                Param { assoc: assoc, by_name: by_name, mode: mode, pat: Box::new(pat1) }
+                Param { attr: *attr, pat: Box::new(pat1) }
             }
         }
     }

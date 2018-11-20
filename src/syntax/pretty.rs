@@ -136,7 +136,7 @@ impl ToDoc for Def {
                 doc.append(Doc::space())
                    .append(show_located_box!(formula))
             },
-            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref params, ref ret } => {
+            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret } => {
                 let doc = match *flag {
                     MixfixFlag::Trait => Doc::text("trait"),
                     MixfixFlag::Fun => Doc::text("fun"),
@@ -150,6 +150,7 @@ impl ToDoc for Def {
                    .append(Doc::text("="))
                    .append(Doc::space())
                    .append(show_located!(ret))
+                   .append(show_located_opt!(opt_body))
             },
             Def::ImportDef { opt_path: None, ref selector } => {
                 Doc::text("import")
@@ -188,12 +189,15 @@ impl ToDoc for Exp {
                 .append(show_located_vec!(cmds, Doc::text(";").append(Doc::newline())).nest(1))
                 .append(Doc::newline())
                 .append(Doc::text("}")),
-            Exp::Record { id, ref defs } =>
-                Doc::text("{")
+            Exp::Record { id, ref tag, ref defs } =>
+                show_located_box!(tag)
+                .append(Doc::space())
+                .append(Doc::text("{"))
                 .append(Doc::newline())
                 .append(show_located_vec!(defs, Doc::text(";").append(Doc::newline())).nest(1))
                 .append(Doc::newline())
                 .append(Doc::text("}")),
+            Exp::Outer => Doc::text("outer"),
 
             Exp::Union { ref es } =>
                 show_located_vec!(es, Doc::space().append(Doc::text("with")).append(Doc::space())),
@@ -303,7 +307,7 @@ impl ToDoc for Exp {
 impl ToDoc for Param {
     fn to_doc(&self) -> Doc<BoxDoc<()>> {
         match *self {
-            Param { assoc, by_name, mode, ref pat } => {
+            Param { attr: ParamAttr { ref assoc, ref by_name, ref mode }, ref pat } => {
                 let pat1 = show_located_box!(pat);
                 let (left1, right1) = match by_name {
                     CallingConv::ByValue => (Doc::text("("), Doc::text(")")),

@@ -606,25 +606,6 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     cmds: self.walk_cmd_list(&cmds, &child_ctx)
                 };
 
-                // Include nested records in the scope.
-                match new_node {
-                    Root::Bundle { ref cmds, .. } => {
-                        for cmd in cmds {
-                            match cmd {
-                                Located {
-                                    loc,
-                                    value: Cmd::Exp(Exp::Record { id, .. })
-                                } => {
-                                    if let Some(inner_scope) = self.scopes.get(&id) {
-                                        self.driver.graph.include(scope.to_here(), *inner_scope);
-                                    }
-                                },
-                                _ => {},
-                            }
-                        }
-                    },
-                }
-
                 // Add imports.
                 match new_node {
                     Root::Bundle { ref cmds, .. } => {
@@ -639,64 +620,98 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
     fn visit_def(&mut self, s: &'a Def, ctx: &PrenameCtx, loc: &Loc) -> Def {
         match s {
-            Def::MixfixDef { id, attrs, flag, name, opt_guard, params, ret } => {
+            Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret } => {
                 let scope = self.driver.graph.new_env();
                 self.scopes.insert(*id, scope);
 
                 self.driver.graph.set_parent(scope, ctx.scope);
 
-                // Collect the unknowns in the input parameters.
-                let mut unknowns = Vec::new();
+                // First visit the input parameters, collecting unknowns there.
+                // Then visit the guard.
+                // Then visit the body, collecting more unknowns.
+                // Then visit the output parameters.
 
-                for Located { loc, value: Param { pat, mode, .. } } in params {
+                // Collect the unknowns in the input parameters.
+                let mut input_unknowns = Vec::new();
+
+                for Located { loc, value: Param { pat, attr: ParamAttr { mode, .. } } } in params {
                     if let CallingMode::Input = mode {
-                        Prenamer::add_unknowns_for_exp(&mut unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
+                        Prenamer::add_unknowns_for_exp(&mut input_unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
                     }
                 }
 
-                if let Located { loc, value: Param { pat, mode: CallingMode::Input, .. } } = ret {
-                    Prenamer::add_unknowns_for_exp(&mut unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
+                if let Located { loc, value: Param { pat, attr: ParamAttr { mode: CallingMode::Input, .. } } } = ret {
+                    Prenamer::add_unknowns_for_exp(&mut input_unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
                 }
 
-                if let Some(guard) = opt_guard {
-                    Prenamer::add_unknowns_for_exp(&mut unknowns, FormulaFlag::Val, &*guard, &ctx.names, scope);
+                // Collect the unknowns in the body.
+                let mut body_unknowns = Vec::new();
+
+                // The body is evaluated before the output parameters are bound.
+                // Unknowns in the body are in scope in the output parameters.
+                if let Some(body) = opt_body {
+                    Prenamer::add_unknowns_for_exp(&mut body_unknowns, FormulaFlag::Val, &*body, &ctx.names, scope);
                 }
 
-                // Declare the unknowns in the new scope here.
-                // Add the names of the unknowns to the child scope.
-                let mut new_names = ctx.names.clone();
-
-                for decl in &unknowns {
-                    new_names.push(decl.name());
+                // Declare the unknowns.
+                for decl in &input_unknowns {
                     self.driver.graph.declare(scope, decl);
                 }
 
-                let child_ctx = PrenameCtx {
+                for decl in &body_unknowns {
+                    self.driver.graph.declare(scope, decl);
+                }
+
+                // Add the names of the input_unknowns to the child scope.
+                let new_input_names: Vec<Name> = ctx.names.iter().cloned().chain(input_unknowns.iter().map(|decl| decl.name())).collect();
+                let new_names: Vec<Name> = new_input_names.iter().cloned().chain(body_unknowns.iter().map(|decl| decl.name())).collect();
+
+                let input_params_ctx = PrenameCtx {
                     scope,
-                    names: new_names.clone(),
+                    names: new_input_names.clone(),
+                    unknowns: input_unknowns,
                     ..ctx.clone()
                 };
 
-                let input_params_ctx = PrenameCtx {
-                    unknowns,
-                    ..child_ctx.clone()
+                let guard_ctx = PrenameCtx {
+                    scope,
+                    names: new_input_names,
+                    ..ctx.clone()
                 };
 
-                // The output parameters are logically a child of the guard scope.
+                let body_ctx = PrenameCtx {
+                    scope,
+                    names: new_names.clone(),
+                    unknowns: body_unknowns,
+                    ..ctx.clone()
+                };
+
+                let output_params_ctx = PrenameCtx {
+                    scope,
+                    names: new_names,
+                    ..ctx.clone()
+                };
+
                 let opt_guard1 = opt_guard.clone().map(|x|
                     match *x {
-                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &child_ctx, &loc) })
+                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &guard_ctx, &loc) })
+                    }
+                );
+
+                let opt_body1 = opt_body.clone().map(|x|
+                    match *x {
+                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &body_ctx, &loc) })
                     }
                 );
 
                 let ret1 = match ret {
-                    Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Input } } => {
+                    Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Input, .. } } } => {
                         Located { loc: ret.loc, value:
-                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Input } }
+                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), attr: ret.attr } }
                     },
-                    Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
+                    Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } => {
                         Located { loc: ret.loc, value:
-                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &child_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Output } }
+                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &output_params_ctx, &e.loc) }), attr: ret.attr } }
                     },
                 };
 
@@ -704,39 +719,35 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 for param in params {
                     match param {
-                        Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Input } } => {
+                        Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Input, .. } } } => {
                             let param1 = Located { loc: ret.loc, value:
-                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Input } };
+                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), attr: param.attr } };
                             params1.push(param1);
                         },
-                        Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } => {
+                        Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } => {
                             let param1 = Located { loc: ret.loc, value:
-                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &child_ctx, &e.loc) }), assoc: *assoc, by_name: *by_name, mode: CallingMode::Output } };
+                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &output_params_ctx, &e.loc) }), attr: param.attr } };
                             params1.push(param1);
                         },
                     }
                 }
 
-                let param_assocs = params.iter().map(|Located { value: Param { assoc, .. }, .. }| *assoc).collect();
-                let param_convs = params.iter().map(|Located { value: Param { by_name, .. }, .. }| *by_name).collect();
-                let param_modes = params.iter().map(|Located { value: Param { mode, .. }, .. }| *mode).collect();
-                let ret_mode = match ret {
-                    Located { loc: _, value: Param { mode, .. } } => mode
+                let param_attrs = params.iter().map(|Located { value: Param { attr, .. }, .. }| *attr).collect();
+                let ret_attr = match ret {
+                    Located { loc: _, value: Param { attr, .. } } => attr
                 };
-                let ret_conv = match ret {
-                    Located { loc: _, value: Param { by_name, .. } } => by_name
-                };
+
                 let prio = ctx.prio;
 
                 let mut inner_frames = vec![];
 
                 for param in params {
-                    if let Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } = param {
+                    if let Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } = param {
                         inner_frames.push(self.lookup_frame(scope, e));
                     }
                 }
 
-                if let Located { loc, value: Param { pat: e, assoc, by_name, mode: CallingMode::Output } } = ret {
+                if let Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } = ret {
                     inner_frames.push(self.lookup_frame(scope, e));
                 }
 
@@ -747,11 +758,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                             value: Decl::Fun {
                                 scope: ctx.scope,
                                 name: *name,
-                                param_assocs,
-                                param_convs,
-                                param_modes,
-                                ret_mode: *ret_mode,
-                                ret_conv: *ret_conv,
+                                params: param_attrs,
+                                ret: *ret_attr,
                                 prio,
                             }
                         }
@@ -762,11 +770,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                             value: Decl::Trait {
                                 scope: ctx.scope,
                                 name: *name,
-                                param_assocs,
-                                param_convs,
-                                param_modes,
-                                ret_mode: *ret_mode,
-                                ret_conv: *ret_conv,
+                                params: param_attrs,
+                                ret: *ret_attr,
                                 prio,
                                 body: inner_frames,
                             }
@@ -774,9 +779,10 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     },
                 };
 
+                // Declare in the parent scope.
                 self.driver.graph.declare(ctx.scope, &decl);
 
-                // TODO: declare mixfix parts
+                // Declare mixfix parts in the parent scope.
                 if let Name::Mixfix(s) = name {
                     let parts = Name::decode_parts(*s);
 
@@ -795,7 +801,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     }
                 }
 
-                Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, params: params1, ret: ret1 }
+                Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, opt_body: opt_body1, params: params1, ret: ret1 }
             },
             Def::FormulaDef { .. } => {
                 self.walk_def(s, ctx, loc)
@@ -842,17 +848,6 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 let new_node = self.walk_exp(e, &child_ctx, &loc);
 
-                // Include nested records in the scope.
-                if let Exp::Layout { ref cmds, .. } = new_node {
-                    for cmd in cmds {
-                        if let Located { loc, value: Cmd::Exp(Exp::Record { id, .. }) } = cmd {
-                            if let Some(inner_scope) = self.scopes.get(&id) {
-                                self.driver.graph.include(scope.to_here(), *inner_scope);
-                            }
-                        }
-                    }
-                }
-
                 // Add imports.
                 if let Exp::Layout { ref cmds, .. } = new_node {
                     self.add_imports(scope, ctx.scope, cmds, false);
@@ -860,7 +855,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 new_node
             },
-            Exp::Record { id, defs } => {
+            Exp::Record { id, tag, defs } => {
                 let scope = self.driver.graph.new_env();
                 self.driver.graph.set_parent(scope, ctx.scope);
                 self.scopes.insert(*id, scope);

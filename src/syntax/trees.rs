@@ -67,11 +67,16 @@ pub enum MixfixFlag {
     Trait,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Param {
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ParamAttr {
     pub assoc: Assoc,
     pub by_name: CallingConv,
     pub mode: CallingMode,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Param {
+    pub attr: ParamAttr,
     pub pat: Box<Located<Exp>>,
 }
 
@@ -102,7 +107,7 @@ pub enum Cmd {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Def {
     FormulaDef { attrs: Vec<Located<Attr>>, flag: FormulaFlag, formula: Box<Located<Exp>> },
-    MixfixDef { id: NodeId, attrs: Vec<Located<Attr>>, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
+    MixfixDef { id: NodeId, attrs: Vec<Located<Attr>>, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, opt_body: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
     ImportDef { opt_path: Option<Box<Located<Exp>>>, selector: Selector },
 }
 
@@ -154,7 +159,10 @@ pub enum Attr {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Exp {
     Layout { id: NodeId, cmds: Vec<Located<Cmd>> },
-    Record { id: NodeId, defs: Vec<Located<Def>> },
+
+    Record { id: NodeId, tag: Box<Located<Exp>>, defs: Vec<Located<Def>> },
+    // Tag of the enclosing trait.
+    Outer,
 
     // A with B
     Union { es: Vec<Located<Exp>> },

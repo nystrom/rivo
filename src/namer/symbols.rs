@@ -4,6 +4,7 @@ use syntax::loc::*;
 use syntax::trees::Assoc;
 use syntax::trees::CallingConv;
 use syntax::trees::CallingMode;
+use syntax::trees::ParamAttr;
 
 use std::collections::BTreeMap;
 
@@ -79,14 +80,6 @@ impl Import {
 }
 
 // TODO
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ParamAttribute {
-    assoc: Assoc,
-    conv: CallingConv,
-    mode: CallingMode,
-}
-
-// TODO
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Attribute {
     Prio(usize),
@@ -101,11 +94,8 @@ pub enum Decl {
     Trait {
         scope: Scope,
         name: Name,
-        param_assocs: Vec<Assoc>,   // FIXME merge into one vec.
-        param_convs: Vec<CallingConv>,
-        param_modes: Vec<CallingMode>,
-        ret_mode: CallingMode,
-        ret_conv: CallingConv,
+        params: Vec<ParamAttr>,   // FIXME merge into one vec.
+        ret: ParamAttr,
         prio: Prio,
         body: Vec<Scope>,
     },
@@ -113,11 +103,8 @@ pub enum Decl {
     Fun {
         scope: Scope,
         name: Name,
-        param_assocs: Vec<Assoc>,
-        param_convs: Vec<CallingConv>,
-        param_modes: Vec<CallingMode>,
-        ret_mode: CallingMode,
-        ret_conv: CallingConv,
+        params: Vec<ParamAttr>,   // FIXME merge into one vec.
+        ret: ParamAttr,
         prio: Prio,
     },
 
@@ -153,16 +140,16 @@ impl Decl {
 
     pub fn assoc(&self) -> Option<usize> {
         match self {
-            Decl::Trait { param_assocs, .. } => {
-                for (i, p) in param_assocs.iter().enumerate() {
-                    if *p == Assoc::Assoc {
+            Decl::Trait { params, .. } => {
+                for (i, p) in params.iter().enumerate() {
+                    if p.assoc == Assoc::Assoc {
                         return Some(i)
                     }
                 }
             },
-            Decl::Fun { param_assocs, .. } => {
-                for (i, p) in param_assocs.iter().enumerate() {
-                    if *p == Assoc::Assoc {
+            Decl::Fun { params, .. } => {
+                for (i, p) in params.iter().enumerate() {
+                    if p.assoc == Assoc::Assoc {
                         return Some(i)
                     }
                 }
