@@ -45,7 +45,7 @@ impl NodeIdGenerator {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Lit {
     Int { value: BigInt },
     Rat { value: BigRational },
