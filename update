@@ -1,3 +1,11 @@
 #!/bin/sh
 
-rustup update || (rustup uninstall nightly && rustup install nightly) && cargo update && cargo build && cargo build --release
+n=$(curl -Ls http://static.rust-lang.org/dist/channel-rust-nightly.toml | awk 'BEGIN { RS = "[" } /apple-darwin.*available = false/ { print $0 }' | wc -l)
+
+if [ $n -eq 0 ]
+then
+  rustup update && cargo update && cargo build && cargo build --release
+else
+  echo rustup unavailable
+  cargo update && cargo build && cargo build --release
+fi
