@@ -1205,7 +1205,7 @@ impl<'a> Parser<'a> {
                             value:
                                 Exp::Record {
                                     id: self.alloc_node_id(),
-                                    tag: Box::new(Located::new(Loc::from(&self.last_token), Exp::Outer)),
+                                    tag: Box::new(Located::new(Loc::from(&self.last_token), Exp::Outer { id: self.alloc_node_id() })),
                                     defs: vec![],
                                 }
                         };
@@ -1740,7 +1740,7 @@ impl<'a> Parser<'a> {
                         // All the cmds are defs.
                         // Create a trait.
                         let defs: Vec<Located<Def>> = filter_collect_loc!(cmds, Cmd::Def(d), d);
-                        Ok(Exp::Record { id: self.alloc_node_id(), tag: Box::new(Located::new(loc, Exp::Outer)), defs: defs })
+                        Ok(Exp::Record { id: self.alloc_node_id(), tag: Box::new(Located::new(loc, Exp::Outer { id: self.alloc_node_id() })), defs: defs })
                     }
                     else {
                         // At least some of the cmds are expressions.
@@ -1937,7 +1937,7 @@ mod tests {
                                                 id: NodeId(2),
                                                 tag: Box::new(Located {
                                                     loc: Loc::new(6, 6),
-                                                    value: Exp::Outer
+                                                    value: Exp::Outer { id: NodeId(3) }
                                                 }),
                                                 defs: vec![]
                                             }
@@ -2099,7 +2099,7 @@ mod tests {
                                                     id: NodeId(3),
                                                     tag: Box::new(Located {
                                                         loc: Loc::new(10, 10),
-                                                        value: Exp::Outer
+                                                        value: Exp::Outer { id: NodeId(4) }
                                                     }),
                                                     defs: vec![]
                                                 }

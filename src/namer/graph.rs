@@ -61,6 +61,7 @@ impl ScopeGraph {
             imports: Vec::new(),
             parents: Vec::new(),
             includes: Vec::new(),
+            path: None,
         });
         Scope::Env(EnvIndex(index))
     }
@@ -117,6 +118,29 @@ impl ScopeGraph {
 
     pub fn get_scope_of_mixfix(&self, r: MixfixIndex) -> Scope {
         Scope::Mixfix(r)
+    }
+
+    pub fn set_path(&mut self, scope: Scope, path: Located<StablePath>) {
+        match scope.to_here() {
+            Scope::EnvHere(EnvIndex(index)) => {
+                if let Some(ref mut env) = self.envs.get_mut(index) {
+                    env.path = Some(path)
+                }
+            }
+            _ => {},
+        }
+    }
+
+    pub fn get_path(&self, scope: Scope) -> Option<Located<StablePath>> {
+        match scope.to_here() {
+            Scope::EnvHere(EnvIndex(index)) => {
+                if let Some(ref env) = self.envs.get(index) {
+                    return env.path.clone()
+                }
+            }
+            _ => {},
+        }
+        None
     }
 
     pub fn declare(&mut self, scope: Scope, decl: &Located<Decl>) {

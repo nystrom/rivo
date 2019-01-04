@@ -7,6 +7,7 @@ use syntax::trees;
 use super::symbols::*;
 use super::graph::*;
 use super::earley::*;
+use super::worklist::Worklist;
 
 use driver;
 use driver::*;
@@ -17,8 +18,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use rpds::HashTrieSet;
 
-use std::cmp::min;
-
+// TODO: move into own module (or crate)
 #[cfg(debug_assertions)]
 #[allow(non_upper_case_globals)]
 static mut depth: usize = 0;
@@ -55,119 +55,6 @@ pub struct Namer<'a> {
 
 type Visited = LookupCache;
 type Dependencies = HashTrieSet<LookupRef>;
-
-// #[derive(Debug)]
-struct Worklist {
-    changed: bool,
-    worklist: VecDeque<LookupRef>,
-    in_worklist: HashSet<LookupRef>,
-}
-
-use std::fmt;
-
-impl fmt::Debug for Worklist {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.worklist.fmt(f)
-    }
-}
-
-impl Worklist {
-    pub fn new() -> Self {
-        Worklist {
-            changed: true,
-            worklist: VecDeque::new(),
-            in_worklist: HashSet::new()
-        }
-    }
-
-    pub fn push_back(&mut self, r: LookupRef) {
-        if self.in_worklist.contains(&r) {
-            return;
-        }
-        self.changed = true;
-        self.in_worklist.insert(r);
-        self.worklist.push_back(r)
-    }
-
-    pub fn pop_front(&mut self) -> Option<LookupRef> {
-        if let Some(r) = self.worklist.pop_front() {
-            self.in_worklist.remove(&r);
-            Some(r)
-        }
-        else {
-            None
-        }
-    }
-
-    pub fn is_changed(&self) -> bool {
-        self.changed
-    }
-
-    pub fn reset_changed(&mut self) {
-        self.changed = false;
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.worklist.is_empty()
-    }
-
-    pub fn contains(&self, r: &LookupRef) -> bool {
-        self.in_worklist.contains(r)
-    }
-}
-
-pub trait Lattice<Rhs = Self> : PartialOrd<Rhs> where Rhs: ?Sized {
-    fn top() -> Rhs;
-    fn bot() -> Rhs;
-    fn lub(&self, other: &Rhs) -> Rhs;
-    fn glb(&self, other: &Rhs) -> Rhs;
-    fn height(&self) -> usize;
-}
-
-use std::cmp::Ordering;
-use std::hash::Hash;
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Set<A: Eq + Hash + Clone>(HashTrieSet<A>);
-
-impl<A> Lattice for Set<A> where A: Eq + Hash + Clone {
-    fn bot() -> Set<A> { Set(HashTrieSet::new()) }
-    fn top() -> Set<A> { unimplemented!() }
-    fn lub(&self, other: &Set<A>) -> Set<A> {
-        let mut s = HashTrieSet::new();
-        for x in self.0.iter() { s = s.insert(x.clone()); }
-        for x in other.0.iter() { s = s.insert(x.clone()); }
-        Set(s)
-    }
-    fn glb(&self, other: &Set<A>) -> Set<A> {
-        let mut s = HashTrieSet::new();
-        for x in self.0.iter() { if other.0.contains(&x) { s = s.insert(x.clone()); } }
-        Set(s)
-    }
-    fn height(&self) -> usize {
-        self.0.size()
-    }
-}
-
-impl<A> PartialOrd for Set<A> where A: Eq + Hash + Clone {
-    fn partial_cmp(&self, other: &Set<A>) -> Option<Ordering> {
-        let leq = self.0.is_subset(&other.0);
-        let geq = self.0.is_superset(&other.0);
-        if leq && geq {
-            Some(Ordering::Equal)
-        }
-        else if leq {
-            Some(Ordering::Less)
-        }
-        else if geq {
-            Some(Ordering::Greater)
-        }
-        else {
-            None
-        }
-    }
-}
-
 
 impl<'a> Namer<'a> {
     // The general naming strategy is rather complicated.

@@ -197,7 +197,7 @@ impl ToDoc for Exp {
                 .append(show_located_vec!(defs, Doc::text(";").append(Doc::newline())).nest(1))
                 .append(Doc::newline())
                 .append(Doc::text("}")),
-            Exp::Outer => Doc::text("outer"),
+            Exp::Outer { .. } => Doc::text("outer"),
 
             Exp::Union { ref es } =>
                 show_located_vec!(es, Doc::space().append(Doc::text("with")).append(Doc::space())),

@@ -161,8 +161,9 @@ pub enum Exp {
     Layout { id: NodeId, cmds: Vec<Located<Cmd>> },
 
     Record { id: NodeId, tag: Box<Located<Exp>>, defs: Vec<Located<Def>> },
-    // Tag of the enclosing trait.
-    Outer,
+
+    // Path of the enclosing trait--rewritten during renaming.
+    Outer { id: NodeId },
 
     // A with B
     Union { es: Vec<Located<Exp>> },

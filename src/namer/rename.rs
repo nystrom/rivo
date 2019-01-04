@@ -25,17 +25,48 @@ pub struct Renamer<'a> {
 #[derive(Debug, Clone, Copy)]
 pub struct RenamerCtx {
     in_mixfix: bool,
+    // path: StablePath,
 }
 
 impl RenamerCtx {
     pub fn new() -> RenamerCtx {
         RenamerCtx {
             in_mixfix: false,
+            // path: StablePath::Root,
         }
     }
 }
 
 impl<'a> Renamer<'a> {
+    // fn convert_to_path(pat: &Located<Exp>) -> StablePath {
+    //     match pat.value {
+    //         Exp::Lit { lit } => StablePath::Lit { lit: lit.clone() },
+    //         Exp::Select { exp, name } => StablePath::Select { outer: Renamer::convert_to_path(exp), name },
+    //         Exp::Within { e1, e2 } => StablePath::Select { outer: Renamer::convert_to_path(e1), name },
+    //         _ => StablePath::Unstable,
+    //     }
+    // }
+    //
+    // fn mk_path(p: StablePath, params: &[Param]) -> StablePath {
+    //     if let Some((param, params)) = es.split_first() {
+    //         let arg = match param {
+    //             Param { attr: ParamAttr { mode: CallingMode::Input, .. }, pat } =>
+    //                 Renamer::convert_to_path(pat),
+    //             Param { attr: ParamAttr { mode: CallingMode::Output, .. }, pat } =>
+    //                 StablePath::Lit { lit: Lit::Wildcard },
+    //         };
+    //         Renamer::mk_path(
+    //             StablePath::Apply {
+    //                 fun: Box::new(p),
+    //                 arg: Box::new(arg),
+    //             },
+    //             params)
+    //     }
+    //     else {
+    //         p
+    //     }
+    // }
+
     fn apply_mixfix(&mut self, tree: &MixfixTree, es: &Vec<Located<Exp>>) -> Option<Exp> {
         struct ParseResult {
             e: Located<Exp>,
@@ -113,15 +144,101 @@ impl<'a> Renamer<'a> {
             },
         }
     }
+
+    fn path_of_scope(&mut self, scope: Scope) -> StablePath {
+        match scope {
+            Scope::Global => StablePath::Root,
+            Scope::Empty => StablePath::Unstable,
+            Scope::Lookup(index) => StablePath::Unstable,
+            Scope::Mixfix(index) => StablePath::Unstable,
+            Scope::Env(index) => unimplemented!(),
+            Scope::EnvWithoutImports(index) => unimplemented!(),
+            Scope::EnvHere(index) => unimplemented!(),
+        }
+        // Root,
+        // Fresh,
+        // Unstable,
+        // Lit { lit: Lit },
+        // Select { outer: Box<Located<StablePath>>, name: Name },
+        // Apply { fun: Box<Located<StablePath>>, arg: Box<Located<StablePath>> },
+
+        // unimplemented!()
+    }
 }
 
 // visit any node that has a node id.
 impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
     #[cfg_attr(debug_assertions, trace)]
+    fn visit_def(&mut self, e: &'a Def, ctx: &RenamerCtx, loc: &Loc) -> Def {
+        match e {
+            Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret } => {
+                // let path = Renamer::mk_path(StablePath::Select { outer: ctx.path, name: *name }, &params);
+                // let child_ctx = RenamerCtx {
+                //     path: path,
+                //     ..ctx.clone()
+                // };
+                //
+                // // TODO:
+                // // Map each scope to a path.
+                // // Replace each Name with a Union of path selections.
+
+                self.walk_def(e, ctx, loc)
+            },
+            _ => {
+                self.walk_def(e, ctx, loc)
+            }
+        }
+    }
+
+
+    #[cfg_attr(debug_assertions, trace)]
     fn visit_exp(&mut self, e: &'a Exp, ctx: &RenamerCtx, loc: &Loc) -> Exp {
         match e {
+            Exp::Outer { id } => {
+                // Rewrite as the path to the containing scope.
+                if let Some(scope) = self.scopes.get(&id) {
+                    // TODO
+                    let new_node = self.walk_exp(e, ctx, loc);
+                    new_node
+                }
+                else {
+                    self.namer.driver.error(Located::new(loc.clone(), format!("Could not find enclosing path of record. ({})", id)));
+                    let new_node = self.walk_exp(e, ctx, loc);
+                    new_node
+                }
+            }
+            // Exp::Within { id, e1, e2 } => {
+            //     // TODO: verify that e2 is in the scope of e1, not an enclosing scope.
+            //     let new_node = self.walk_exp(e, ctx, loc);
+            //
+            //     // Rewrite e1.((f x) y) as ((e1.f) x) y
+            //     match new_node {
+            //         Exp::Within { id, e1, e2 } => {
+            //             fn insert_select(e1: Located<Exp>, e2: Located<Exp>) -> Option<Located<Exp>> {
+            //                 match e2 {
+            //                     Exp::Name { id, name } => Some(Exp::Select { exp: e1, name }),
+            //                     Exp::Apply { fun, arg } => {
+            //                         insert_select(e1, fun).map(|fun| Exp::Apply { fun, arg })
+            //                     },
+            //                     _ => None,
+            //                 }
+            //             }
+            //
+            //             match insert_select(e1, e2) {
+            //                 Some(e) => e,
+            //                 None => {
+            //                     self.namer.driver.error(Located::new(loc.clone(), format!("Could not resolve selected expression to a name or function application. ({})", id)));
+            //                 },
+            //             }
+            //         }
+            //         _ => new_node
+            //     }
+            // },
             Exp::Name { .. } => {
                 let new_node = self.walk_exp(e, ctx, loc);
+
+                // FIXME: generate union of selections rather than a name with a list of decls
+                // Each scope has a path associated with it.
 
                 match &new_node {
                     Exp::Name { name, id } => {
@@ -133,6 +250,13 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                 else if ! ctx.in_mixfix && Namer::all_mixfix(&decls) {
                                     self.namer.driver.error(Located::new(loc.clone(), format!("Name {} is a mixfix part, not a name. ({})", name, id)));
                                 }
+
+                                for d in decls {
+                                    let s = d.scope();
+                                    let path = self.namer.driver.graph.get_path(s);
+                                    println!("d {:?} path {:?}", d, path);
+                                }
+
                                 new_node
                             },
                             Err(_) => {

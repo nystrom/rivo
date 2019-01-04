@@ -21,6 +21,8 @@ static mut depth: usize = 0;
 pub struct PrenameCtx {
     /// The current lexical scope.
     scope: Scope,
+    /// The current stable path.
+    path: Option<Located<StablePath>>,
     /// Names declared or imported in this scope or a parent scope.
     names: Vec<Name>,
     /// Unknowns declared in this scope.
@@ -39,6 +41,7 @@ impl PrenameCtx {
             // the imports should reference Global. Global is not
             // a parent of the Bundle scope.
             scope: Scope::Empty,
+            path: None,
             names: vec![],
             unknowns: vec![],
             in_mixfix: false,
@@ -70,7 +73,7 @@ impl<'a> Prenamer<'a> {
         decls
     }
 
-    #[trace]
+    #[cfg_attr(debug_assertions, trace(disable(ctx)))]
     fn add_unknown_for_name(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, name: Name, defined_names: &Vec<Name>, scope: Scope, loc: &Loc) -> Vec<Located<Decl>> {
         for decl in decls.iter() {
             if decl.name() == name {
@@ -95,7 +98,7 @@ impl<'a> Prenamer<'a> {
         decls.clone()
     }
 
-#[trace]
+    #[cfg_attr(debug_assertions, trace(disable(ctx)))]
     fn add_unknowns_for_exp(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, e: &Located<Exp>, defined_names: &Vec<Name>, scope: Scope) {
         match &e.value {
             Exp::Union { es } => {
@@ -186,6 +189,8 @@ impl<'a> Prenamer<'a> {
                     Located { ref loc, value: Exp::MixfixPart { .. } } => {},
                     _ => { Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope); }
                 }
+                Prenamer::add_unknowns_for_exp(decls, flag, &e2, defined_names, scope);
+
             },
             Exp::Apply { fun, arg } => {
                 Prenamer::add_unknowns_for_exp(decls, flag, &fun, defined_names, scope);
@@ -202,6 +207,17 @@ impl<'a> Prenamer<'a> {
             Exp::MixfixApply { es, id } => {
                 for e in es {
                     Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
+                }
+            },
+            Exp::Layout { id, cmds } => {
+                for cmd in cmds {
+                    match cmd {
+                        Located { loc, value: Cmd::Exp(e) } => {
+                            Prenamer::add_unknowns_for_exp(decls, flag, &Located { loc: *loc, value: e.clone() }, defined_names, scope);
+                        },
+                        _ => {},
+                    }
+
                 }
             },
             _ => {},
@@ -582,9 +598,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
     fn visit_root(&mut self, s: &'a Root, ctx: &PrenameCtx, loc: &Loc) -> Root {
         match s {
             Root::Bundle { id, cmds } => {
+                let path = Located::new(*loc, StablePath::Root);
+
                 let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, Scope::Global);
                 self.scopes.insert(*id, scope);
+                
+                self.driver.graph.set_path(scope, path.clone());
+                self.driver.graph.set_parent(scope, Scope::Global);
 
                 let names = &ctx.names;
                 let imported_names = Prenamer::get_imported_names(cmds);
@@ -597,6 +617,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 let child_ctx = PrenameCtx {
                     scope,
+                    path: Some(path),
                     names: new_names,
                     ..ctx.clone()
                 };
@@ -621,9 +642,37 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
     fn visit_def(&mut self, s: &'a Def, ctx: &PrenameCtx, loc: &Loc) -> Def {
         match s {
             Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret } => {
+                let root_path = match &ctx.path {
+                    Some(p) => Located::new(*loc, StablePath::Select { outer: box p.clone(), name: *name }),
+                    None => Located::new(*loc, StablePath::Unstable),
+                };
+
+                fn mk_path_from_pat(pat: &Located<Exp>) -> Located<StablePath> {
+                    match pat {
+                        Located { loc, value: Exp::Lit { lit } } => Located { loc: *loc, value: StablePath::Lit { lit: lit.clone() } },
+                        Located { loc, .. } => Located { loc: *loc, value: StablePath::Unstable },
+                    }
+                }
+
+                let path = params.iter().fold(root_path,
+                    |path, param| {
+                        match path {
+                            Located { value: StablePath::Unstable, .. } => path,
+                            Located { loc, .. } => match param {
+                                Located { value: Param { box pat, attr: ParamAttr { mode: CallingMode::Input, .. } }, .. } => {
+                                    let v = mk_path_from_pat(pat);
+                                    Located { loc, value: StablePath::Apply { fun: box path, arg: box v } }
+                                },
+                                _ => path,
+                            }
+                        }
+                    }
+                );
+
                 let scope = self.driver.graph.new_env();
                 self.scopes.insert(*id, scope);
 
+                self.driver.graph.set_path(scope, path.clone());
                 self.driver.graph.set_parent(scope, ctx.scope);
 
                 // First visit the input parameters, collecting unknowns there.
@@ -668,6 +717,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 let input_params_ctx = PrenameCtx {
                     scope,
+                    path: None,
                     names: new_input_names.clone(),
                     unknowns: input_unknowns,
                     ..ctx.clone()
@@ -675,12 +725,14 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 let guard_ctx = PrenameCtx {
                     scope,
+                    path: None,
                     names: new_input_names,
                     ..ctx.clone()
                 };
 
                 let body_ctx = PrenameCtx {
                     scope,
+                    path: Some(path),
                     names: new_names.clone(),
                     unknowns: body_unknowns,
                     ..ctx.clone()
@@ -688,6 +740,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 let output_params_ctx = PrenameCtx {
                     scope,
+                    path: None,
                     names: new_names,
                     ..ctx.clone()
                 };
@@ -1070,6 +1123,10 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     e1: Box::new(e1_2),
                     e2: Box::new(Located { loc: e2.loc, value: e2_1 })
                 }
+            },
+            Exp::Outer { id } => {
+                self.scopes.insert(*id, ctx.scope);
+                Exp::Outer { id: *id }
             },
             Exp::Name { name, id } => {
                 self.scopes.insert(*id, ctx.scope);

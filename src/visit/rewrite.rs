@@ -101,8 +101,8 @@ pub trait Rewriter<'a, Ctx>: Sized {
                 Exp::Layout { id, cmds: walk_located_vec!(self, visit_cmd, cmds, ctx) },
             Exp::Record { id, ref tag, ref defs } =>
                 Exp::Record { id, tag: walk_located_box!(self, visit_exp, tag, ctx), defs: walk_located_vec!(self, visit_def, defs, ctx) },
-            Exp::Outer =>
-                Exp::Outer,
+            Exp::Outer { id } =>
+                Exp::Outer { id },
 
             Exp::Union { ref es } =>
                 Exp::Union { es: walk_located_vec!(self, visit_exp, es, ctx) },

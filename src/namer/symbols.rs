@@ -5,6 +5,8 @@ use syntax::trees::Assoc;
 use syntax::trees::CallingConv;
 use syntax::trees::CallingMode;
 use syntax::trees::ParamAttr;
+use syntax::trees::Lit;
+use syntax::trees::Attr;
 
 use std::collections::BTreeMap;
 
@@ -51,6 +53,7 @@ pub struct Env {
     pub imports: Vec<Located<Import>>,
     pub parents: Vec<Scope>,
     pub includes: Vec<Scope>,
+    pub path: Option<Located<StablePath>>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -79,14 +82,15 @@ impl Import {
     }
 }
 
-// TODO
+// A stable path. These can be evaluated at compile time.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Attribute {
-    Prio(usize),
-    Default,
-    Inline,
-    Type(String),
-    Pragma(String),  // the string contains an unevaluated Ivo expression. Should just contain an Exp tree, but don't want to mix trees and symbols.
+pub enum StablePath {
+    Root,
+    Fresh,
+    Unstable,
+    Lit { lit: Lit },
+    Select { outer: Box<Located<StablePath>>, name: Name },
+    Apply { fun: Box<Located<StablePath>>, arg: Box<Located<StablePath>> },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]

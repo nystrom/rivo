@@ -11,6 +11,8 @@
 #![feature(vec_resize_default)]
 #![feature(vec_remove_item)]
 #![feature(nll)]
+#![feature(box_patterns)]
+#![feature(box_syntax)]
 
 
 extern crate term;
