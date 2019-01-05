@@ -1748,7 +1748,39 @@ impl<'a> Parser<'a> {
                         Ok(Exp::Layout { id: self.alloc_node_id(), cmds: cmds })
                     }
                 },
-                Token::Id(_) | Token::Op(_) | Token::Bang | Token::Question | Token::Tick => {
+                Token::Bang => {
+                    self.eat();
+                    match *self.lookahead()? {
+                        // !x is a var, not just a name
+                        Token::Id(_) => {
+                            let id = self.alloc_node_id();
+                            let name = self.parse_name()?;
+                            Ok(Exp::Var { name, id })
+                        },
+                        _ => {
+                            let id = self.alloc_node_id();
+                            let name = Name::Op(Interned::new("!"));
+                            Ok(Exp::Name { name, id })
+                        },
+                    }
+                },
+                Token::Question => {
+                    self.eat();
+                    match *self.lookahead()? {
+                        // ?x is an unknown, not just a name
+                        Token::Id(_) => {
+                            let id = self.alloc_node_id();
+                            let name = self.parse_name()?;
+                            Ok(Exp::Unknown { name, id })
+                        },
+                        _ => {
+                            let id = self.alloc_node_id();
+                            let name = Name::Op(Interned::new("?"));
+                            Ok(Exp::Name { name, id })
+                        },
+                    }
+                },
+                Token::Id(_) | Token::Op(_) | Token::Tick => {
                     let id = self.alloc_node_id();
                     let name = self.parse_name()?;
                     Ok(Exp::Name { name, id })
