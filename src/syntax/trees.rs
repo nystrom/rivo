@@ -133,7 +133,6 @@ pub enum Attr {
     Arrow,
     Assign,
     At,
-    BackArrow,
     Bang,
     Colon,
     Comma,
@@ -181,7 +180,6 @@ pub enum Exp {
     Ascribe { exp: Box<Located<Exp>>, pat: Box<Located<Exp>> },
     Arrow { id: NodeId, arg: Box<Located<Exp>>, ret: Box<Located<Exp>> },
     Assign { lhs: Box<Located<Exp>>, rhs: Box<Located<Exp>> },
-    Generator { lhs: Box<Located<Exp>>, rhs: Box<Located<Exp>> },
     Bind { lhs: Box<Located<Exp>>, rhs: Box<Located<Exp>> },
 
     Select { exp: Box<Located<Exp>>, name: Name },

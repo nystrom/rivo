@@ -250,13 +250,6 @@ impl ToDoc for Exp {
                 .append(Doc::text(":="))
                 .append(Doc::space())
                 .append(show_located_box!(rhs)),
-            Exp::Generator { ref lhs, ref rhs } =>
-                Doc::nil()
-                .append(show_located_box!(lhs))
-                .append(Doc::space())
-                .append(Doc::text("<-"))
-                .append(Doc::space())
-                .append(show_located_box!(rhs)),
             Exp::Bind { ref lhs, ref rhs } =>
                 Doc::nil()
                 .append(show_located_box!(lhs))

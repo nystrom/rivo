@@ -310,7 +310,6 @@ impl<'a> Parser<'a> {
                 Token::Arrow => { self.eat(); Ok(Attr::Arrow) },
                 Token::Assign => { self.eat(); Ok(Attr::Assign) },
                 Token::At => { self.eat(); Ok(Attr::At) },
-                Token::BackArrow => { self.eat(); Ok(Attr::BackArrow) },
                 Token::Bang => { self.eat(); Ok(Attr::Bang) },
                 Token::Colon => { self.eat(); Ok(Attr::Colon) },
                 Token::Comma => { self.eat(); Ok(Attr::Comma) },
@@ -1240,11 +1239,6 @@ impl<'a> Parser<'a> {
                     self.eat();
                     let right = self.parse_exp()?;
                     Ok(Exp::Bind { lhs: Box::new(left), rhs: Box::new(right) })
-                },
-                Token::BackArrow => {
-                    self.eat();
-                    let right = self.parse_exp()?;
-                    Ok(Exp::Generator { lhs: Box::new(left), rhs: Box::new(right) })
                 },
                 Token::Arrow => {
                     self.eat();

@@ -306,16 +306,6 @@ impl<'a> Lexer<'a> {
                     self.read_operator('-')
                 }
             },
-            Some('<') => {
-                self.read_char();
-                if self.peek_char_eq('-') {
-                    self.read_char();
-                    self.locate(Token::BackArrow, 2)
-                }
-                else {
-                    self.read_operator('<')
-                }
-            },
             Some(':') => {
                 self.read_char();
                 if self.peek_char_eq('=') {
@@ -1121,7 +1111,6 @@ impl<'a> Lexer<'a> {
             Token::Arrow => true,
             Token::Assign => true,
             Token::At => true,
-            Token::BackArrow => true,
             Token::Colon => true,
             Token::Comma => true,
             Token::Dot => true,
@@ -1179,7 +1168,6 @@ mod tests {
             , Ok(Token::Arrow)
             , Ok(Token::Assign)
             , Ok(Token::At)
-            , Ok(Token::BackArrow)
             , Ok(Token::Bang)
             , Ok(Token::Colon)
             , Ok(Token::Comma)
@@ -1214,7 +1202,7 @@ mod tests {
             , Ok(Token::Op(String::from("<<")))
             , Ok(Token::Op(String::from("<=")))
             , Ok(Token::Op(String::from("<<<")))
-            , Ok(Token::BackArrow)
+            , Ok(Token::Op(String::from("<-")))
             , Ok(Token::EOF)
         );
     }

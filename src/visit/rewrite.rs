@@ -125,8 +125,6 @@ pub trait Rewriter<'a, Ctx>: Sized {
                 Exp::Arrow { id, arg: walk_located_box!(self, visit_exp, arg, ctx), ret: walk_located_box!(self, visit_exp, ret, ctx) },
             Exp::Assign { ref lhs, ref rhs } =>
                 Exp::Assign { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
-            Exp::Generator { ref lhs, ref rhs } =>
-                Exp::Generator { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
             Exp::Bind { ref lhs, ref rhs } =>
                 Exp::Bind { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
 

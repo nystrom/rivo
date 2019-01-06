@@ -146,20 +146,6 @@ impl<'a> Prenamer<'a> {
                     _ => {},
                 }
             },
-            Exp::Generator { lhs, rhs } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &rhs, defined_names, scope);
-                // Names on the left of a binding are also unknowns, regardless of their case.
-                match **lhs {
-                    Located { ref loc, value: Exp::Name { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
-                    },
-                    Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
-                    },
-                    _ => {},
-                }
-            },
             Exp::Bind { lhs, rhs } => {
                 Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
                 Prenamer::add_unknowns_for_exp(decls, flag, &rhs, defined_names, scope);
@@ -602,7 +588,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 let scope = self.driver.graph.new_env();
                 self.scopes.insert(*id, scope);
-                
+
                 self.driver.graph.set_path(scope, path.clone());
                 self.driver.graph.set_parent(scope, Scope::Global);
 
