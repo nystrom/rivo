@@ -15,6 +15,7 @@ trait Prim = {
   // returns non-zero i32 iff the two arguments are identical values
   // This should never be called directly. Use `Eq` for equality.
   #[native]
+  #[type a -> a -> i32]
   fun identical (_) (_)
 
   // This is the underlying implementation of `with`.
