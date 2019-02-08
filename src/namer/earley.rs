@@ -22,6 +22,9 @@ use namer::graph::EnvIndex;
 
 use std::collections::HashMap;
 
+use trace::trace;
+trace::init_depth_var!();
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Exp(MixfixTree),
@@ -56,9 +59,6 @@ pub(super) struct EarleyBuilder<'a> {
     brackets: Symbol,
     primary: Symbol,
 }
-
-#[allow(non_upper_case_globals)]
-static mut depth: usize = 0;
 
 impl Earley {
     pub fn new(decls: &Vec<Located<Decl>>) -> Earley {

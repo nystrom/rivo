@@ -1,6 +1,5 @@
-#![feature(custom_attribute, plugin)]
-#![plugin(trace)]
-#![cfg_attr(test, plugin(quickcheck_macros))]
+// #![feature(custom_attribute, plugin)]
+// #![cfg_attr(test, plugin(quickcheck_macros))]
 
 #![allow(unused_variables)]
 #![allow(dead_code)]
@@ -38,9 +37,12 @@ extern crate lazy_static;
 #[macro_use]
 extern crate pretty_assertions;
 
-#[cfg(test)]
+// #[cfg(test)]
+// #[macro_use]
+// extern crate quickcheck;
+
 #[macro_use]
-extern crate quickcheck;
+extern crate trace;
 
 pub mod parser;
 pub mod syntax;

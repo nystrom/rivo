@@ -17,9 +17,8 @@ pub mod errors;
 pub mod loader;
 pub mod stats;
 
-#[cfg(debug_assertions)]
-#[allow(non_upper_case_globals)]
-static mut depth: u32 = 0;
+use trace::trace;
+trace::init_depth_var!();
 
 // The interpreter states consists of the states of the bundles.
 // One of the bundles is the current bundle being processed.

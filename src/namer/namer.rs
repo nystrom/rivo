@@ -18,14 +18,16 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use rpds::HashTrieSet;
 
-// TODO: move into own module (or crate)
-#[cfg(debug_assertions)]
-#[allow(non_upper_case_globals)]
-static mut depth: usize = 0;
+use trace::trace;
+trace::init_depth_var!();
 
 #[cfg(debug_assertions)]
 macro_rules! trace {
-    ($($arg:tt)*) => { print!("{1:0$}[!] At {2}:{3}: ", depth, " ", file!(), line!()); println!($($arg)*) };
+    ($($arg:tt)*) => {
+        DEPTH.with(|depth| {
+            print!("{1:0$}[!] At {2}:{3}: ", depth.get(), " ", file!(), line!()); println!($($arg)*)
+        });
+    }
 }
 
 #[cfg(not(debug_assertions))]

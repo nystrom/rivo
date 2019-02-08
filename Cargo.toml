@@ -32,9 +32,9 @@ gearley = "*"
 cfg = "*"
 
 [patch.crates-io]
-trace = { git = "https://github.com/nystrom/trace.git" }
-quickcheck = { git = "https://github.com/nystrom/quickcheck.git" }
-quickcheck_macros = { git = "https://github.com/nystrom/quickcheck.git" }
+trace = { git = "https://github.com/gsingh93/trace.git" }
+# quickcheck = { git = "https://github.com/nystrom/quickcheck.git" }
+# quickcheck_macros = { git = "https://github.com/nystrom/quickcheck.git" }
 
 [dev-dependencies]
 pretty_assertions = "*"

@@ -10,9 +10,8 @@ use visit::rewrite::*;
 
 use std::collections::HashMap;
 
-#[cfg(debug_assertions)]
-#[allow(non_upper_case_globals)]
-static mut depth: u32 = 0;
+use trace::trace;
+trace::init_depth_var!();
 
 pub struct Renamer<'a> {
     pub namer: &'a mut Namer<'a>,

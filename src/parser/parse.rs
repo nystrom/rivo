@@ -10,9 +10,8 @@ use parser::tokens::*;
 use parser::lex::Lexer;
 use parser::lex::LexError;
 
-// #[cfg(debug_assertions)]
-#[allow(non_upper_case_globals)]
-static mut depth: usize = 0;
+use trace::trace;
+trace::init_depth_var!();
 
 // TODO: parse groups of definitions directly rather than building a dummy trait.
 // TODO: rename Trait to Record and add a tag, generate by the parser.

@@ -13,9 +13,8 @@ use driver::bundle::*;
 use std::collections::HashMap;
 use std::collections::BTreeMap;
 
-#[cfg(debug_assertions)]
-#[allow(non_upper_case_globals)]
-static mut depth: u32 = 0;
+use trace::trace;
+trace::init_depth_var!();
 
 // The vectors in this data structure are indexed by the *Index types.
 #[derive(Copy, Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Hash)]

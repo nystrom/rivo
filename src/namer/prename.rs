@@ -13,9 +13,8 @@ use visit::rewrite::*;
 
 use std::collections::HashMap;
 
-#[cfg(debug_assertions)]
-#[allow(non_upper_case_globals)]
-static mut depth: usize = 0;
+use trace::trace;
+trace::init_depth_var!();
 
 #[derive(Clone)]
 pub struct PrenameCtx {
