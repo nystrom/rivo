@@ -244,7 +244,74 @@ impl Earley {
                           .collect();
         result.sort();
         result.dedup();
+        Earley::longest_match(&mut result);
         result
+    }
+
+    // Remove trees which are otherwise identical, but where a prefix name in one tree
+    // is the same but lower arity than in another tree. That is, longest arity wins.
+    // TODO TEST
+    fn longest_match(result: &mut Vec<MixfixTree>) {
+        if result.len() <= 1 {
+            return;
+        }
+
+        fn left_is_same_or_longer(l: &MixfixTree, r: &MixfixTree) -> bool {
+            match (l, r) {
+                (MixfixTree::Apply(box l1, box l2),
+                 MixfixTree::Apply(box r1, box r2)) => {
+                    left_is_same_or_longer(l1, r1) && left_is_same_or_longer(l2, r2)
+                },
+                (MixfixTree::Exp, MixfixTree::Exp) => {
+                    true
+                },
+                (MixfixTree::Name(xl, _), MixfixTree::Name(xr, _)) => {
+                    if xl == xr {
+                        true
+                    }
+                    else {
+                        xl.is_prefix_name() && xr.is_prefix_name() &&
+                        xl.parts().first() == xr.parts().first() &&
+                        xl.parts().len() >= xr.parts().len()
+                    }
+                },
+                _ => {
+                    false
+                },
+            }
+        }
+
+        let mut n = result.len();
+        let mut i = 0;
+
+        while i < n {
+            let mut j = 0;
+
+            while j < n {
+                // println!("i={} j={} n={}", i, j, n);
+
+                if i == j {
+                    j += 1;
+                    continue;
+                }
+
+                let ri = result.get(i).unwrap();
+                let rj = result.get(j).unwrap();
+
+                if left_is_same_or_longer(ri, rj) {
+                    result.remove(j);
+                    n -= 1;
+                    if i > j {
+                        i -= 1;
+                    }
+                }
+                else {
+                    j += 1;
+                }
+            }
+
+            i += 1;
+        }
     }
 
     /// Convert a scope and priority into a nonterminal symbol.
@@ -431,7 +498,6 @@ impl<'a> EarleyBuilder<'a> {
         let current = self.nonterm_name(scope, prio.0);
         let next = self.nonterm_name(scope, prio.0 + 1);
 
-
         match x {
             Name::Op(x) => {
                 vec![self.term_name(Part::Op(x.clone()))]
@@ -456,7 +522,6 @@ impl<'a> EarleyBuilder<'a> {
                     // FIXME: prefix rules too...
                     parts => {
                         println!("parts {:?}", parts);
-
 
                         #[derive(Debug)]
                         enum Sym {
