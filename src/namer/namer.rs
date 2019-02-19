@@ -510,23 +510,22 @@ impl<'a> Namer<'a> {
     #[cfg_attr(debug_assertions, trace(disable(worklist, visited, stack)))]
     fn get_inner_decls(&mut self, name: Name, outer_decls: &Decls, worklist: &mut Worklist, visited: &mut Visited, stack: &Dependencies) -> NamerResult<(bool, Decls)> {
         let mut results = Vec::new();
-
-        let frames = outer_decls.iter().flat_map(|d| {
-            match d {
-                Located { loc, value: Decl::Trait { body, .. } } => body.to_vec(),
-                _ => vec![]
-            }
-        });
-
         let mut all_cached = true;
 
-        for scope in frames {
-            let s = LookupRef { scope: scope.to_here(), name };
-            let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-            results.extend(vs.iter().cloned());
+        for d in outer_decls {
+            match d {
+                Located { loc, value: Decl::Struct { body, supers, .. } } => {
+                    {
+                        let s = LookupRef { scope: body.to_here(), name };
+                        let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
+                        results.extend(vs.iter().cloned());
 
-            if let None = self.cache.lookup_cache.get(&s) {
-                all_cached = false;
+                        if let None = self.cache.lookup_cache.get(&s) {
+                            all_cached = false;
+                        }
+                    }
+                },
+                _ => {},
             }
         }
 
@@ -534,7 +533,7 @@ impl<'a> Namer<'a> {
     }
 
     // HACK
-    // Version of lookup_here_in_scope that only works on Env environments.
+    // Version of lookup_here_in_scope that only works on Env scopes.
     // Called from lookup_in_trees. Avoids loading other bundles which requires
     // borrowing the driver mutably. The assumption is that the root scope of a bundle
     // is always a simple Env.
@@ -744,12 +743,14 @@ impl<'a> Namer<'a> {
     #[cfg_attr(debug_assertions, trace(disable(worklist, visited, stack)))]
     fn lookup_in_env(&mut self, r: &LookupRef, env: Env, name: Name, follow_parents: bool, follow_imports: bool, worklist: &mut Worklist, visited: &mut Visited, stack: &Dependencies) -> NamerResult<(bool, Decls)> {
         let imports = env.imports;
+        let supers = env.supers;
         let parents = env.parents;
         let includes = env.includes;
         let decls = env.decls;
 
         let found_here;
         let found_imports;
+        let found_supers;
         let found_parents;
 
         let mut all_cached = true;
@@ -777,6 +778,7 @@ impl<'a> Namer<'a> {
                 }
             }
 
+
             found_imports = Namer::filter_mixfix(rs, &found_here);
         }
         else {
@@ -785,8 +787,35 @@ impl<'a> Namer<'a> {
 
         trace!("found_imports = {:?}", found_imports);
 
-        if follow_parents && Namer::all_mixfix(&found_here) && Namer::all_mixfix(&found_imports) {
+        // Always look in supers, regardless of follow_parents.
+        if /* follow_parents && */ Namer::all_mixfix(&found_here) && Namer::all_mixfix(&found_imports) {
             let mut rs = Vec::new();
+
+            trace!("supers = {:?}", supers);
+
+            for parent in &supers {
+                let s = LookupRef { scope: *parent, name };
+
+                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
+                rs.extend(vs.iter().cloned());
+
+                if let None = self.cache.lookup_cache.get(&s) {
+                    all_cached = false;
+                }
+            }
+
+            found_supers = Namer::filter_mixfix(Namer::filter_mixfix(rs, &found_here), &found_imports);
+        }
+        else {
+            found_supers = Vec::new();
+        }
+
+        trace!("found_supers = {:?}", found_supers);
+
+        if follow_parents && Namer::all_mixfix(&found_here) && Namer::all_mixfix(&found_imports) && Namer::all_mixfix(&found_supers) {
+            let mut rs = Vec::new();
+
+            trace!("parents = {:?}", parents);
 
             for parent in &parents {
                 if Namer::imports_truncated(&imports, *parent) {
@@ -803,7 +832,7 @@ impl<'a> Namer<'a> {
                 }
             }
 
-            found_parents = Namer::filter_mixfix(Namer::filter_mixfix(rs, &found_here), &found_imports);
+            found_parents = Namer::filter_mixfix(Namer::filter_mixfix(Namer::filter_mixfix(rs, &found_here), &found_imports), &found_supers);
         }
         else {
             found_parents = Vec::new();
@@ -812,7 +841,10 @@ impl<'a> Namer<'a> {
         let mut results = Vec::new();
         results.extend(found_here.iter().cloned());
         results.extend(found_imports.iter().cloned());
+        results.extend(found_supers.iter().cloned());
         results.extend(found_parents.iter().cloned());
+
+        trace!("includes = {:?}", includes);
 
         for include in &includes {
             let scope = if follow_parents && follow_imports {

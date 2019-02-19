@@ -170,7 +170,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
     #[cfg_attr(debug_assertions, trace)]
     fn visit_def(&mut self, e: &'a Def, ctx: &RenamerCtx, loc: &Loc) -> Def {
         match e {
-            Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret } => {
+            Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret, supers } => {
                 // let path = Renamer::mk_path(StablePath::Select { outer: ctx.path, name: *name }, &params);
                 // let child_ctx = RenamerCtx {
                 //     path: path,
@@ -193,19 +193,6 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
     #[cfg_attr(debug_assertions, trace)]
     fn visit_exp(&mut self, e: &'a Exp, ctx: &RenamerCtx, loc: &Loc) -> Exp {
         match e {
-            Exp::Outer { id } => {
-                // Rewrite as the path to the containing scope.
-                if let Some(scope) = self.scopes.get(&id) {
-                    // TODO
-                    let new_node = self.walk_exp(e, ctx, loc);
-                    new_node
-                }
-                else {
-                    self.namer.driver.error(Located::new(loc.clone(), format!("Could not find enclosing path of record. ({})", id)));
-                    let new_node = self.walk_exp(e, ctx, loc);
-                    new_node
-                }
-            }
             // Exp::Within { id, e1, e2 } => {
             //     // TODO: verify that e2 is in the scope of e1, not an enclosing scope.
             //     let new_node = self.walk_exp(e, ctx, loc);

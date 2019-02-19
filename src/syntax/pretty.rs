@@ -136,16 +136,21 @@ impl ToDoc for Def {
                 doc.append(Doc::space())
                    .append(show_located_box!(formula))
             },
-            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret } => {
+            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret, ref supers } => {
                 let doc = match *flag {
                     MixfixFlag::Trait => Doc::text("trait"),
                     MixfixFlag::Fun => Doc::text("fun"),
+                    MixfixFlag::Struct => Doc::text("struct"),
                 };
                 doc.append(Doc::space())
                    .append(name.to_doc())
                    .append(Doc::space())
                    .append(show_located_vec!(params, Doc::space()))
                    .append(show_located_opt!(opt_guard))
+                   .append(Doc::space())
+                   .append(Doc::text("with"))
+                   .append(Doc::space())
+                   .append(show_located_vec!(supers, Doc::text(", ")))
                    .append(Doc::space())
                    .append(Doc::text("="))
                    .append(Doc::space())
@@ -190,19 +195,30 @@ impl ToDoc for Exp {
                 .append(Doc::newline())
                 .append(Doc::text("}")),
             Exp::Record { id, ref tag, ref defs } =>
-                show_located_box!(tag)
+                Doc::text("struct")
                 .append(Doc::space())
+                // .append(show_located_box!(tag))
+                // .append(Doc::space())
                 .append(Doc::text("{"))
                 .append(Doc::newline())
                 .append(show_located_vec!(defs, Doc::text(";").append(Doc::newline())).nest(1))
                 .append(Doc::newline())
                 .append(Doc::text("}")),
-            Exp::Outer { .. } => Doc::text("outer"),
 
-            Exp::Union { ref es } =>
-                show_located_vec!(es, Doc::space().append(Doc::text("with")).append(Doc::space())),
-            Exp::Intersect { ref es } =>
-                show_located_vec!(es, Doc::space().append(Doc::text("@")).append(Doc::space())),
+            Exp::Union { ref e1, ref e2 } =>
+                Doc::nil()
+                .append(show_located_box!(e1))
+                .append(Doc::space())
+                .append(Doc::text("with"))
+                .append(Doc::space())
+                .append(show_located_box!(e2)),
+            Exp::Intersect { ref e1, ref e2 } =>
+                Doc::nil()
+                .append(show_located_box!(e1))
+                .append(Doc::space())
+                .append(Doc::text("@"))
+                .append(Doc::space())
+                .append(show_located_box!(e2)),
 
             Exp::Tuple { ref es } =>
                 Doc::text("(")
@@ -222,20 +238,25 @@ impl ToDoc for Exp {
                 .append(Doc::text("->"))
                 .append(Doc::space())
                 .append(show_located_box!(ret)),
-            Exp::For { id, ref generator, ref body } =>
+            Exp::For { id, ref formula, ref body } =>
                 Doc::text("for")
                 .append(Doc::space())
-                .append(show_located_box!(generator))
+                .append(show_located_box!(formula))
+                .append(Doc::space())
+                .append(show_located_box!(body)),
+            Exp::Let { id, ref formula, ref body } =>
+                Doc::text("for")
+                .append(Doc::space())
+                .append(show_located_box!(formula))
+                .append(Doc::space())
+                .append(show_located_box!(body)),
+            Exp::LetVar { id, ref formula, ref body } =>
+                Doc::text("var")
+                .append(Doc::space())
+                .append(show_located_box!(formula))
                 .append(Doc::space())
                 .append(show_located_box!(body)),
 
-            Exp::Ascribe { ref exp, ref pat } =>
-                Doc::nil()
-                .append(show_located_box!(exp))
-                .append(Doc::space())
-                .append(Doc::text("@"))
-                .append(Doc::space())
-                .append(show_located_box!(pat)),
             Exp::Arrow { id, ref arg, ref ret } =>
                 Doc::nil()
                 .append(show_located_box!(arg))
@@ -257,6 +278,20 @@ impl ToDoc for Exp {
                 .append(Doc::text("="))
                 .append(Doc::space())
                 .append(show_located_box!(rhs)),
+            Exp::Generator { ref lhs, ref rhs } =>
+                Doc::nil()
+                .append(show_located_box!(lhs))
+                .append(Doc::space())
+                .append(Doc::text("<-"))
+                .append(Doc::space())
+                .append(show_located_box!(rhs)),
+            Exp::Where { ref pat, ref guard } =>
+                Doc::nil()
+                .append(show_located_box!(pat))
+                .append(Doc::space())
+                .append(Doc::text("where"))
+                .append(Doc::space())
+                .append(show_located_box!(guard)),
 
             Exp::Select { ref exp, ref name } =>
                 Doc::nil()
@@ -293,6 +328,8 @@ impl ToDoc for Exp {
                 Doc::text("(")
                     .append(show_located_exp_vec!(es, Doc::space()))
                     .append(Doc::text(")")),
+
+            ref e => Doc::text(format!("{:?}", e)),
         }
     }
 }

@@ -53,6 +53,7 @@ pub struct Env {
     pub imports: Vec<Located<Import>>,
     pub parents: Vec<Scope>,
     pub includes: Vec<Scope>,
+    pub supers: Vec<Scope>,
     pub path: Option<Located<StablePath>>,
 }
 
@@ -95,19 +96,20 @@ pub enum StablePath {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Decl {
-    Trait {
+    Struct {
         scope: Scope,
         name: Name,
-        params: Vec<ParamAttr>,   // FIXME merge into one vec.
+        params: Vec<ParamAttr>,
         ret: ParamAttr,
         prio: Prio,
-        body: Vec<Scope>,
+        supers: Vec<Scope>,
+        body: Scope,
     },
 
     Fun {
         scope: Scope,
         name: Name,
-        params: Vec<ParamAttr>,   // FIXME merge into one vec.
+        params: Vec<ParamAttr>,
         ret: ParamAttr,
         prio: Prio,
     },
@@ -134,7 +136,7 @@ pub enum Decl {
 impl Decl {
     pub fn name(&self) -> Name {
         match self {
-            Decl::Trait { name, .. } => name.clone(),
+            Decl::Struct { name, .. } => name.clone(),
             Decl::Fun { name, .. } => name.clone(),
             Decl::Val { name, .. } => name.clone(),
             Decl::Var { name, .. } => name.clone(),
@@ -144,7 +146,7 @@ impl Decl {
 
     pub fn assoc(&self) -> Option<usize> {
         match self {
-            Decl::Trait { params, .. } => {
+            Decl::Struct { params, .. } => {
                 for (i, p) in params.iter().enumerate() {
                     if p.assoc == Assoc::Assoc {
                         return Some(i)
@@ -166,7 +168,7 @@ impl Decl {
 
     pub fn scope(&self) -> Scope {
         match self {
-            Decl::Trait { scope, .. } => *scope,
+            Decl::Struct { scope, .. } => *scope,
             Decl::Fun { scope, .. } => *scope,
             Decl::Val { scope, .. } => *scope,
             Decl::Var { scope, .. } => *scope,
@@ -176,7 +178,7 @@ impl Decl {
 
     pub fn prio(&self) -> Prio {
         match self {
-            Decl::Trait { prio, .. } => *prio,
+            Decl::Struct { prio, .. } => *prio,
             Decl::Fun { prio, .. } => *prio,
             _ => Prio(0),
         }

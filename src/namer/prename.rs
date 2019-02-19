@@ -100,17 +100,15 @@ impl<'a> Prenamer<'a> {
     #[cfg_attr(debug_assertions, trace(disable(ctx)))]
     fn add_unknowns_for_exp(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, e: &Located<Exp>, defined_names: &Vec<Name>, scope: Scope) {
         match &e.value {
-            Exp::Union { es } => {
+            Exp::Union { box e1, box e2 } => {
                 // TODO: we need to verify that all members of the union bind the same unknowns
                 // because we don't know which member will match.
-                for e in es {
-                    Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
-                }
+                Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope);
+                Prenamer::add_unknowns_for_exp(decls, flag, &e2, defined_names, scope);
             },
-            Exp::Intersect { es } => {
-                for e in es {
-                    Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
-                }
+            Exp::Intersect { box e1, box e2 } => {
+                Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope);
+                Prenamer::add_unknowns_for_exp(decls, flag, &e2, defined_names, scope);
             },
             Exp::Tuple { es } => {
                 for e in es {
@@ -122,10 +120,9 @@ impl<'a> Prenamer<'a> {
                     Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
                 }
             },
-            Exp::Ascribe { exp, pat } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &exp, defined_names, scope);
-                // x: t -- t is evaluated in forward mode so should not have unknowns
-                // Prenamer::add_unknowns_for_exp(decls, flag, &pat, defined_names, scope);
+            Exp::Where { pat, guard } => {
+                Prenamer::add_unknowns_for_exp(decls, flag, &pat, defined_names, scope);
+                Prenamer::add_unknowns_for_exp(decls, flag, &guard, defined_names, scope);
             },
             Exp::Arrow { id, arg, ret } => {
                 Prenamer::add_unknowns_for_exp(decls, flag, &arg, defined_names, scope);
@@ -146,6 +143,20 @@ impl<'a> Prenamer<'a> {
                 }
             },
             Exp::Bind { lhs, rhs } => {
+                Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
+                Prenamer::add_unknowns_for_exp(decls, flag, &rhs, defined_names, scope);
+                // Names on the left of a binding are also unknowns, regardless of their case.
+                match **lhs {
+                    Located { ref loc, value: Exp::Name { ref name, .. } } => {
+                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                    },
+                    Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
+                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                    },
+                    _ => {},
+                }
+            },
+            Exp::Generator { lhs, rhs } => {
                 Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
                 Prenamer::add_unknowns_for_exp(decls, flag, &rhs, defined_names, scope);
                 // Names on the left of a binding are also unknowns, regardless of their case.
@@ -426,20 +437,14 @@ impl<'a> Prenamer<'a> {
                 let lookup = self.lookup(id, inner_scope, *name);
                 self.driver.graph.get_scope_of_lookup(lookup)
             }
-            Exp::Union { es } => {
-                match es.as_slice() {
-                    [] => Scope::Empty,
-                    [e] => self.lookup_frame(scope, e),
-                    es => {
-                        let env = self.driver.graph.new_env();
-                        for e in es {
-                            let s = self.lookup_frame(scope, e);
-                            // self.driver.graph.import(env, &Located::new(e.loc, Import::All { path: s }));
-                            self.driver.graph.include(env, s);
-                        }
-                        env.to_here()
-                    },
-                }
+            Exp::Union { box e1, box e2 } => {
+                let env = self.driver.graph.new_env();
+                let s1 = self.lookup_frame(scope, e1);
+                let s2 = self.lookup_frame(scope, e2);
+                // self.driver.graph.import(env, &Located::new(e.loc, Import::All { path: s }));
+                self.driver.graph.include(env, s1);
+                self.driver.graph.include(env, s2);
+                env.to_here()
             },
             e => {
                 // unimplemented!("{:?}", e);
@@ -461,8 +466,6 @@ impl<'a> Prenamer<'a> {
     }
 
     fn get_prio_from_attributes(attrs: &Vec<Located<Attr>>) -> Option<usize> {
-        use num::ToPrimitive;
-
         for attr in attrs {
             match Prenamer::get_prio_from_attribute(attr) {
                 Some(n) => { return Some(n); },
@@ -626,7 +629,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
     fn visit_def(&mut self, s: &'a Def, ctx: &PrenameCtx, loc: &Loc) -> Def {
         match s {
-            Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret } => {
+            Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret, supers } => {
                 let root_path = match &ctx.path {
                     Some(p) => Located::new(*loc, StablePath::Select { outer: box p.clone(), name: *name }),
                     None => Located::new(*loc, StablePath::Unstable),
@@ -676,6 +679,11 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 if let Located { loc, value: Param { pat, attr: ParamAttr { mode: CallingMode::Input, .. } } } = ret {
                     Prenamer::add_unknowns_for_exp(&mut input_unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
+                }
+
+                // Unknowns in the guard are also in scope.
+                if let Some(guard) = opt_guard {
+                    Prenamer::add_unknowns_for_exp(&mut input_unknowns, FormulaFlag::Val, &*guard, &ctx.names, scope);
                 }
 
                 // Collect the unknowns in the body.
@@ -770,6 +778,10 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     }
                 }
 
+                let supers1 = supers.iter().map(|Located { loc, value: e }|
+                    Located { loc: *loc, value: self.visit_exp(&e, &body_ctx, &loc) }
+                ).collect();
+
                 let param_attrs = params.iter().map(|Located { value: Param { attr, .. }, .. }| *attr).collect();
                 let ret_attr = match ret {
                     Located { loc: _, value: Param { attr, .. } } => attr
@@ -777,16 +789,26 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 let prio = ctx.prio;
 
-                let mut inner_frames = vec![];
+                let mut inner_scopes = vec![];
 
                 for param in params {
                     if let Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } = param {
-                        inner_frames.push(self.lookup_frame(scope, e));
+                        inner_scopes.push(self.lookup_frame(scope, e));
                     }
                 }
 
                 if let Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } = ret {
-                    inner_frames.push(self.lookup_frame(scope, e));
+                    inner_scopes.push(self.lookup_frame(scope, e));
+                }
+
+                let mut super_scopes = vec![];
+
+                for e in supers {
+                    let super_scope = self.lookup_frame(scope, e);
+                    super_scopes.push(super_scope);
+                    for inner_scope in &inner_scopes {
+                        self.driver.graph.set_super(*inner_scope, super_scope);
+                    }
                 }
 
                 let decl = match flag {
@@ -803,15 +825,19 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                         }
                     },
                     MixfixFlag::Trait => {
+                        unimplemented!()
+                    },
+                    MixfixFlag::Struct => {
                         Located {
                             loc: *loc,
-                            value: Decl::Trait {
+                            value: Decl::Struct {
                                 scope: ctx.scope,
                                 name: *name,
                                 params: param_attrs,
                                 ret: *ret_attr,
                                 prio,
-                                body: inner_frames,
+                                supers: super_scopes,
+                                body: inner_scopes.first().unwrap_or(&Scope::Empty).clone(),
                             }
                         }
                     },
@@ -839,7 +865,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     }
                 }
 
-                Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, opt_body: opt_body1, params: params1, ret: ret1 }
+                Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, opt_body: opt_body1, params: params1, ret: ret1, supers: supers1 }
             },
             Def::FormulaDef { attrs, flag, formula } => {
                 let mut unknowns = Vec::new();
@@ -946,22 +972,26 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 // Import the other frames into the records in the union.
                 match &new_node {
-                    Exp::Union { es } => {
-                        for (i, ei) in es.iter().enumerate() {
-                            match ei.value {
-                                Exp::Record { id, .. } => {
-                                    if let Some(s) = self.scopes.get(&id) {
-                                        let scope_i = *s; // copy out so we stop borrowing self.
-                                        for (j, ej) in es.iter().enumerate() {
-                                            if i != j {
-                                                let scope_j = self.lookup_frame(scope, ej);
-                                                self.driver.graph.import(scope_i, &Located::new(ej.loc, Import::All { path: scope_j }))
-                                            }
-                                        }
-                                    }
-                                },
-                                _ => {},
-                            }
+                    Exp::Union { box e1, box e2 } => {
+                        match e1.value {
+                            Exp::Record { id, .. } => {
+                                if let Some(s) = self.scopes.get(&id) {
+                                    let scope_1 = *s; // copy out so we stop borrowing self.
+                                    let scope_2 = self.lookup_frame(scope, e2);
+                                    self.driver.graph.import(scope_1, &Located::new(e2.loc, Import::All { path: scope_2 }))
+                                }
+                            },
+                            _ => {},
+                        }
+                        match e2.value {
+                            Exp::Record { id, .. } => {
+                                if let Some(s) = self.scopes.get(&id) {
+                                    let scope_2 = *s; // copy out so we stop borrowing self.
+                                    let scope_1 = self.lookup_frame(scope, e1);
+                                    self.driver.graph.import(scope_2, &Located::new(e1.loc, Import::All { path: scope_1 }))
+                                }
+                            },
+                            _ => {},
                         }
                     },
                     _ => {},
@@ -1010,13 +1040,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 Exp::Lambda { id: *id, opt_guard: opt_guard1, params: params1, ret: ret1 }
             },
-            Exp::For { id, generator, body } => {
+            Exp::For { id, formula, body } => {
                 let scope = self.driver.graph.new_env();
                 self.driver.graph.set_parent(scope, ctx.scope);
                 self.scopes.insert(*id, scope);
 
                 let names = &ctx.names;
-                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Val, &*generator, names, scope);
+                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Val, &*formula, names, scope);
 
                 let mut new_names = names.clone();
 
@@ -1039,9 +1069,75 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     ..child_ctx.clone()
                 };
 
-                let generator1 = Box::new(Located { loc: generator.loc, value: self.visit_exp(&generator.value, &params_ctx, &generator.loc) });
+                let formula1 = Box::new(Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) });
 
-                Exp::For { id: *id, generator: generator1, body: body1 }
+                Exp::For { id: *id, formula: formula1, body: body1 }
+            },
+            Exp::Let { id, formula, body } => {
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, ctx.scope);
+                self.scopes.insert(*id, scope);
+
+                let names = &ctx.names;
+                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Val, &*formula, names, scope);
+
+                let mut new_names = names.clone();
+
+                for decl in &unknowns {
+                    new_names.push(decl.name());
+                    self.driver.graph.declare(scope, decl);
+                }
+
+                let child_ctx = PrenameCtx {
+                    scope,
+                    in_mixfix: false,
+                    names: new_names,
+                    ..ctx.clone()
+                };
+
+                let body1 = Box::new(Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
+
+                let params_ctx = PrenameCtx {
+                    unknowns,
+                    ..child_ctx.clone()
+                };
+
+                let formula1 = Box::new(Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) });
+
+                Exp::Let { id: *id, formula: formula1, body: body1 }
+            },
+            Exp::LetVar { id, formula, body } => {
+                let scope = self.driver.graph.new_env();
+                self.driver.graph.set_parent(scope, ctx.scope);
+                self.scopes.insert(*id, scope);
+
+                let names = &ctx.names;
+                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Var, &*formula, names, scope);
+
+                let mut new_names = names.clone();
+
+                for decl in &unknowns {
+                    new_names.push(decl.name());
+                    self.driver.graph.declare(scope, decl);
+                }
+
+                let child_ctx = PrenameCtx {
+                    scope,
+                    in_mixfix: false,
+                    names: new_names,
+                    ..ctx.clone()
+                };
+
+                let body1 = Box::new(Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
+
+                let params_ctx = PrenameCtx {
+                    unknowns,
+                    ..child_ctx.clone()
+                };
+
+                let formula1 = Box::new(Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) });
+
+                Exp::LetVar { id: *id, formula: formula1, body: body1 }
             },
             Exp::Arrow { id, arg, ret } => {
                 let scope = self.driver.graph.new_env();
@@ -1108,10 +1204,6 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     e1: Box::new(e1_2),
                     e2: Box::new(Located { loc: e2.loc, value: e2_1 })
                 }
-            },
-            Exp::Outer { id } => {
-                self.scopes.insert(*id, ctx.scope);
-                Exp::Outer { id: *id }
             },
             Exp::Name { name, id } => {
                 self.scopes.insert(*id, ctx.scope);

@@ -55,6 +55,13 @@ pub enum Lit {
     Nothing,
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub enum Path {
+    Root,
+    Fresh,
+    Member { parent: Box<Path>, child: Name },
+}
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum FormulaFlag {
     Val,
@@ -65,6 +72,7 @@ pub enum FormulaFlag {
 pub enum MixfixFlag {
     Fun,
     Trait,
+    Struct,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -107,7 +115,14 @@ pub enum Cmd {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Def {
     FormulaDef { attrs: Vec<Located<Attr>>, flag: FormulaFlag, formula: Box<Located<Exp>> },
-    MixfixDef { id: NodeId, attrs: Vec<Located<Attr>>, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, opt_body: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
+
+    // Accept input parameters.
+    // Solve guard formula.
+    // Now matched.
+    // Under a thunk...
+    // Solve body formula.
+    // Evaluate output parameters.
+    MixfixDef { id: NodeId, attrs: Vec<Located<Attr>>, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, opt_body: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param>, supers: Vec<Located<Exp>> },
     ImportDef { opt_path: Option<Box<Located<Exp>>>, selector: Selector },
 }
 
@@ -133,6 +148,7 @@ pub enum Attr {
     Arrow,
     Assign,
     At,
+    Backarrow,
     Bang,
     Colon,
     Comma,
@@ -145,29 +161,40 @@ pub enum Attr {
     For,
     Fun,
     Import,
+    Let,
     Val,
     Var,
     Trait,
-    With,
+    Struct,
     Where,
+    With,
 
     Lit { lit: Lit },
     Name { name: Name },
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct Field {
+    name: Name,
+    value: Located<Exp>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum Exp {
     Layout { id: NodeId, cmds: Vec<Located<Cmd>> },
-
-    Record { id: NodeId, tag: Box<Located<Exp>>, defs: Vec<Located<Def>> },
-
-    // Path of the enclosing trait--rewritten during renaming.
-    Outer { id: NodeId },
+    Record { id: NodeId, tag: Path, defs: Vec<Located<Def>> },
 
     // A with B
-    Union { es: Vec<Located<Exp>> },
+    Union { e1: Box<Located<Exp>>, e2: Box<Located<Exp>> },
     // A @ B
-    Intersect { es: Vec<Located<Exp>> },
+    Intersect { e1: Box<Located<Exp>>, e2: Box<Located<Exp>> },
+
+    // These are used by the cheap renamer.
+    OrElse { e1: Box<Located<Exp>>, e2: Box<Located<Exp>> },
+    TrySelect { exp: Box<Located<Exp>>, name: Name },
+    AnyOf { es: Vec<Located<Exp>> },
+    Fail { message: String },
+    Global,
 
     // These should really be syntactic sugar, but we bake them in
     // mainly to make AST building easier in the parser.
@@ -175,12 +202,15 @@ pub enum Exp {
     List { es: Vec<Located<Exp>> },
 
     Lambda { id: NodeId, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Exp>>, ret: Box<Located<Exp>> },
-    For { id: NodeId, generator: Box<Located<Exp>>, body: Box<Located<Exp>> },
+    For { id: NodeId, formula: Box<Located<Exp>>, body: Box<Located<Exp>> },
+    Let { id: NodeId, formula: Box<Located<Exp>>, body: Box<Located<Exp>> },
+    LetVar { id: NodeId, formula: Box<Located<Exp>>, body: Box<Located<Exp>> },
 
-    Ascribe { exp: Box<Located<Exp>>, pat: Box<Located<Exp>> },
     Arrow { id: NodeId, arg: Box<Located<Exp>>, ret: Box<Located<Exp>> },
     Assign { lhs: Box<Located<Exp>>, rhs: Box<Located<Exp>> },
     Bind { lhs: Box<Located<Exp>>, rhs: Box<Located<Exp>> },
+    Generator { lhs: Box<Located<Exp>>, rhs: Box<Located<Exp>> },
+    Where { pat: Box<Located<Exp>>, guard: Box<Located<Exp>> },
 
     Select { exp: Box<Located<Exp>>, name: Name },
 

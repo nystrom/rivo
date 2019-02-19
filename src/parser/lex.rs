@@ -296,6 +296,16 @@ impl<'a> Lexer<'a> {
                     self.locate(Token::Dot, 1)
                 }
             },
+            Some('<') => {
+                self.read_char();
+                if self.peek_char_eq('-') {
+                    self.read_char();
+                    self.locate(Token::Backarrow, 2)
+                }
+                else {
+                    self.read_operator('<')
+                }
+            },
             Some('-') => {
                 self.read_char();
                 if self.peek_char_eq('>') {
@@ -452,9 +462,11 @@ impl<'a> Lexer<'a> {
         match text.as_str() {
             "_"      => self.locate(Token::Underscore, text.len() as u32),
             "fun"    => self.locate(Token::Fun, text.len() as u32),
+            "struct" => self.locate(Token::Struct, text.len() as u32),
             "trait"  => self.locate(Token::Trait, text.len() as u32),
             "val"    => self.locate(Token::Val, text.len() as u32),
             "var"    => self.locate(Token::Var, text.len() as u32),
+            "let"    => self.locate(Token::Let, text.len() as u32),
             "for"    => self.locate(Token::For, text.len() as u32),
             "with"   => self.locate(Token::With, text.len() as u32),
             "where"  => self.locate(Token::Where, text.len() as u32),
@@ -1100,6 +1112,7 @@ impl<'a> Lexer<'a> {
             Token::Var => false,
             Token::Fun => false,
             Token::Trait => false,
+            Token::Struct => false,
             Token::Import => false,
             Token::For => false,
             _ => ! Lexer::is_infix(t),
@@ -1210,7 +1223,7 @@ mod tests {
     #[test]
     fn test_keywords() {
         assert_tokens!(
-            "_ for fun import val var trait with where"
+            "_ for fun import val var trait struct with where"
             , Ok(Token::Underscore)
             , Ok(Token::For)
             , Ok(Token::Fun)
@@ -1218,6 +1231,7 @@ mod tests {
             , Ok(Token::Val)
             , Ok(Token::Var)
             , Ok(Token::Trait)
+            , Ok(Token::Struct)
             , Ok(Token::With)
             , Ok(Token::Where)
             , Ok(Token::EOF)
@@ -1227,7 +1241,7 @@ mod tests {
     #[test]
     fn test_identifiers_and_keywords() {
         assert_tokens!(
-            "xyzzy foo _1 _ for fun import val var x x0 ⊥ ⊤ trait with"
+            "xyzzy foo _1 _ for fun import val var x x0 ⊥ ⊤ struct trait with"
             , Ok(Token::Id(String::from("xyzzy")))
             , Ok(Token::Id(String::from("foo")))
             , Ok(Token::Id(String::from("_1")))
@@ -1241,6 +1255,7 @@ mod tests {
             , Ok(Token::Id(String::from("x0")))
             , Ok(Token::Id(String::from("⊥")))
             , Ok(Token::Id(String::from("⊤")))
+            , Ok(Token::Struct)
             , Ok(Token::Trait)
             , Ok(Token::With)
             , Ok(Token::EOF)
@@ -1411,7 +1426,7 @@ mod tests {
     fn test_virtual_semis() {
         assert_tokens!(
             r#"
-                trait Foo {
+                trait Foo = struct {
                     fun f (x) -> x
                     fun g (x) -> (x)
                     trait Bar {
@@ -1422,6 +1437,8 @@ mod tests {
             "#
             , Ok(Token::Trait)
             , Ok(Token::Id(String::from("Foo")))
+            , Ok(Token::Eq)
+            , Ok(Token::Struct)
             , Ok(Token::Lc)
             , Ok(Token::Fun)
             , Ok(Token::Id(String::from("f")))

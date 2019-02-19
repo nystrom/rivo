@@ -60,6 +60,7 @@ impl ScopeGraph {
             imports: Vec::new(),
             parents: Vec::new(),
             includes: Vec::new(),
+            supers: Vec::new(),
             path: None,
         });
         Scope::Env(EnvIndex(index))
@@ -174,6 +175,21 @@ impl ScopeGraph {
         }
     }
 
+    pub fn set_super(&mut self, scope: Scope, parent: Scope) {
+        if parent == Scope::Empty {
+            return;
+        }
+        match scope.to_here() {
+            Scope::EnvHere(EnvIndex(index)) => {
+                if let Some(ref mut env) = self.envs.get_mut(index) {
+                    assert_ne!(index, 0, "WTF!");
+                    env.supers.push(parent)
+                }
+            },
+            _ => {},
+        }
+    }
+
     pub fn import(&mut self, scope: Scope, import: &Located<Import>) {
         if import.value.path() == Scope::Empty {
             return;
@@ -195,6 +211,7 @@ impl ScopeGraph {
         match scope.to_here() {
             Scope::EnvHere(EnvIndex(index)) => {
                 if let Some(ref mut env) = self.envs.get_mut(index) {
+                    unimplemented!("includes are deprecated");
                     env.includes.push(include)
                 }
             },

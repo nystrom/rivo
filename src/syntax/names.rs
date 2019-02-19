@@ -27,6 +27,11 @@ impl Interned {
     pub fn new(s: &str) -> Interned {
         Interned(CACHE.lock().unwrap().get_or_intern(s))
     }
+
+    pub fn fresh(prefix: &str) -> Interned {
+        let s = format!("{}'{}", prefix, CACHE.lock().unwrap().len());
+        Interned::new(&s)
+    }
 }
 
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
@@ -37,6 +42,14 @@ pub enum Name {
 }
 
 impl Name {
+    pub fn fresh(prefix: &str) -> Name {
+        Name::Id(Interned::fresh(prefix))
+    }
+
+    pub fn new(s: &str) -> Name {
+        Name::Id(Interned::new(s))
+    }
+
     pub fn parts(&self) -> Vec<Part> {
         match self {
             Name::Id(x) => vec![Part::Id(*x)],
@@ -270,6 +283,26 @@ impl Name {
             Name::Mixfix(_) => true,
             _ => false,
         }
+    }
+}
+
+pub struct FreshNameGenerator {
+    prefix: String,
+    next: usize,
+}
+
+impl FreshNameGenerator {
+    pub fn new(prefix: &str) -> FreshNameGenerator {
+        FreshNameGenerator {
+            prefix: String::from(prefix),
+            next: 0
+        }
+    }
+
+    pub fn fresh(&mut self, prefix: &str) -> Name {
+        let x = Interned::new(&format!("{}'{}'{}", prefix, self.prefix, self.next));
+        self.next += 1;
+        Name::Id(x)
     }
 }
 

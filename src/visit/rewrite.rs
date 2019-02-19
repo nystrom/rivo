@@ -86,8 +86,14 @@ pub trait Rewriter<'a, Ctx>: Sized {
             Def::FormulaDef { ref attrs, ref flag, ref formula } => {
                 Def::FormulaDef { attrs: attrs.clone(), flag: *flag, formula: walk_located_box!(self, visit_exp, formula, ctx) }
             },
-            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret } => {
-                Def::MixfixDef { id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), opt_body: walk_located_opt!(self, visit_exp, opt_body, ctx), params: walk_located_vec!(self, visit_param, params, ctx), ret: walk_located!(self, visit_param, ret, ctx) }
+            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret, ref supers } => {
+                Def::MixfixDef { id, attrs: attrs.clone(), flag: *flag, name: *name,
+                    opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx),
+                    opt_body: walk_located_opt!(self, visit_exp, opt_body, ctx),
+                    params: walk_located_vec!(self, visit_param, params, ctx),
+                    ret: walk_located!(self, visit_param, ret, ctx),
+                    supers: walk_located_vec!(self, visit_exp, supers, ctx)
+                 }
             },
             Def::ImportDef { ref opt_path, ref selector } => {
                 Def::ImportDef { opt_path: walk_located_opt!(self, visit_exp, opt_path, ctx), selector: selector.clone() }
@@ -100,14 +106,21 @@ pub trait Rewriter<'a, Ctx>: Sized {
             Exp::Layout { id, ref cmds } =>
                 Exp::Layout { id, cmds: walk_located_vec!(self, visit_cmd, cmds, ctx) },
             Exp::Record { id, ref tag, ref defs } =>
-                Exp::Record { id, tag: walk_located_box!(self, visit_exp, tag, ctx), defs: walk_located_vec!(self, visit_def, defs, ctx) },
-            Exp::Outer { id } =>
-                Exp::Outer { id },
+                Exp::Record { id,
+                    tag: tag.clone(),
+                    // tag: walk_located_box!(self, visit_exp, tag, ctx),
+                    defs: walk_located_vec!(self, visit_def, defs, ctx) },
 
-            Exp::Union { ref es } =>
-                Exp::Union { es: walk_located_vec!(self, visit_exp, es, ctx) },
-            Exp::Intersect { ref es } =>
-                Exp::Intersect { es: walk_located_vec!(self, visit_exp, es, ctx) },
+            Exp::AnyOf { ref es } =>
+                Exp::AnyOf { es: walk_located_vec!(self, visit_exp, es, ctx) },
+            Exp::TrySelect { ref exp, ref name } =>
+                Exp::TrySelect { exp: walk_located_box!(self, visit_exp, exp, ctx), name: *name },
+            Exp::OrElse { ref e1, ref e2 } =>
+                Exp::OrElse { e1: walk_located_box!(self, visit_exp, e1, ctx), e2: walk_located_box!(self, visit_exp, e2, ctx) },
+            Exp::Fail { ref message } =>
+                Exp::Fail { message: message.clone() },
+            Exp::Global =>
+                Exp::Global,
 
             Exp::Tuple { ref es } =>
                 Exp::Tuple { es: walk_located_vec!(self, visit_exp, es, ctx) },
@@ -116,22 +129,32 @@ pub trait Rewriter<'a, Ctx>: Sized {
 
             Exp::Lambda { id, ref opt_guard, ref params, ref ret } =>
                 Exp::Lambda { id, opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx), params: walk_located_vec!(self, visit_exp, params, ctx), ret: walk_located_box!(self, visit_exp, ret, ctx) },
-            Exp::For { id, ref generator, ref body } =>
-                Exp::For { id, generator: walk_located_box!(self, visit_exp, generator, ctx), body: walk_located_box!(self, visit_exp, body, ctx) },
+            Exp::For { id, ref formula, ref body } =>
+                Exp::For { id, formula: walk_located_box!(self, visit_exp, formula, ctx), body: walk_located_box!(self, visit_exp, body, ctx) },
+            Exp::Let { id, ref formula, ref body } =>
+                Exp::Let { id, formula: walk_located_box!(self, visit_exp, formula, ctx), body: walk_located_box!(self, visit_exp, body, ctx) },
+            Exp::LetVar { id, ref formula, ref body } =>
+                Exp::LetVar { id, formula: walk_located_box!(self, visit_exp, formula, ctx), body: walk_located_box!(self, visit_exp, body, ctx) },
 
-            Exp::Ascribe { ref exp, ref pat } =>
-                Exp::Ascribe { exp: walk_located_box!(self, visit_exp, exp, ctx), pat: walk_located_box!(self, visit_exp, pat, ctx) },
             Exp::Arrow { id, ref arg, ref ret } =>
                 Exp::Arrow { id, arg: walk_located_box!(self, visit_exp, arg, ctx), ret: walk_located_box!(self, visit_exp, ret, ctx) },
             Exp::Assign { ref lhs, ref rhs } =>
                 Exp::Assign { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
             Exp::Bind { ref lhs, ref rhs } =>
                 Exp::Bind { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
+            Exp::Generator { ref lhs, ref rhs } =>
+                Exp::Generator { lhs: walk_located_box!(self, visit_exp, lhs, ctx), rhs: walk_located_box!(self, visit_exp, rhs, ctx) },
+            Exp::Where { ref pat, ref guard } =>
+                Exp::Where { pat: walk_located_box!(self, visit_exp, pat, ctx), guard: walk_located_box!(self, visit_exp, guard, ctx) },
 
             Exp::Select { ref exp, ref name } =>
                 Exp::Select { exp: walk_located_box!(self, visit_exp, exp, ctx), name: *name },
             Exp::Within { id, ref e1, ref e2 } =>
                 Exp::Within { id, e1: walk_located_box!(self, visit_exp, e1, ctx), e2: walk_located_box!(self, visit_exp, e2, ctx) },
+            Exp::Union { ref e1, ref e2 } =>
+                Exp::Union { e1: walk_located_box!(self, visit_exp, e1, ctx), e2: walk_located_box!(self, visit_exp, e2, ctx) },
+            Exp::Intersect { ref e1, ref e2 } =>
+                Exp::Intersect { e1: walk_located_box!(self, visit_exp, e1, ctx), e2: walk_located_box!(self, visit_exp, e2, ctx) },
 
             Exp::Apply { ref fun, ref arg } =>
                 Exp::Apply { fun: walk_located_box!(self, visit_exp, fun, ctx), arg: walk_located_box!(self, visit_exp, arg, ctx) },
