@@ -17,61 +17,49 @@ use std::collections::BTreeMap;
 
 use namer::graph::{LookupIndex, MixfixIndex, EnvIndex};
 
-// need to implement hash for breadcrumbs to work.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum Scope {
-    Empty,
-    Global,
-    Lookup(LookupIndex),   // should be a LookupRef, but LookupRef contains a Scope and we can't have a cyclic data structure
-    Mixfix(MixfixIndex),
-    Env(EnvIndex),
-    EnvHere(EnvIndex), // just like env but we don't search imports or parents
-    EnvWithoutImports(EnvIndex), // just like env but we don't search imports
-}
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Prio(pub usize);
 
-impl Scope {
-    pub fn to_here(&self) -> Scope {
-        match *self {
-            Scope::Env(i) => Scope::EnvHere(i),
-            Scope::EnvWithoutImports(i) => Scope::EnvHere(i),
-            scope => scope,
+impl std::iter::Step for Prio {
+    fn add_one(&self) -> Prio {
+        Prio(self.0+1)
+    }
+    fn sub_one(&self) -> Prio {
+        Prio(self.0-1)
+    }
+    fn add_usize(&self, n: usize) -> Option<Prio> {
+        Some(Prio(self.0+n))
+    }
+    fn steps_between(fst: &Prio, snd: &Prio) -> Option<usize> {
+        if snd.0 >= fst.0 {
+            Some(snd.0 - fst.0)
+        }
+        else {
+            None
         }
     }
-    pub fn without_imports(&self) -> Scope {
-        match *self {
-            Scope::Env(i) => Scope::EnvWithoutImports(i),
-            Scope::EnvWithoutImports(i) => Scope::EnvWithoutImports(i),
-            scope => scope,
-        }
+    fn replace_one(&mut self) -> Prio {
+        self.0 = 1;
+        *self
     }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Env {
-    pub index: EnvIndex, // for easier debugging
-    pub decls: BTreeMap<Name, Vec<Located<Decl>>>,  // FIXME: use a BTreeMap keyed on name.
-    pub imports: Vec<Located<Import>>,
-    pub parents: Vec<Scope>,
-    pub includes: Vec<Scope>,
-    pub supers: Vec<Scope>,
-    pub path: Option<Located<StablePath>>,
+    fn replace_zero(&mut self) -> Prio {
+        self.0 = 0;
+        *self
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Prio(pub usize);
-
-#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Import {
-    All { path: Scope },
-    None { path: Scope },
-    Here { path: Scope },
-    Including { path: Scope, name: Name },
-    Excluding { path: Scope, name: Name },
-    Renaming { path: Scope, name: Name, rename: Name },
+    All { path: Ref },
+    None { path: Ref },
+    Here { path: Ref },
+    Including { path: Ref, name: Name },
+    Excluding { path: Ref, name: Name },
+    Renaming { path: Ref, name: Name, rename: Name },
 }
 
 impl Import {
-    pub fn path(&self) -> Scope {
+    pub fn path(&self) -> Ref {
         match self {
             Import::All { path } => *path,
             Import::None { path } => *path,
@@ -90,37 +78,266 @@ pub enum StablePath {
     Fresh,
     Unstable,
     Lit { lit: Lit },
-    Select { outer: Box<Located<StablePath>>, name: Name },
-    Apply { fun: Box<Located<StablePath>>, arg: Box<Located<StablePath>> },
+    Select { outer: Box<StablePath>, name: Name },
+    Apply { fun: Box<StablePath>, arg: Box<StablePath> },
+}
+
+// The symbol table is in graph.rs
+// and consists of a set of Decl.
+// Each Bundle has its own symbol table.
+// Decls may have references to other decls. These may or may not be resolved.
+// A resolved ref is just a GlobalRef. An unresolved ref requires a lookup/mixfix resolution operation be performed.
+// Each Decl except (Decl::Bundle) has a parent Decl, always a LocalRef.
+// Some Decls have members, always LocalDef.
+// Some Decls have imports, with a unresolved Ref path.
+// Some Decls have supers, a vec of unresolved Ref.
+// The path of a Decl can be computed by following parent links.
+// A GlobalRef refers to a particular Decl, possibly in another Bundle.
+// A LocalRef refers to a particular Decl in the same Bundle.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct GlobalRef {
+    pub bundle: crate::driver::BundleIndex,
+    pub local_ref: LocalRef,
+}
+
+pub type LocalRef = EnvIndex;
+
+impl LocalRef {
+    pub fn to_global_ref(self, bundle: crate::driver::BundleIndex) -> GlobalRef {
+        GlobalRef { bundle, local_ref: self }
+    }
+    pub fn to_ref(self, bundle: crate::driver::BundleIndex) -> Ref {
+        self.to_global_ref(bundle).to_ref()
+    }
+}
+impl GlobalRef {
+    pub fn to_ref(self) -> Ref {
+        Ref::Resolved(self)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Ref {
+    Root,
+    Resolved(GlobalRef),
+    Lookup(LookupIndex),
+    Mixfix(MixfixIndex),
+}
+
+trait Resolver {
+    fn resolve(&self) -> Vec<GlobalRef>;
+}
+
+impl Resolver for Ref {
+    fn resolve(&self) -> Vec<GlobalRef> {
+        match self {
+            Ref::Resolved(r) => vec![*r],
+            Ref::Lookup(idx) => unimplemented!(),
+            Ref::Mixfix(idx) => unimplemented!(),
+            Ref::Root => unimplemented!(),
+        }
+    }
+}
+
+// A lookup of a name traverses from the current scope up and out (and possibly in for imports).
+// We return the set of decls in scope with that name.
+// To get the path of a decl, we just follow parent links.
+
+// Treat a declaration as an Env.
+pub trait DeclEnv {
+    fn parent(&self) -> Option<LocalRef>;
+    fn imports(&self) -> Vec<Located<Import>>;
+    fn supers(&self) -> Vec<Ref>;
+    fn lookup_member(&self, name: Name) -> Vec<LocalRef>;
+    fn path(&self, graph: &crate::namer::graph::ScopeGraph) -> StablePath;
+}
+
+impl DeclEnv for Decl {
+    fn parent(&self) -> Option<LocalRef> {
+        match self {
+            Decl::Root => None,
+            Decl::Bundle { .. } => None, // should be the index of Root, but Root has no index.
+            Decl::Block { parent, .. } => Some(*parent), // should be the index of Root, but Root has no index.
+            Decl::Trait { parent, .. } => Some(*parent),
+            Decl::Fun { parent, .. } => Some(*parent),
+            Decl::Val { parent, .. } => Some(*parent),
+            Decl::Var { parent, .. } => Some(*parent),
+            // Decl::Val { scope: Scope::Env(index), .. } => *index,
+            // Decl::Var { scope: Scope::Env(index), .. } => *index,
+            _ => unimplemented!(),
+        }
+    }
+
+    fn imports(&self) -> Vec<Located<Import>> { unimplemented!() }
+
+    fn supers(&self) -> Vec<Ref> {
+        match self {
+            Decl::Trait { supers, .. } => supers.clone(),
+            _ => vec![],
+        }
+    }
+
+// FIXME: some Decls can be used as Scope and others no.
+// Root should not be a Decl. Indeed we should distinguish them again. Che shit.
+    fn path(&self, graph: &crate::namer::graph::ScopeGraph) -> StablePath {
+        match self {
+            Decl::Root => StablePath::Root,
+            Decl::Bundle { .. } => StablePath::Root,
+            Decl::Trait { parent: parent_index, name, .. } => {
+                let parent = graph.get_env(*parent_index);
+                StablePath::Select {
+                    outer: box parent.path(graph),
+                    name: *name
+                }
+            },
+            Decl::Block { parent: parent_index, .. } => {
+                let parent = graph.get_env(*parent_index);
+                parent.path(graph)
+            },
+            Decl::Fun { parent: parent_index, name, .. } => {
+                let parent = graph.get_env(*parent_index);
+                StablePath::Select {
+                    outer: box parent.path(graph),
+                    name: *name
+                }
+            }
+            Decl::Val { parent: parent_index, name } => {
+                let parent = graph.get_env(*parent_index);
+                StablePath::Select {
+                    outer: box parent.path(graph),
+                    name: *name
+                }
+            },
+            Decl::Var { parent: parent_index, name } => {
+                let parent = graph.get_env(*parent_index);
+                StablePath::Select {
+                    outer: box parent.path(graph),
+                    name: *name
+                }
+            },
+            Decl::MixfixPart { .. } => StablePath::Unstable, // unreachable!(),
+        }
+    }
+
+    fn lookup_member(&self, name: Name) -> Vec<LocalRef> {
+        match self {
+            Decl::Bundle { members, .. } => {
+                match members.get(&name) {
+                    Some(lrefs) => lrefs.clone(),
+                    None => vec![],
+                }
+            },
+            Decl::Block { members, .. } => {
+                match members.get(&name) {
+                    Some(lrefs) => lrefs.clone(),
+                    None => vec![],
+                }
+            },
+            Decl::Trait { members, .. } => {
+                match members.get(&name) {
+                    Some(lrefs) => lrefs.clone(),
+                    None => vec![],
+                }
+            },
+            _ => vec![],
+        }
+    }
+}
+
+impl Decl {
+    pub fn new_bundle(index: crate::driver::BundleIndex) -> Decl {
+        Decl::Bundle {
+            index: index,
+            imports: vec![],
+            members: BTreeMap::new(),
+        }
+    }
+    pub fn new_trait(parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>) -> Decl {
+        Decl::Trait {
+            parent: parent,
+            name: name,
+            prio: prio,
+            params: params,
+            supers: vec![],
+            imports: vec![],
+            members: BTreeMap::new(),
+        }
+    }
+    pub fn new_fun(parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>, ret: ParamAttr) -> Decl {
+        Decl::Fun {
+            parent: parent,
+            name: name,
+            prio: prio,
+            params: params,
+            ret: ret,
+        }
+    }
+    pub fn new_block(parent: LocalRef) -> Decl {
+        Decl::Block {
+            parent: parent,
+            imports: vec![],
+            members: BTreeMap::new(),
+        }
+    }
+    pub fn new_val(parent: LocalRef, name: Name) -> Decl {
+        Decl::Val {
+            parent: parent,
+            name: name
+        }
+    }
+    fn new_var(parent: LocalRef, name: Name) -> Decl {
+        Decl::Var {
+            parent: parent,
+            name: name
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Decl {
-    Struct {
-        scope: Scope,
+    Root, // This is just used for imports.
+
+    // Members are anything but Bundle or Root.
+    // Because of overloading, a name can map to multiple definitions (even of different kinds).
+    Bundle {
+        index: crate::driver::BundleIndex,
+        imports: Vec<Located<Import>>,
+        members: BTreeMap<Name, Vec<LocalRef>>,
+    },
+
+    Trait {
+        parent: LocalRef,
         name: Name,
-        params: Vec<ParamAttr>,
-        ret: ParamAttr,
         prio: Prio,
-        supers: Vec<Scope>,
-        body: Scope,
+        params: Vec<ParamAttr>,
+        supers: Vec<Ref>,
+        imports: Vec<Located<Import>>,
+        members: BTreeMap<Name, Vec<LocalRef>>,
+    },
+
+    // Represents the body of a function.
+    Block {
+        parent: LocalRef,
+        imports: Vec<Located<Import>>,
+        members: BTreeMap<Name, Vec<LocalRef>>,
     },
 
     Fun {
-        scope: Scope,
+        parent: LocalRef,
         name: Name,
+        prio: Prio,
         params: Vec<ParamAttr>,
         ret: ParamAttr,
-        prio: Prio,
     },
 
     Val {
-        scope: Scope,
+        parent: LocalRef,
         name: Name,
     },
 
     Var {
-        scope: Scope,
+        parent: LocalRef,
         name: Name,
     },
 
@@ -128,7 +345,7 @@ pub enum Decl {
         name: Name,
         index: usize,
         full: Name,
-        orig: Box<Decl>
+        orig: LocalRef,
     },
 }
 
@@ -136,17 +353,18 @@ pub enum Decl {
 impl Decl {
     pub fn name(&self) -> Name {
         match self {
-            Decl::Struct { name, .. } => name.clone(),
+            Decl::Trait { name, .. } => name.clone(),
             Decl::Fun { name, .. } => name.clone(),
             Decl::Val { name, .. } => name.clone(),
             Decl::Var { name, .. } => name.clone(),
             Decl::MixfixPart { name, .. } => name.clone(),
+            _ => unimplemented!(),
         }
     }
 
     pub fn assoc(&self) -> Option<usize> {
         match self {
-            Decl::Struct { params, .. } => {
+            Decl::Trait { params, .. } => {
                 for (i, p) in params.iter().enumerate() {
                     if p.assoc == Assoc::Assoc {
                         return Some(i)
@@ -166,19 +384,9 @@ impl Decl {
         None
     }
 
-    pub fn scope(&self) -> Scope {
-        match self {
-            Decl::Struct { scope, .. } => *scope,
-            Decl::Fun { scope, .. } => *scope,
-            Decl::Val { scope, .. } => *scope,
-            Decl::Var { scope, .. } => *scope,
-            _ => Scope::Empty,
-        }
-    }
-
     pub fn prio(&self) -> Prio {
         match self {
-            Decl::Struct { prio, .. } => *prio,
+            Decl::Trait { prio, .. } => *prio,
             Decl::Fun { prio, .. } => *prio,
             _ => Prio(0),
         }
@@ -186,15 +394,33 @@ impl Decl {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct LookupRef {
-    pub scope: Scope,
-    pub name: Name,
+pub enum LookupRef {
+    // Lookup name starting in scope and following supers, imports, and parents.
+    From { scope: LocalRef, name: Name, follow_imports: bool },
+    // Lookup name as a member of the given scope or its supers, but not its imports or parents.
+    Within { scope: Ref, name: Name },
 }
 
 impl LookupRef {
-    pub fn new(scope: Scope, name: Name) -> LookupRef {
-        LookupRef {
-            scope, name
+    pub fn new(scope: LocalRef, name: Name, follow_imports: bool) -> LookupRef {
+        LookupRef::From {
+            scope,
+            name,
+            follow_imports
+        }
+    }
+
+    pub fn as_member(scope: Ref, name: Name) -> LookupRef {
+        LookupRef::Within {
+            scope,
+            name
+        }
+    }
+
+    pub fn name(&self) -> Name {
+        match self {
+            LookupRef::From { name, .. } => *name,
+            LookupRef::Within { name, .. } => *name,
         }
     }
 }
@@ -209,9 +435,9 @@ pub struct MixfixPart {
     pub name_ref: Option<LookupIndex>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MixfixTree {
-    Name(Name, Vec<Located<Decl>>),
+    Name(Name, Vec<GlobalRef>), // store the grefs and the decls in the name to avoid lookups. FIXME: borrow the decl to avoid cloning.
     Apply(Box<MixfixTree>, Box<MixfixTree>),
     Exp,
 }
@@ -277,7 +503,7 @@ impl MixfixTree {
     pub fn make_call(e: MixfixTree, es: &[MixfixTree]) -> MixfixTree {
         if let Some((arg, args)) = es.split_first() {
             MixfixTree::make_call(
-                MixfixTree::Apply(Box::new(e), Box::new(arg.clone())),
+                MixfixTree::Apply(box e, box arg.clone()),
                 args)
         }
         else {

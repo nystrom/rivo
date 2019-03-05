@@ -86,13 +86,20 @@ pub trait Rewriter<'a, Ctx>: Sized {
             Def::FormulaDef { ref attrs, ref flag, ref formula } => {
                 Def::FormulaDef { attrs: attrs.clone(), flag: *flag, formula: walk_located_box!(self, visit_exp, formula, ctx) }
             },
-            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret, ref supers } => {
-                Def::MixfixDef { id, attrs: attrs.clone(), flag: *flag, name: *name,
+            Def::TraitDef { id, ref attrs, ref name, ref opt_guard, ref params, ref supers, ref defs } => {
+                Def::TraitDef { id, attrs: attrs.clone(), name: *name,
+                    opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx),
+                    params: walk_located_vec!(self, visit_param, params, ctx),
+                    supers: walk_located_vec!(self, visit_exp, supers, ctx),
+                    defs: walk_located_vec!(self, visit_def, defs, ctx),
+                 }
+            },
+            Def::FunDef { id, ref attrs, ref name, ref opt_guard, ref opt_body, ref params, ref ret } => {
+                Def::FunDef { id, attrs: attrs.clone(), name: *name,
                     opt_guard: walk_located_opt!(self, visit_exp, opt_guard, ctx),
                     opt_body: walk_located_opt!(self, visit_exp, opt_body, ctx),
                     params: walk_located_vec!(self, visit_param, params, ctx),
                     ret: walk_located!(self, visit_param, ret, ctx),
-                    supers: walk_located_vec!(self, visit_exp, supers, ctx)
                  }
             },
             Def::ImportDef { ref opt_path, ref selector } => {
@@ -105,11 +112,6 @@ pub trait Rewriter<'a, Ctx>: Sized {
         match *s {
             Exp::Layout { id, ref cmds } =>
                 Exp::Layout { id, cmds: walk_located_vec!(self, visit_cmd, cmds, ctx) },
-            Exp::Record { id, ref tag, ref defs } =>
-                Exp::Record { id,
-                    tag: tag.clone(),
-                    // tag: walk_located_box!(self, visit_exp, tag, ctx),
-                    defs: walk_located_vec!(self, visit_def, defs, ctx) },
 
             Exp::AnyOf { ref es } =>
                 Exp::AnyOf { es: walk_located_vec!(self, visit_exp, es, ctx) },

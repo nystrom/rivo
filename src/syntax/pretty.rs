@@ -136,13 +136,9 @@ impl ToDoc for Def {
                 doc.append(Doc::space())
                    .append(show_located_box!(formula))
             },
-            Def::MixfixDef { id, ref attrs, ref flag, ref name, ref opt_guard, ref opt_body, ref params, ref ret, ref supers } => {
-                let doc = match *flag {
-                    MixfixFlag::Trait => Doc::text("trait"),
-                    MixfixFlag::Fun => Doc::text("fun"),
-                    MixfixFlag::Struct => Doc::text("struct"),
-                };
-                doc.append(Doc::space())
+            Def::TraitDef { id, ref attrs, ref name, ref opt_guard, ref params, ref supers, ref defs } => {
+                Doc::text("trait")
+                   .append(Doc::space())
                    .append(name.to_doc())
                    .append(Doc::space())
                    .append(show_located_vec!(params, Doc::space()))
@@ -151,6 +147,22 @@ impl ToDoc for Def {
                    .append(Doc::text("with"))
                    .append(Doc::space())
                    .append(show_located_vec!(supers, Doc::text(", ")))
+                   .append(Doc::space())
+                   .append(Doc::text("="))
+                   .append(Doc::space())
+                   .append(Doc::text("{"))
+                   .append(Doc::newline())
+                   .append(show_located_vec!(defs, Doc::text(";").append(Doc::newline())).nest(1))
+                   .append(Doc::newline())
+                   .append(Doc::text("}"))
+            },
+            Def::FunDef { id, ref attrs, ref name, ref opt_guard, ref opt_body, ref params, ref ret } => {
+                Doc::text("fun")
+                   .append(Doc::space())
+                   .append(name.to_doc())
+                   .append(Doc::space())
+                   .append(show_located_vec!(params, Doc::space()))
+                   .append(show_located_opt!(opt_guard))
                    .append(Doc::space())
                    .append(Doc::text("="))
                    .append(Doc::space())
@@ -192,16 +204,6 @@ impl ToDoc for Exp {
                 Doc::text("{")
                 .append(Doc::newline())
                 .append(show_located_vec!(cmds, Doc::text(";").append(Doc::newline())).nest(1))
-                .append(Doc::newline())
-                .append(Doc::text("}")),
-            Exp::Record { id, ref tag, ref defs } =>
-                Doc::text("struct")
-                .append(Doc::space())
-                // .append(show_located_box!(tag))
-                // .append(Doc::space())
-                .append(Doc::text("{"))
-                .append(Doc::newline())
-                .append(show_located_vec!(defs, Doc::text(";").append(Doc::newline())).nest(1))
                 .append(Doc::newline())
                 .append(Doc::text("}")),
 

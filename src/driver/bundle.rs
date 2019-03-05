@@ -5,8 +5,7 @@ use std::collections::HashMap;
 
 use namer::graph::ScopeGraph;
 use namer::graph::{LookupIndex, MixfixIndex, EnvIndex};
-use namer::symbols::Scope;
-use namer::symbols::Env;
+use namer::symbols::LocalRef;
 
 use super::loader::Input;
 
@@ -16,12 +15,12 @@ pub enum Bundle {
     Read { source: Source, input: Input },
     Parsed { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root> },
     Prenamed { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>,
-        scopes: HashMap<NodeId, Scope>,
+        scopes: HashMap<NodeId, LocalRef>,
         lookups: HashMap<NodeId, LookupIndex>,
         mixfixes: HashMap<NodeId, MixfixIndex>,
     },
-    Named { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>, scopes: HashMap<NodeId, Scope> },
-    Core { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, root_scope: Scope }
+    Named { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, tree: Located<Root>, scopes: HashMap<NodeId, LocalRef> },
+    Core { source: Source, line_map: LineMap, node_id_generator: NodeIdGenerator, root_scope: LocalRef }
 }
 
 impl Bundle {

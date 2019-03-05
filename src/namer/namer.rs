@@ -1,5 +1,3 @@
-// ScopeGraph maintains the scope graph.
-
 use syntax::loc::*;
 use syntax::names::*;
 use syntax::trees;
@@ -7,7 +5,6 @@ use syntax::trees;
 use super::symbols::*;
 use super::graph::*;
 use super::earley::*;
-use super::worklist::Worklist;
 
 use driver;
 use driver::*;
@@ -16,7 +13,9 @@ use driver::bundle::*;
 use std::collections::VecDeque;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::BTreeMap;
 use rpds::HashTrieSet;
+use std::hash::Hash;
 
 use trace::trace;
 trace::init_depth_var!();
@@ -36,136 +35,628 @@ macro_rules! trace {
 }
 
 type Trees = Vec<MixfixTree>;
-type Decls = Vec<Located<Decl>>;
-type LookupCache = HashMap<LookupRef, Decls>;
-type TreeCache = HashMap<MixfixRef, Trees>;
+type GlobalRefs = Vec<GlobalRef>;
 
 type NamerResult<T> = Result<T, Located<String>>;
-
-// internal cache
-#[derive(Debug)]
-pub struct Cache<'a> {
-    pub lookup_cache: &'a mut LookupCache,
-    pub tree_cache: &'a mut TreeCache,
-}
 
 // TODO: make driver a trait for loading files.
 pub struct Namer<'a> {
     pub driver: &'a mut driver::Driver,
-    pub cache: &'a mut Cache<'a>,
+    cache: LookupState,
 }
 
-type Visited = LookupCache;
-type Dependencies = HashTrieSet<LookupRef>;
+impl<'a> Namer<'a> {
+    pub fn new(driver: &'a mut driver::Driver) -> Namer<'a> {
+        Namer {
+            driver,
+            cache: LookupState {
+                in_cycle: false,
+                changed: false,
+                ready: false,
+
+                import_stack: Vec::new(),
+
+                memo: HashMap::new(),
+                computed: HashSet::new(),
+                stack: Vec::new(),
+            },
+        }
+    }
+}
+
+// This should be made more generic, but we'll just do it like there here.
+#[derive(Debug)]
+struct LookupState {
+    in_cycle: bool,
+    changed: bool,
+    ready: bool,
+
+    import_stack: Vec<LocalRef>,
+
+    memo: HashMap<Attr, Output>,
+    computed: HashSet<Attr>,
+    stack: Vec<Attr>,
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+enum Attr {
+    Lookup(LookupRef),
+    Mixfix(MixfixRef),
+}
+
+// TODO: we should use an associated type here I guess.
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+enum Output {
+    Lookup(GlobalRefs),
+    Mixfix(Trees),
+}
 
 impl<'a> Namer<'a> {
-    // The general naming strategy is rather complicated.
-    // To lookup a name in an environment, we look:
-    // - in the current environment
-    // - in any the imported environments
-    // - in any parent environments
-    // - in any included environments
-    // The main complications are imports and includes, which can be mutually recursive.
-    // Thus, we keep looking until we hit a fixpoint in the lookup.
+    fn has_been_computed(&self, a: &Attr) -> bool {
+        self.cache.computed.contains(a)
+    }
 
-    // Each time we traverse an "edge" of the scope graph, we check the previous value computed
-    // for that edge. If the new value is different from the previous value, we add the edge
-    // to a worklist to recompute it. When the worklist is empty, we stop.
-
-    // If we hit an cycle in the graph, we add the node to the worklist.
+    fn get_current_value(&self, r: &Attr) -> Output {
+        match self.cache.memo.get(r) {
+            Some(output) => output.clone(),
+            None => {
+                match r {
+                    Attr::Lookup(_) => Output::Lookup(vec![]),
+                    Attr::Mixfix(_) => Output::Mixfix(vec![]),
+                }
+            }
+        }
+    }
 
     #[cfg_attr(debug_assertions, trace)]
-    pub fn lookup(&mut self, r: &LookupRef) -> NamerResult<Decls> {
-        if let Some(results) = self.cache.lookup_cache.get(r) {
-            trace!("lookup {:?} cached", r);
-            self.driver.stats.accum("root lookup_cache hit", 1);
-            return Ok(results.clone());
-        }
+    pub fn do_init_lookup(&mut self, r: &LookupRef) -> NamerResult<GlobalRefs> {
+        self.driver.stats.accum("do_init_lookup call", 1);
 
-        // Stats
         let timer = self.driver.stats.start_timer();
-        let mut iters = 0;
 
-        let mut worklist = Worklist::new();
-        worklist.push_back(r.clone());
+        // This puts the result in the cache.
+        let grefs = self.do_lookup(r);
 
-        let mut results = Vec::new();
-        let mut visited = HashMap::new();
+        self.driver.stats.end_timer("do_init_lookup time", timer);
+        self.driver.stats.accum("do_init_lookup result size", grefs.len() as u64);
 
-        while let Some(r) = worklist.pop_front() {
-            trace!("lookup loop {:?}", r);
-            iters += 1;
-            worklist.reset_changed();
-            results = self.try_lookup_ref(r, &mut worklist, &mut visited, &HashTrieSet::new())?;
+        Ok(grefs)
+    }
+
+    #[cfg_attr(debug_assertions, trace)]
+    pub fn do_init_mixfix(&mut self, r: &MixfixRef) -> NamerResult<Trees> {
+        self.driver.stats.accum("do_init_lookup call", 1);
+
+        let timer = self.driver.stats.start_timer();
+
+        // This puts the result in the cache.
+        let trees = self.do_mixfix(r);
+
+        self.driver.stats.end_timer("do_init_mixfix time", timer);
+        self.driver.stats.accum("do_init_mixfix result size", trees.len() as u64);
+
+        Ok(trees)
+    }
+
+    #[cfg_attr(debug_assertions, trace(disable(state)))]
+    fn do_lookup(&mut self, t: &LookupRef) -> GlobalRefs {
+        match self.do_attr(&Attr::Lookup(*t)) {
+            Output::Lookup(grefs) => grefs,
+            _ => vec![]
+        }
+    }
+
+    #[cfg_attr(debug_assertions, trace(disable(state)))]
+    fn do_mixfix(&mut self, t: &MixfixRef) -> Trees {
+        match self.do_attr(&Attr::Mixfix(t.clone())) {
+            Output::Mixfix(trees) => trees,
+            _ => vec![]
+        }
+    }
+
+    fn compute(&mut self, t: &Attr) -> Output {
+        match t {
+            Attr::Lookup(lookup) => Output::Lookup(self.compute_lookup(lookup)),
+            Attr::Mixfix(mixfix) => Output::Mixfix(self.compute_mixfix(mixfix)),
+        }
+    }
+
+    fn do_attr(&mut self, t: &Attr) -> Output {
+        self.driver.stats.accum("do_attr", 1);
+
+        if self.has_been_computed(t) {
+            trace!("cache hit");
+            self.driver.stats.accum("do_attr hit", 1);
+            // We have previously computed this attribute occurrence so fetch it from the cache.
+            return self.get_current_value(t);
         }
 
-        // Update the cache with the visited nodes.
-        // This might not be needed...
-        self.cache.lookup_cache.extend(visited.drain());
-
-        if iters > 10 {
-            println!("iters for {:?} = {}", r, iters);
-            println!("time for {:?} = {} ms", r, timer.elapsed().as_millis());
+        if self.cache.stack.contains(t) {
+            trace!("cycle found, returning cached value");
+            // If the attr is on the stack, just return the cached value.
+            // This avoids infinite loops.
+            return self.get_current_value(t);
         }
 
-        self.driver.stats.end_timer("lookup time", timer);
-        self.driver.stats.accum("lookup loop iters", iters);
+        // Looking up in root should not trigger any recursive lookups (especially cycles).
+        // So, just cache the result.
+        let is_leaf = match t {
+            Attr::Lookup(LookupRef::Within { scope: Ref::Root, name }) => true,
+            _ => false,
+        };
 
-        Ok(results)
+        if false && is_leaf {
+            trace!("leaf node");
+            self.cache.stack.push(t.clone());
+
+            let prev = self.get_current_value(t);
+            let next = self.compute(t);
+
+            self.cache.stack.pop();
+
+            if prev != next {
+                trace!("{:?} changed {:?} --> {:?}", t, prev, next);
+                self.cache.changed = true;
+                self.cache.memo.insert(t.clone(), next.clone());
+            }
+
+
+            self.cache.computed.insert(t.clone());
+
+            return next;
+        }
+
+        if ! self.cache.in_cycle {
+            trace!("starting cycle");
+
+            assert_eq!(self.cache.stack, vec![]);
+
+            // This is the first evaluation of a cyclic attribute.
+            // Enter the fixed point computation.
+            self.cache.in_cycle = true;
+            self.cache.changed = true;
+
+            self.cache.stack.push(t.clone());
+
+            while self.cache.changed {
+                trace!("looping cycle");
+
+                self.cache.changed = false;
+
+                let prev = self.get_current_value(t);
+                let next = self.compute(t);
+
+                if prev != next {
+                    trace!("{:?} changed {:?} --> {:?}", t, prev, next);
+                    self.cache.changed = true;
+                    self.cache.memo.insert(t.clone(), next);
+                }
+            }
+
+            trace!("exiting cycle");
+
+            // Leave the fixed point computation.
+
+            // Mark the attribute completed.
+            self.cache.computed.insert(t.clone());
+
+            // All the values in the component rooted at t should also be computed,
+            // but not yet cached. As an optimization, mark them completed now.
+            trace!("running ready pass");
+
+            self.cache.ready = true;
+
+            let prev = self.get_current_value(t);
+            let next = self.compute(t);
+            assert_eq!(prev, next);
+
+            self.cache.ready = false;
+
+            self.cache.stack.pop();
+            self.cache.in_cycle = false;
+
+            trace!("ending ready pass");
+
+            return next;
+        }
+
+        assert!(self.cache.in_cycle);
+
+        // We have finished a fixed point computation and we're just caching the values on the last pass.
+        if self.cache.ready {
+            self.cache.stack.push(t.clone());
+
+            let prev = self.get_current_value(t);
+
+            // calling compute to traverse the graph, not to actually compute the value.
+            // we SHOULD just save the SCC in a buffer and iterate from the caller.
+            let next = self.compute(t);
+
+            self.cache.stack.pop();
+
+            assert_eq!(prev, next);
+            self.cache.computed.insert(t.clone());
+
+            return next;
+        }
+
+        // This node is not on the stack and we're in the middle of a fixed point computation (possibly).
+
+        self.cache.stack.push(t.clone());
+
+        let prev = self.get_current_value(t);
+        let next = self.compute(t);
+
+        self.cache.stack.pop();
+
+        if prev != next {
+            self.cache.memo.insert(t.clone(), next.clone());
+            trace!("{:?} changed {:?} --> {:?}", t, prev, next);
+            self.cache.changed = true;
+        }
+
+        next
+    }
+
+    #[cfg_attr(debug_assertions, trace(disable(state)))]
+    fn compute_lookup(&mut self, r: &LookupRef) -> GlobalRefs {
+        trace!("import_stack = {:?}", self.cache.import_stack);
+
+        let bundle = self.driver.current_bundle.unwrap();
+
+        match r {
+            LookupRef::From { scope, name, follow_imports } => {
+                // If we're processing an import (or super) into scope,
+                // we should skip the imports (and supers) to avoid
+                // an infinite loop.
+                let importing_here = false && self.cache.import_stack.contains(scope);
+
+                // clone to shutup borrow checker.
+                // we don't mutate the Decl so should be ok.
+                let d = self.driver.graph.get_env(*scope).clone();
+
+                match &d.value {
+                    Decl::Root => {
+                        // I think this doesn't happen.
+                        let s = LookupRef::Within { scope: Ref::Root, name: *name };
+                        self.do_lookup(&s)
+                    },
+                    Decl::Block { parent, imports, members, .. } => {
+                        let mut found_here = vec![];
+                        let mut found_imports = vec![];
+                        let mut found_parent = vec![];
+
+                        if let Some(lrefs) = members.get(name) {
+                            for lref in lrefs {
+                                found_here.push(lref.to_global_ref(bundle));
+                            }
+                        }
+
+                        if self.all_mixfix(&found_here) {
+                            if ! importing_here && *follow_imports {
+                                self.cache.import_stack.push(*scope);
+
+                                let paths = Namer::import_paths(imports, *name);
+                                for s in paths {
+                                    let mut ws = self.do_lookup(&s);
+                                    found_imports.append(&mut ws);
+                                }
+
+                                self.cache.import_stack.pop();
+                            }
+
+                            if self.all_mixfix(&found_imports) {
+                                let p = LookupRef::new(*parent, *name, true);
+                                found_parent = self.do_lookup(&p);
+                            }
+                        }
+
+                        self.filter_mixfix(&mut found_imports, &found_here);
+                        self.filter_mixfix(&mut found_parent, &found_here);
+                        self.filter_mixfix(&mut found_parent, &found_imports);
+
+                        trace!("found_here = {:?}", &found_here);
+                        trace!("found_imports = {:?}", &found_imports);
+                        trace!("found_parent = {:?}", &found_parent);
+
+                        let mut results = vec![];
+                        results.extend(found_here.iter().cloned());
+                        results.extend(found_imports.iter().cloned());
+                        results.extend(found_parent.iter().cloned());
+                        results.sort();
+                        results.dedup();
+                        results
+                    },
+                    Decl::Bundle { imports, members, .. } => {
+                        let mut found_here = vec![];
+                        let mut found_imports = vec![];
+
+                        if let Some(lrefs) = members.get(name) {
+                            for lref in lrefs {
+                                found_here.push(lref.to_global_ref(bundle));
+                            }
+                        }
+
+                        if ! importing_here && *follow_imports {
+                            if self.all_mixfix(&found_here) {
+                                self.cache.import_stack.push(*scope);
+
+                                let paths = Namer::import_paths(imports, *name);
+                                for s in paths {
+                                    let mut ws = self.do_lookup(&s);
+                                    found_imports.append(&mut ws);
+                                }
+
+                                self.cache.import_stack.pop();
+                            }
+                        }
+
+                        self.filter_mixfix(&mut found_imports, &found_here);
+
+                        trace!("found_here = {:?}", &found_here);
+                        trace!("found_imports = {:?}", &found_imports);
+
+                        let mut results = vec![];
+                        results.extend(found_here.iter().cloned());
+                        results.extend(found_imports.iter().cloned());
+                        results.sort();
+                        results.dedup();
+                        results
+                    }
+                    Decl::Trait { parent, imports, supers, members, .. } => {
+                        let mut found_here = vec![];
+                        let mut found_imports = vec![];
+                        let mut found_supers = vec![];
+                        let mut found_parent = vec![];
+
+                        if let Some(lrefs) = members.get(name) {
+                            for lref in lrefs {
+                                found_here.push(lref.to_global_ref(bundle));
+                            }
+                        }
+
+                        if self.all_mixfix(&found_here) {
+                            if ! importing_here && *follow_imports {
+                                self.cache.import_stack.push(*scope);
+
+                                let paths = Namer::import_paths(imports, *name);
+                                for s in paths {
+                                    let mut ws = self.do_lookup(&s);
+                                    found_imports.append(&mut ws);
+                                }
+
+                                self.cache.import_stack.pop();
+                            }
+
+                            if self.all_mixfix(&found_imports) {
+                                if ! importing_here && *follow_imports {
+                                    self.cache.import_stack.push(*scope);
+
+                                    for p in supers {
+                                        let s = LookupRef::Within { scope: *p, name: *name };
+                                        let mut ws = self.do_lookup(&s);
+                                        found_supers.append(&mut ws);
+                                    }
+
+                                    self.cache.import_stack.pop();
+                                }
+
+                                if self.all_mixfix(&found_supers) {
+                                    let p = LookupRef::new(*parent, *name, true);
+                                    found_parent = self.do_lookup(&p);
+                                }
+                            }
+                        }
+
+                        self.filter_mixfix(&mut found_imports, &found_here);
+                        self.filter_mixfix(&mut found_supers, &found_here);
+                        self.filter_mixfix(&mut found_supers, &found_imports);
+                        self.filter_mixfix(&mut found_parent, &found_here);
+                        self.filter_mixfix(&mut found_parent, &found_imports);
+                        self.filter_mixfix(&mut found_parent, &found_supers);
+
+                        trace!("found_here = {:?}", &found_here);
+                        trace!("found_imports = {:?}", &found_imports);
+                        trace!("found_supers = {:?}", &found_supers);
+                        trace!("found_parent = {:?}", &found_parent);
+
+                        let mut results = vec![];
+                        results.extend(found_here.iter().cloned());
+                        results.extend(found_imports.iter().cloned());
+                        results.extend(found_supers.iter().cloned());
+                        results.extend(found_parent.iter().cloned());
+                        results.sort();
+                        results.dedup();
+                        results
+                    },
+                    Decl::Fun { parent, .. } => {
+                        let mut vs = vec![];
+
+                        let p = LookupRef::new(*parent, *name, true);
+                        let mut ws = self.do_lookup(&p);
+                        vs.append(&mut ws);
+
+                        vs
+                    },
+                    Decl::Val { parent, .. } => {
+                        let mut vs = vec![];
+
+                        let p = LookupRef::new(*parent, *name, true);
+                        let mut ws = self.do_lookup(&p);
+                        vs.append(&mut ws);
+
+                        vs
+                    },
+                    Decl::Var { parent, .. } => {
+                        let mut vs = vec![];
+
+                        let p = LookupRef::new(*parent, *name, true);
+                        let mut ws = self.do_lookup(&p);
+                        vs.append(&mut ws);
+
+                        vs
+                    },
+                    Decl::MixfixPart { .. } => {
+                        vec![]
+                    },
+                }
+            },
+            LookupRef::Within { scope, name } => {
+                match scope {
+                    Ref::Resolved(gref) => {
+                        let d = self.driver.graph.get_env(gref.local_ref).clone();
+
+                        let importing_here = false && self.cache.import_stack.contains(&gref.local_ref);
+
+                        match &d.value {
+                            Decl::Root => {
+                                match self.lookup_in_root(*name) {
+                                    Ok(grefs) => {
+                                        grefs
+                                    },
+                                    _ => {
+                                        vec![]
+                                    },
+                                }
+                            },
+                            Decl::Block { parent, imports, members, .. } => {
+                                let mut vs = vec![];
+                                if let Some(lrefs) = members.get(name) {
+                                    for lref in lrefs {
+                                        vs.push(lref.to_global_ref(bundle));
+                                    }
+                                }
+                                vs
+                            },
+                            Decl::Bundle { imports, members, .. } => {
+                                let mut vs = vec![];
+                                if let Some(lrefs) = members.get(name) {
+                                    for lref in lrefs {
+                                        vs.push(lref.to_global_ref(bundle));
+                                    }
+                                }
+                                vs
+                            },
+                            Decl::Trait { parent, imports, supers, members, .. } => {
+                                let mut vs = vec![];
+                                if let Some(lrefs) = members.get(name) {
+                                    for lref in lrefs {
+                                        vs.push(lref.to_global_ref(bundle));
+                                    }
+                                }
+
+                                if ! importing_here {
+                                    self.cache.import_stack.push(gref.local_ref);
+
+                                    for p in supers {
+                                        let s = LookupRef::Within { scope: *p, name: *name };
+                                        let mut ws = self.do_lookup(&s);
+                                        vs.append(&mut ws);
+                                    }
+
+                                    self.cache.import_stack.pop();
+                                }
+
+                                vs
+                            },
+                            Decl::Fun { parent, .. } => {
+                                vec![]
+                            },
+                            Decl::Val { parent, .. } => {
+                                vec![]
+                            },
+                            Decl::Var { parent, .. } => {
+                                vec![]
+                            },
+                            Decl::MixfixPart { .. } => {
+                                vec![]
+                            },
+                        }
+                    },
+                    Ref::Root => {
+                        match self.lookup_in_root(*name) {
+                            Ok(grefs) => {
+                                grefs
+                            },
+                            _ => {
+                                vec![]
+                            },
+                        }
+                    },
+                    Ref::Lookup(index) => {
+                        let mut vs = vec![];
+                        let s = self.driver.graph.get_lookup(index);
+                        let ws = self.do_lookup(&s);
+                        for gref in ws {
+                            let importing_here = self.cache.import_stack.contains(&gref.local_ref);
+                            if ! importing_here {
+                                self.cache.import_stack.push(gref.local_ref);
+                                let p = LookupRef::Within { scope: Ref::Resolved(gref), name: *name };
+                                let mut ws = self.do_lookup(&p);
+                                vs.append(&mut ws);
+                                self.cache.import_stack.pop();
+                            }
+                        }
+                        vs
+                    },
+                    Ref::Mixfix(index) => {
+                        let mut vs = vec![];
+                        let s = self.driver.graph.get_mixfix(index);
+                        let ts = self.do_mixfix(&s);
+                        let grefs: Vec<GlobalRef> = ts.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
+                        for gref in grefs {
+                            let importing_here = self.cache.import_stack.contains(&gref.local_ref);
+                            if ! importing_here {
+                                self.cache.import_stack.push(gref.local_ref);
+                                let p = LookupRef::Within { scope: Ref::Resolved(gref), name: *name };
+                                let mut ws = self.do_lookup(&p);
+                                vs.append(&mut ws);
+                                self.cache.import_stack.pop();
+                            }
+                        }
+                        vs
+                    }
+                }
+            },
+        }
+    }
+
+    #[cfg_attr(debug_assertions, trace)]
+    pub fn lookup(&mut self, r: &LookupRef) -> NamerResult<GlobalRefs> {
+        return self.do_init_lookup(r)
     }
 
     #[cfg_attr(debug_assertions, trace)]
     pub fn parse_mixfix(&mut self, m: &MixfixRef) -> NamerResult<Trees> {
-        if let Some(results) = self.cache.tree_cache.get(m) {
-            trace!("parse_mixfix {:?} cached", m);
-            return Ok(results.clone());
-        }
-
-        let timer = self.driver.stats.start_timer();
-        let mut inner_iters = 0;
-        let mut outer_iters = 0;
-
-        let mut visited = HashMap::new();
-
-        loop {
-            let mut worklist = Worklist::new();
-
-            outer_iters += 1;
-
-            let results = self.try_mixfix_ref(m.clone(), &mut worklist, &mut visited, &HashTrieSet::new())?;
-
-            if worklist.is_empty() {
-                // Update the cache with the visited nodes.
-                // This might not be needed...
-                self.cache.lookup_cache.extend(visited.drain());
-
-                // Update the tree cache.
-                self.cache.tree_cache.insert(m.clone(), results.clone());
-
-                self.driver.stats.end_timer("parse_mixfix time", timer);
-                self.driver.stats.accum("parse_mixfix outer iters", outer_iters);
-                self.driver.stats.accum("parse_mixfix inner iters", inner_iters);
-
-                return Ok(results)
-            }
-
-            while let Some(r) = worklist.pop_front() {
-                worklist.reset_changed();
-                inner_iters += 1;
-                self.try_lookup_ref(r, &mut worklist, &mut visited, &HashTrieSet::new())?;
-            }
-        }
+        return self.do_init_mixfix(m)
     }
 
-    #[cfg_attr(debug_assertions, trace(disable(worklist, visited, stack)))]
-    fn try_mixfix_ref(&mut self, r: MixfixRef, worklist: &mut Worklist, visited: &mut Visited, stack: &Dependencies) -> NamerResult<Trees> {
-        if let Some(result) = self.cache.tree_cache.get(&r) {
-            // Already completed.
-            return Ok(result.clone());
-        }
+    fn filter_mixfix(&self, xs: &mut GlobalRefs, ys: &GlobalRefs) {
+        xs.drain_filter(|x| ! {
+            match self.driver.graph.get_env(x.local_ref) {
+                Located { loc, value: Decl::MixfixPart { full: fullx, .. } } =>
+                    ys.iter().all(|y| {
+                        match self.driver.graph.get_env(y.local_ref) {
+                            Located { loc, value: Decl::MixfixPart { full: fully, .. } } => fullx != fully,
+                            _ => true,
+                        }
+                    }),
+                _ => true,
+            }
+        });
+    }
 
-        let mut all_cached = true;
+    pub(super) fn all_mixfix(&self, grefs: &GlobalRefs) -> bool {
+        grefs.iter().all(|gref| {
+            match self.driver.graph.get_env(gref.local_ref) {
+                Located { loc, value: Decl::MixfixPart { .. } } => true,
+                _ => false,
+            }
+        })
+    }
 
+    #[cfg_attr(debug_assertions, trace(disable(state)))]
+    fn compute_mixfix(&mut self, r: &MixfixRef) -> Trees {
         self.driver.stats.accum("mixfix expression size", r.parts.len() as u64);
 
         let mut refs: Vec<Option<LookupRef>> = vec![];
@@ -191,20 +682,16 @@ impl<'a> Namer<'a> {
         for r in refs {
             match r {
                 Some(r) => {
-                    let decls = self.try_lookup_ref(r, worklist, visited, stack)?;
+                    let grefs = self.do_lookup(&r);
 
-                    if let None = self.cache.lookup_cache.get(&r) {
-                        all_cached = false;
-                    }
-
-                    if ! decls.is_empty() && Namer::all_mixfix(&decls) {
-                        match &r.name {
+                    if ! grefs.is_empty() && self.all_mixfix(&grefs) {
+                        match &r.name() {
                             Name::Id(x) => {
-                                tokens.push(Token::Name(Part::Id(x.to_owned()), decls.clone()));
+                                tokens.push(Token::Name(Part::Id(x.to_owned()), grefs.clone()));
                                 has_name = true;
                             },
                             Name::Op(x) => {
-                                tokens.push(Token::Name(Part::Op(x.to_owned()), decls.clone()));
+                                tokens.push(Token::Name(Part::Op(x.to_owned()), grefs.clone()));
                                 has_name = true;
                             },
                             _ => {
@@ -257,60 +744,52 @@ impl<'a> Namer<'a> {
             // Resolve the mixfix expression.
 
             // We don't include decls whose mixfix name includes parts that are not in the tokens list.
-            // This will reduce the number of decls to consider during mixfix parsing and therefore reduce the size of the grammar and therefore simplify the mixfix parser.
+            // This will reduce the number of decls to consider during mixfix parsing and therefore reduce the size of the grammar and therefore speed up the mixfix parser.
             let mut parts_in_tokens = HashSet::new();
 
             for t in &tokens {
-                match t {
-                    Token::Name(x, _) => { parts_in_tokens.insert(x); },
-                    _ => {},
+                if let Token::Name(x, _) = t {
+                    parts_in_tokens.insert(x);
                 }
             }
 
-            let mut decls: Decls = Vec::new();
+            let bundle = self.driver.current_bundle.unwrap();
+
+            let mut grefs: GlobalRefs = Vec::new();
+            let mut part_grefs: GlobalRefs = Vec::new();
 
             for t in &tokens {
-                match t {
-                    Token::Name(_, xdecls) => {
-                        for xd in xdecls {
-                            let loc = xd.loc;
-                            let decl = match &xd.value {
-                                Decl::MixfixPart { orig, .. } => Located::new(loc, *orig.clone()),
-                                decl => Located::new(loc, decl.clone()),
-                            };
-                            match decl.name() {
-                                Name::Mixfix(s) => {
-                                    let parts = Name::decode_parts(s);
-                                    if parts.iter().all(|part| part == &Part::Placeholder || parts_in_tokens.contains(part)) {
-                                        decls.push(decl);
-                                    }
-                                },
-                                _ => {},
+                if let Token::Name(_, xrefs) = t {
+                    for xref in xrefs {
+                        part_grefs.push(xref.clone());
+                        if let Located { loc, value: Decl::MixfixPart { full: Name::Mixfix(s), orig, .. } } = self.driver.graph.get_env(xref.local_ref) {
+                            let parts = Name::decode_parts(*s);
+                            if parts.iter().all(|part| part == &Part::Placeholder || parts_in_tokens.contains(part)) {
+                                grefs.push(orig.to_global_ref(bundle));
                             }
                         }
-                    },
-                    _ => {},
+                    }
                 }
             }
 
             trace!("parts {:?}", r.parts);
             trace!("tokens {:?}", tokens);
-            trace!("decls {:?}", decls);
+            trace!("decls {:?}", grefs);
 
-            self.driver.stats.accum("mixfix decls size", decls.len() as u64);
+            self.driver.stats.accum("mixfix decls size", grefs.len() as u64);
 
             // The names in the expression did not resolve into anything we can possibly parse.
             // Return early.
-            if decls.is_empty() {
-                if all_cached {
-                    self.cache.tree_cache.insert(r, vec![]);
-                }
-                return Ok(vec![]);
+            if grefs.is_empty() {
+                return vec![];
             }
 
             let mut trees = {
                 // if all decls have the same name, we can use fast parsing.
-                let mut names: Vec<Name> = decls.iter().map(|d| d.name()).collect();
+                let pairs: Vec<(GlobalRef, Located<Decl>)> = grefs.iter().map(|gref| (*gref, self.driver.graph.get_env(gref.local_ref).clone())).collect();
+                let part_pairs: Vec<(GlobalRef, Located<Decl>)> = part_grefs.iter().map(|gref| (*gref, self.driver.graph.get_env(gref.local_ref).clone())).collect();
+
+                let mut names: Vec<Name> = pairs.iter().map(|(gref, d)| d.value.name()).collect();
                 names.sort();
                 names.dedup();
 
@@ -319,7 +798,7 @@ impl<'a> Namer<'a> {
 
                     let timer = self.driver.stats.start_timer();
 
-                    let trees = match Namer::fast_parse(tokens, &decls, *names.first().unwrap()) {
+                    let trees = match Namer::fast_parse(tokens, &grefs, *names.first().unwrap()) {
                         Some(t) => vec![t],
                         None => vec![],
                     };
@@ -329,11 +808,11 @@ impl<'a> Namer<'a> {
                     trees
                 }
                 else {
-                    self.driver.stats.accum("mixfix Earley parse decls size", decls.len() as u64);
+                    self.driver.stats.accum("mixfix Earley parse decls size", grefs.len() as u64);
 
                     let timer = self.driver.stats.start_timer();
 
-                    let trees = Earley::new(&decls).parse(&tokens);
+                    let trees = Earley::new(&pairs, &part_pairs).parse(&tokens);
 
                     self.driver.stats.end_timer("earley parsing time", timer);
 
@@ -344,15 +823,11 @@ impl<'a> Namer<'a> {
             results.append(&mut trees);
         }
 
-        if all_cached {
-            self.cache.tree_cache.insert(r, results.clone());
-        }
-
-        Ok(results)
+        results
     }
 
-    #[cfg_attr(debug_assertions, trace(disable(worklist, visited, stack)))]
-    fn lookup_in_root(&mut self, name: Name, worklist: &mut Worklist, visited: &mut Visited, stack: &Dependencies) -> NamerResult<Decls> {
+    #[cfg_attr(debug_assertions, trace(disable(state)))]
+    fn lookup_in_root(&mut self, name: Name) -> NamerResult<GlobalRefs> {
         self.driver.stats.accum("lookup_in_root", 1);
 
         // we only search other bundles for legal bundle names
@@ -365,7 +840,7 @@ impl<'a> Namer<'a> {
 
         // If all tree results were mixfix parts, try to load a bundle with the same name.
         // If successful, add those results to the results.
-        if Namer::all_mixfix(&results) {
+        if self.all_mixfix(&results) {
             match self.driver.load_bundle_by_name(&name) {
                 Ok(index) => {
                     match self.driver.prename_bundle(index) {
@@ -375,32 +850,32 @@ impl<'a> Namer<'a> {
                         },
                     }
 
-                    let r = LookupRef { scope: Scope::Global, name };
+                    let r = LookupRef::as_member(Ref::Root, name);
 
 // FIXME: should add a bundle index to all Env and Lookup refs.
 // Or make the graph global.
 // The returned decls have inner scopes referring to the graph in the bundle, not the current bundle.
                     match self.driver.get_bundle(index) {
                         Some(Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
-                            if let Some(Scope::Env(env_index)) = scopes.get(&id) {
-                                return Namer::lookup_here_in_env(&mut self.driver.stats, &self.driver.graph, *env_index, name, &mut HashMap::new());
-                                // return self.try_lookup_ref(LookupRef { scope: scope.to_here(), name }, worklist, visited, &stack.insert(r));
+                            let graph = &self.driver.graph;
+                            if let Some(Located { loc, value: Decl::Bundle { members, .. } }) = scopes.get(&id).map(|i| graph.get_env(*i)) {
+                                return Ok(self.get_members(name, &members))
                             }
                             self.driver.error(Located::new(loc, "root scope of bundle not found".to_owned()))
                         },
                         Some(Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
-                            if let Some(Scope::Env(env_index)) = scopes.get(&id) {
-                                return Namer::lookup_here_in_env(&mut self.driver.stats, &self.driver.graph, *env_index, name, &mut HashMap::new());
-                                // return self.try_lookup_ref(LookupRef { scope: scope.to_here(), name }, worklist, visited, &stack.insert(r));
+                            let graph = &self.driver.graph;
+                            if let Some(Located { loc, value: Decl::Bundle { members, .. } }) = scopes.get(&id).map(|i| graph.get_env(*i)) {
+                                return Ok(self.get_members(name, &members))
                             }
                             self.driver.error(Located::new(loc, "root scope of bundle not found".to_owned()))
                         },
                         Some(Bundle::Core { root_scope, .. }) => {
-                            if let Scope::Env(env_index) = &root_scope {
-                                return Namer::lookup_here_in_env(&mut self.driver.stats, &self.driver.graph, *env_index, name, &mut HashMap::new());
+                            let graph = &self.driver.graph;
+                            if let Some(Located { loc, value: Decl::Bundle { members, .. } }) = Some(&root_scope).map(|i| graph.get_env(*i)) {
+                                return Ok(self.get_members(name, &members))
                             }
                             self.driver.error(Located::new(Loc::no_loc(), "root scope of bundle is not an env".to_owned()))
-                            // return self.try_lookup_ref(LookupRef { scope: root_scope.to_here(), name }, worklist, visited, &stack.insert(r));
                         },
                         _ => {},
                     }
@@ -412,11 +887,11 @@ impl<'a> Namer<'a> {
             }
         }
 
-        Ok(vec![])
+        Ok(results)
     }
 
     #[cfg_attr(debug_assertions, trace)]
-    fn lookup_in_trees(&mut self, name: Name) -> NamerResult<Decls> {
+    fn lookup_in_trees(&mut self, name: Name) -> NamerResult<GlobalRefs> {
         self.driver.stats.accum("lookup_in_trees", 1);
 
         let mut to_name = Vec::new();
@@ -485,19 +960,23 @@ impl<'a> Namer<'a> {
         for bundle in &self.driver.bundles {
             match bundle {
                 Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. } => {
-                    if let Some(Scope::Env(env)) = scopes.get(&id) {
-                        let vs = Namer::lookup_here_in_env(stats, &graph, *env, name, &mut self.cache.lookup_cache)?;
+                    if let Some(Located { loc, value: Decl::Bundle { members, .. } }) = scopes.get(&id).map(|i| graph.get_env(*i)) {
+                        let vs = self.get_members(name, &members);
                         results.extend(vs.iter().cloned());
                     }
                 },
                 Bundle::Named { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. } => {
-                    if let Some(Scope::Env(env)) = scopes.get(&id) {
-                        let vs = Namer::lookup_here_in_env(stats, &graph, *env, name, &mut self.cache.lookup_cache)?;
+                    if let Some(Located { loc, value: Decl::Bundle { members, .. } }) = scopes.get(&id).map(|i| graph.get_env(*i)) {
+                        let vs = self.get_members(name, &members);
                         results.extend(vs.iter().cloned());
                     }
                 },
-                // Bundle::Core { root_scope, .. } => {
-                // },
+                Bundle::Core { root_scope, .. } => {
+                    if let Some(Located { loc, value: Decl::Bundle { members, .. } }) = Some(root_scope).map(|i| graph.get_env(*i)) {
+                        let vs = self.get_members(name, &members);
+                        results.extend(vs.iter().cloned());
+                    }
+                },
                 _ => {},
             }
         }
@@ -507,370 +986,9 @@ impl<'a> Namer<'a> {
         Ok(results)
     }
 
-    #[cfg_attr(debug_assertions, trace(disable(worklist, visited, stack)))]
-    fn get_inner_decls(&mut self, name: Name, outer_decls: &Decls, worklist: &mut Worklist, visited: &mut Visited, stack: &Dependencies) -> NamerResult<(bool, Decls)> {
-        let mut results = Vec::new();
-        let mut all_cached = true;
-
-        for d in outer_decls {
-            match d {
-                Located { loc, value: Decl::Struct { body, supers, .. } } => {
-                    {
-                        let s = LookupRef { scope: body.to_here(), name };
-                        let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                        results.extend(vs.iter().cloned());
-
-                        if let None = self.cache.lookup_cache.get(&s) {
-                            all_cached = false;
-                        }
-                    }
-                },
-                _ => {},
-            }
-        }
-
-        Ok((all_cached, results))
-    }
-
-    // HACK
-    // Version of lookup_here_in_scope that only works on Env scopes.
-    // Called from lookup_in_trees. Avoids loading other bundles which requires
-    // borrowing the driver mutably. The assumption is that the root scope of a bundle
-    // is always a simple Env.
-    #[cfg_attr(debug_assertions, trace(disable(stats, graph, cache)))]
-    fn lookup_here_in_env(stats: &mut driver::stats::Stats, graph: &ScopeGraph, env_index: EnvIndex, name: Name, cache: &mut LookupCache) -> NamerResult<Decls> {
-        let r = LookupRef { scope: Scope::EnvHere(env_index), name };
-
-        if let Some(results) = cache.get(&r) {
-            stats.accum("lookup_here_in_env cache hit", 1);
-            return Ok(results.clone());
-        }
-
-        let mut results = Vec::new();
-
-        match env_index {
-            EnvIndex(index) => {
-                let env = graph.envs.get(index).unwrap();
-                // need to clone the includes
-                // before we borrow self mutably.
-                let includes = env.includes.clone();
-
-                let tmp = vec![];
-                let found_here = env.decls.get(&name).unwrap_or(&tmp);
-
-                results.extend(found_here.iter().cloned());
-
-                for include in includes {
-                    match include.to_here() {
-                        Scope::EnvHere(include) if include != env_index => {
-                            let vs = Namer::lookup_here_in_env(stats, graph, include, name, cache)?;
-                            results.extend(vs.iter().cloned());
-                        },
-                        _ => {},
-                    }
-                }
-            }
-        }
-
-        Ok(results)
-    }
-
-    fn add_stack_to_worklist(worklist: &mut Worklist, stack: &Dependencies) {
-        for s in stack.iter() {
-            worklist.push_back(s.clone());
-        }
-    }
-
-    fn stack_contains(stack: &Dependencies, r: &LookupRef) -> bool {
-        stack.contains(&r)
-    }
-
-    // fn add_stack_to_worklist(worklist: &mut Worklist, stack: &Dependencies) {
-    //     if let Some(s) = stack.peek() {
-    //         worklist.push_back(s.clone());
-    //
-    //         if let Some(rest) = stack.pop() {
-    //             Namer::add_stack_to_worklist(worklist, &rest);
-    //         }
-    //     }
-    // }
-    //
-    // fn stack_contains(stack: &Dependencies, r: &LookupRef) -> bool {
-    //     if let Some(s) = stack.peek() {
-    //         if s == r {
-    //             return true;
-    //         }
-    //
-    //         if let Some(rest) = stack.pop() {
-    //             return Namer::stack_contains(&rest, r);
-    //         }
-    //     }
-    //
-    //     false
-    // }
-
-    #[cfg_attr(debug_assertions, trace(disable(worklist, visited, stack)))]
-    fn try_lookup_ref(&mut self, r: LookupRef, worklist: &mut Worklist, visited: &mut Visited, stack: &Dependencies) -> NamerResult<Decls> {
-        // Special case the empty scope just so we don't waste space and time with caching it.
-        if r.scope == Scope::Empty {
-            return Ok(vec![]);
-        }
-
-        if let Some(result) = self.cache.lookup_cache.get(&r) {
-            return Ok(result.clone());
-        }
-
-        trace!("cache miss");
-
-        let mut old_results;
-
-        if let Some(results) = visited.get(&r) {
-            // We have visited this node before.
-            // Either we have a cross-edge or a back-edge.
-            // If a cross-edge, the value cached here should be valid too.
-            // If a back-edge, we should be returning a result <= the fixpoint value.
-            // if Namer::stack_contains(stack, &r) {
-            //     Namer::add_stack_to_worklist(worklist, stack);
-            // }
-            if Namer::stack_contains(stack, &r) {
-                // Cycle in the graph. We should return the cached results.
-                // But, DO NOT add ourselves to the worklist.
-                // That will happen when we return from the recursive call.
-                trace!("cycle");
-                return Ok(results.clone());
-            }
-
-            trace!("cross edge");
-
-            old_results = results.clone();
-        }
-        else {
-            // Cache an initial value so we can compute the fixed point.
-            visited.insert(r.clone(), vec![]);
-            old_results = vec![];
-        }
-
-        trace!("forward edge");
-
-        let name = r.name;
-
-        let mut all_cached = true;
-
-        let mut results = match r.scope {
-            Scope::Empty => {
-                Ok(vec![])
-            },
-            Scope::Global => {
-                all_cached = false; // FIXME
-                self.lookup_in_root(name, worklist, visited, &stack.insert(r))
-            },
-            Scope::Lookup(LookupIndex(index)) => {
-                let s = self.driver.graph.lookups.get(index).unwrap().clone();
-
-                let vs = self.try_lookup_ref(s.clone(), worklist, visited, &stack.insert(r))?;
-                let (c, rs) = self.get_inner_decls(name, &vs, worklist, visited, &stack.insert(r))?;
-
-                all_cached &= c;
-                if let None = self.cache.lookup_cache.get(&s) {
-                    all_cached = false;
-                }
-
-                Ok(rs)
-            },
-            Scope::Mixfix(MixfixIndex(index)) => {
-                let s = self.driver.graph.mixfixes.get(index).unwrap().clone();
-
-                let ts = self.try_mixfix_ref(s.clone(), worklist, visited, &stack.insert(r))?;
-                let vs = ts.iter().flat_map(|t| Namer::mixfix_tree_to_decls(t)).collect();
-                let (c, rs) = self.get_inner_decls(name, &vs, worklist, visited, &stack.insert(r))?;
-
-                all_cached &= c;
-                if let None = self.cache.tree_cache.get(&s) {
-                    all_cached = false;
-                }
-                Ok(rs)
-            },
-            Scope::EnvHere(EnvIndex(index)) => {
-                let env = self.driver.graph.envs.get(index).unwrap();
-                let (c, rs) = self.lookup_in_env(&r, env.clone(), name, false, false, worklist, visited, &stack.insert(r))?;
-                all_cached &= c;
-                Ok(rs)
-            }
-            Scope::EnvWithoutImports(EnvIndex(index)) => {
-                let env = self.driver.graph.envs.get(index).unwrap();
-                let (c, rs) = self.lookup_in_env(&r, env.clone(), name, true, false, worklist, visited, &stack.insert(r))?;
-                all_cached &= c;
-                Ok(rs)
-            }
-            Scope::Env(EnvIndex(index)) => {
-                let env = self.driver.graph.envs.get(index).unwrap();
-                let (c, rs) = self.lookup_in_env(&r, env.clone(), name, true, true, worklist, visited, &stack.insert(r))?;
-                all_cached &= c;
-                Ok(rs)
-            }
-        }?;
-
-        results.extend(old_results.iter().cloned());
-        results.sort();
-        results.dedup();
-
-        // Update the cache with the new results.
-        if all_cached {
-            trace!("caching!");
-            trace!("worklist = {:?}", worklist);
-            self.cache.lookup_cache.insert(r, results.clone());
-        }
-
-        visited.insert(r, results.clone());
-
-        // If the value changed, we should add the node back to the worklist.
-        // We don't need to add callers explicitly, because they should do the same check.
-        if old_results.len() < results.len() {
-            trace!("changed {:?}: {} -> {}", r, old_results.len(), results.len());
-            trace!("changed {:?}: {:?} -> {:?}", r, old_results, results);
-            if let None = self.cache.lookup_cache.get(&r) {
-                // add back to the worklist if changed and not stabilized
-                worklist.push_back(r);
-            }
-        }
-        else if old_results.len() > results.len() {
-            panic!("results size should not shrink for {:?}: {:?} -> {:?}", r, old_results, results);
-        }
-
-        Ok(results)
-    }
-
-    #[cfg_attr(debug_assertions, trace(disable(worklist, visited, stack)))]
-    fn lookup_in_env(&mut self, r: &LookupRef, env: Env, name: Name, follow_parents: bool, follow_imports: bool, worklist: &mut Worklist, visited: &mut Visited, stack: &Dependencies) -> NamerResult<(bool, Decls)> {
-        let imports = env.imports;
-        let supers = env.supers;
-        let parents = env.parents;
-        let includes = env.includes;
-        let decls = env.decls;
-
-        let found_here;
-        let found_imports;
-        let found_supers;
-        let found_parents;
-
-        let mut all_cached = true;
-
-        let tmp = vec![]; // Shut up borrow checker. The vec has to live as long as found_here
-
-        found_here = decls.get(&name).unwrap_or(&tmp);
-
-        trace!("found_here = {:?}", found_here);
-
-        if follow_imports && Namer::all_mixfix(&found_here) {
-            let mut rs = Vec::new();
-
-            let paths = Namer::import_paths(&imports, name);
-
-            trace!("paths = {:?}", paths);
-
-            // x here is usually the same as x, unless there's a renaming import.
-            for s in paths {
-                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                rs.extend(vs.iter().cloned());
-
-                if let None = self.cache.lookup_cache.get(&s) {
-                    all_cached = false;
-                }
-            }
-
-
-            found_imports = Namer::filter_mixfix(rs, &found_here);
-        }
-        else {
-            found_imports = Vec::new();
-        }
-
-        trace!("found_imports = {:?}", found_imports);
-
-        // Always look in supers, regardless of follow_parents.
-        if /* follow_parents && */ Namer::all_mixfix(&found_here) && Namer::all_mixfix(&found_imports) {
-            let mut rs = Vec::new();
-
-            trace!("supers = {:?}", supers);
-
-            for parent in &supers {
-                let s = LookupRef { scope: *parent, name };
-
-                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                rs.extend(vs.iter().cloned());
-
-                if let None = self.cache.lookup_cache.get(&s) {
-                    all_cached = false;
-                }
-            }
-
-            found_supers = Namer::filter_mixfix(Namer::filter_mixfix(rs, &found_here), &found_imports);
-        }
-        else {
-            found_supers = Vec::new();
-        }
-
-        trace!("found_supers = {:?}", found_supers);
-
-        if follow_parents && Namer::all_mixfix(&found_here) && Namer::all_mixfix(&found_imports) && Namer::all_mixfix(&found_supers) {
-            let mut rs = Vec::new();
-
-            trace!("parents = {:?}", parents);
-
-            for parent in &parents {
-                if Namer::imports_truncated(&imports, *parent) {
-                    continue;
-                }
-
-                let s = LookupRef { scope: *parent, name };
-
-                let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-                rs.extend(vs.iter().cloned());
-
-                if let None = self.cache.lookup_cache.get(&s) {
-                    all_cached = false;
-                }
-            }
-
-            found_parents = Namer::filter_mixfix(Namer::filter_mixfix(Namer::filter_mixfix(rs, &found_here), &found_imports), &found_supers);
-        }
-        else {
-            found_parents = Vec::new();
-        }
-
-        let mut results = Vec::new();
-        results.extend(found_here.iter().cloned());
-        results.extend(found_imports.iter().cloned());
-        results.extend(found_supers.iter().cloned());
-        results.extend(found_parents.iter().cloned());
-
-        trace!("includes = {:?}", includes);
-
-        for include in &includes {
-            let scope = if follow_parents && follow_imports {
-                *include
-            }
-            else if follow_parents {
-                include.without_imports()
-            }
-            else {
-                include.to_here()
-            };
-
-            let s = LookupRef { scope, name };
-
-            let vs = self.try_lookup_ref(s, worklist, visited, stack)?;
-            results.extend(vs.iter().cloned());
-
-            if let None = self.cache.lookup_cache.get(&s) {
-                all_cached = false;
-            }
-        }
-
-        results.sort();
-        results.dedup();
-
-        Ok((all_cached, results))
+    fn get_members(&self, name: Name, members: &BTreeMap<Name, Vec<LocalRef>>) -> GlobalRefs {
+        let bundle = self.driver.current_bundle.unwrap();
+        members.get(&name).cloned().unwrap_or_default().iter().map(|lref| lref.to_global_ref(bundle)).collect()
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -879,7 +997,7 @@ impl<'a> Namer<'a> {
 
     // Do fast mixfix parsing. Should be called only when all the decls have a single mixfix name.
     // It just checks that the tokens match the mixfix name and builds the call tree.
-    fn fast_parse(tokens: Vec<Token>, decls: &Decls, name: Name) -> Option<MixfixTree> {
+    fn fast_parse(tokens: Vec<Token>, grefs: &GlobalRefs, name: Name) -> Option<MixfixTree> {
         match name {
             Name::Mixfix(s) => {
                 let parts = Name::decode_parts(s);
@@ -916,7 +1034,7 @@ impl<'a> Namer<'a> {
                     _ => None,
                 }).collect();
 
-                Some(MixfixTree::make_call(MixfixTree::Name(name.clone(), decls.clone()), &args))
+                Some(MixfixTree::make_call(MixfixTree::Name(name.clone(), grefs.clone()), &args))
             },
             _ => {
                 None
@@ -933,19 +1051,19 @@ impl<'a> Namer<'a> {
         for import in imports {
             match import {
                 Located { loc, value: Import::None { path: scope } } => {
-                    exclude_all.push(LookupRef { scope: *scope, name: x });
+                    exclude_all.push(LookupRef::as_member(*scope, x));
                 }
                 Located { loc, value: Import::All { path: scope } } => {
-                    include_all.push(LookupRef { scope: *scope, name: x });
+                    include_all.push(LookupRef::as_member(*scope, x));
                 }
                 Located { loc, value: Import::Including { path: scope, name: y } } if *y == x => {
-                    include.push(LookupRef { scope: *scope, name: x });
+                    include.push(LookupRef::as_member(*scope, x));
                 }
                 Located { loc, value: Import::Renaming { path: scope, name: y, rename: z } } if *z == x => {
-                    include.push(LookupRef { scope: *scope, name: *y });
+                    include.push(LookupRef::as_member(*scope, *y));
                 }
                 Located { loc, value: Import::Excluding { path: scope, name: y } } if *y == x => {
-                    exclude.push(LookupRef { scope: *scope, name: x });
+                    exclude.push(LookupRef::as_member(*scope, x));
                 }
                 _ => {},
             }
@@ -971,7 +1089,7 @@ impl<'a> Namer<'a> {
     // This resolves to the declarations in the leftmost name in
     // the mixfix tree. That is to resolve the scope of (List (Maybe Int)),
     // we just look at `List _`.
-    fn mixfix_tree_to_decls(t: &MixfixTree) -> Decls {
+    fn mixfix_tree_to_decls(t: &MixfixTree) -> GlobalRefs {
         match t {
             MixfixTree::Apply(ref t1, ref t2) => Namer::mixfix_tree_to_decls(&**t1),
             MixfixTree::Name(ref x, ref decls) => decls.clone(),
@@ -979,7 +1097,7 @@ impl<'a> Namer<'a> {
         }
     }
 
-    pub fn imports_truncated(imports: &Vec<Located<Import>>, scope: Scope) -> bool {
+    pub fn imports_truncated(imports: &Vec<Located<Import>>, scope: Ref) -> bool {
         for import in imports {
             match import {
                 Located { loc, value: Import::None { path } } =>
@@ -990,29 +1108,5 @@ impl<'a> Namer<'a> {
             }
         }
         false
-    }
-
-    pub fn all_mixfix(decls: &Decls) -> bool {
-        decls.iter().all(|d| {
-            match d {
-                Located { loc: _, value: Decl::MixfixPart { .. } } => true,
-                _ => false,
-            }
-        })
-    }
-
-    fn filter_mixfix(xs: Decls, ys: &Decls) -> Decls {
-        xs.iter().filter(|x| {
-            match x {
-                Located { loc: _, value: Decl::MixfixPart { full, .. } } =>
-                    ys.iter().all(|y| {
-                        match y {
-                            Located { loc: _, value: Decl::MixfixPart { full: fully, .. } } => *full != *fully,
-                            _ => true,
-                        }
-                    }),
-                _ => true,
-            }
-        }).cloned().collect()
     }
 }

@@ -20,6 +20,7 @@ use syntax::names::*;
 use namer::symbols::*;
 use namer::graph::EnvIndex;
 
+use std::iter::Step;
 use std::collections::HashMap;
 
 use trace::trace;
@@ -28,7 +29,7 @@ trace::init_depth_var!();
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Exp(MixfixTree),
-    Name(Part, Vec<Located<Decl>>),
+    Name(Part, Vec<GlobalRef>),
 }
 
 #[derive(Debug)]
@@ -40,18 +41,20 @@ pub enum Term {
 
 pub(super) struct Earley {
     grammar: InternalGrammar,
-    nonterminals: HashMap<(Scope, usize), Symbol>,
+    nonterminals: HashMap<(Ref, Prio), Symbol>,
     terminals: HashMap<Part, Symbol>,
     start: Symbol,
     exp: Symbol,
     prefix: Symbol,
     brackets: Symbol,
     primary: Symbol,
+    decls: HashMap<GlobalRef, Located<Decl>>,
+    part_decls: HashMap<GlobalRef, Located<Decl>>,
 }
 
 pub(super) struct EarleyBuilder<'a> {
     grammar: Grammar,
-    nonterminals: &'a mut HashMap<(Scope, usize), Symbol>,
+    nonterminals: &'a mut HashMap<(Ref, Prio), Symbol>,
     terminals: &'a mut HashMap<Part, Symbol>,
     start: Symbol,
     exp: Symbol,
@@ -61,15 +64,15 @@ pub(super) struct EarleyBuilder<'a> {
 }
 
 impl Earley {
-    pub fn new(decls: &Vec<Located<Decl>>) -> Earley {
-        EarleyBuilder::new(&mut HashMap::new(), &mut HashMap::new()).from_decls(decls)
+    pub fn new(decls: &Vec<(GlobalRef, Located<Decl>)>, part_decls: &Vec<(GlobalRef, Located<Decl>)>) -> Earley {
+        EarleyBuilder::new(&mut HashMap::new(), &mut HashMap::new()).from_decls(decls, part_decls)
     }
 
     #[trace]
     fn make_tree(&self, children: &[&Option<MixfixTree>]) -> Option<MixfixTree> {
         // Accumulate the name parts and the declarations of those names.
         let mut parts: Vec<Part> = Vec::new();
-        let mut decls: Vec<Located<Decl>> = Vec::new();
+        let mut grefs_with_names: Vec<(Name, GlobalRef)> = Vec::new();
 
         // Accumulate the call arguments.
         let mut args: Vec<MixfixTree> = Vec::new();
@@ -77,27 +80,33 @@ impl Earley {
 
         for t in children {
             match t {
-                Some(MixfixTree::Name(x, xdecls)) => {
+                Some(MixfixTree::Name(x, grefs)) => {
                     match x {
                         Name::Id(x) => parts.push(Part::Id(x.clone())),
                         Name::Op(x) => parts.push(Part::Op(x.clone())),
                         _ => {
                             // This should not happen.
-// panic!("unexpected {:?} in MixfixTree", x);
+                            panic!("unexpected name {:?} in MixfixTree", x);
                             return None;
                         },
                     }
 
-                    for xd in xdecls {
-                        match &xd.value {
-                            Decl::MixfixPart { orig, .. } => {
-                                decls.push(Located::new(xd.loc, *orig.clone()));
+                    for gref in grefs {
+                        match self.part_decls.get(gref) {
+                            Some(Located { loc, value: Decl::MixfixPart { full, orig, .. } }) => {
+                                let orig_gref = orig.to_global_ref(gref.bundle);
+                                grefs_with_names.push((*full, orig_gref));
                             },
-                            _ => {
+                            Some(xd) => {
                                 // This should not happen.
-// panic!("unexpected {:?} in MixfixTree decls", xd);
+                                panic!("unexpected {:?} --> {:?} in MixfixTree decls", gref, xd);
                                 return None;
                             },
+                            None => {
+                                // This should not happen.
+                                panic!("unexpected {:?} --> None in MixfixTree decls {:?}", gref, self.part_decls);
+                                return None;
+                            }
                         }
                     }
 
@@ -110,7 +119,7 @@ impl Earley {
                 None => {
                     // Parse failed below, so we should also fail.
                     // This shouldn't happen, but we check this for robustness.
-// panic!("unexpected mixfix parse failure: child failed");
+                    panic!("unexpected mixfix parse failure: child failed");
                     return None
                 },
             }
@@ -122,9 +131,17 @@ impl Earley {
         }
 
         let new_name = Name::Mixfix(Name::encode_parts(&parts));
+        let grefs = grefs_with_names.iter().filter_map(|(name, gref)|
+            if name == &new_name {
+                Some(*gref)
+            }
+            else {
+                None
+            }
+        ).collect();
 
         let call = MixfixTree::make_call(
-            MixfixTree::Name(new_name.clone(), decls.iter().filter(|decl| decl.name() == new_name).cloned().collect()),
+            MixfixTree::Name(new_name, grefs),
             args.as_slice()
         );
 
@@ -133,7 +150,7 @@ impl Earley {
 
 
     #[trace]
-    fn make_symbol_tree(&self, sym: &Symbol, decls_map: &HashMap<Part, &Vec<Located<Decl>>>) -> Option<MixfixTree> {
+    fn make_symbol_tree(&self, sym: &Symbol, decls_map: &HashMap<Part, &Vec<GlobalRef>>) -> Option<MixfixTree> {
         if sym == &self.start {
             return Some(MixfixTree::Exp);
         }
@@ -170,7 +187,7 @@ impl Earley {
                 };
                 println!(" x = {}", x);
                 println!(" y = {}", y);
-                return decls_map.get(x).map(|&xdecls| MixfixTree::Name(y, xdecls.clone()));
+                return decls_map.get(x).map(|&decls| MixfixTree::Name(y, decls.clone()));
             }
         }
 
@@ -315,7 +332,7 @@ impl Earley {
     }
 
     /// Convert a scope and priority into a nonterminal symbol.
-    fn nonterm_name(&self, scope: Scope, prio: usize) -> Symbol {
+    fn nonterm_name(&self, scope: Ref, prio: Prio) -> Symbol {
         self.nonterminals.get(&(scope, prio)).unwrap().clone()
     }
 
@@ -326,7 +343,7 @@ impl Earley {
 }
 
 impl<'a> EarleyBuilder<'a> {
-    fn new(nonterminals: &'a mut HashMap<(Scope, usize), Symbol>, terminals: &'a mut HashMap<Part, Symbol>) -> EarleyBuilder<'a> {
+    fn new(nonterminals: &'a mut HashMap<(Ref, Prio), Symbol>, terminals: &'a mut HashMap<Part, Symbol>) -> EarleyBuilder<'a> {
         let mut grammar = Grammar::new();
 
         // nonterminals
@@ -350,7 +367,9 @@ impl<'a> EarleyBuilder<'a> {
         }
     }
 
-    fn from_decls(&mut self, decls: &Vec<Located<Decl>>) -> Earley {
+    fn from_decls(&mut self, decls: &Vec<(GlobalRef, Located<Decl>)>, part_decls: &Vec<(GlobalRef, Located<Decl>)>) -> Earley {
+        println!("from_decls {:?}", decls);
+
         // terminals
         // S -> E
         self.grammar.rule(self.start).rhs([self.exp]);
@@ -364,18 +383,24 @@ impl<'a> EarleyBuilder<'a> {
         self.grammar.set_start(self.start);
 
         // Take the first decl of each (scope, name) pair -- that is, the one with lowest prio.
-        let mut first_decls: HashMap<(Name, Scope), &Decl> = HashMap::new();
+        let mut first_decls: HashMap<(Name, Ref), (Name, Ref, Prio, Option<usize>)> = HashMap::new();
 
-        for decl in decls {
-            let key = (decl.value.name(), decl.value.scope());
+        for (gref, Located { loc, value: decl }) in decls {
+            let scope = decl.parent().unwrap().to_ref(gref.bundle);
+            let prio = decl.prio();
+            let name = decl.name();
+            let assoc = decl.assoc();
+
+            let key = (name, scope);
+
             match first_decls.get(&key) {
-                Some(existing) => {
-                    if existing.prio().0 < decl.prio().0 {
-                        first_decls.insert(key, &decl.value);
+                Some((_, _, existing_prio, _)) => {
+                    if *existing_prio < prio {
+                        first_decls.insert(key, (name, scope, prio, assoc));
                     }
                 },
                 None => {
-                    first_decls.insert(key, &decl.value);
+                    first_decls.insert(key, (name, scope, prio, assoc));
                 }
             }
         }
@@ -384,41 +409,36 @@ impl<'a> EarleyBuilder<'a> {
         let mut min_prio = HashMap::new();
         let mut max_prio = HashMap::new();
 
-        for decl in first_decls.values() {
-            let scope = decl.scope();
-            let prio = decl.prio().0;
-
+        for (name, scope, prio, assoc) in first_decls.values() {
             // Skip prefix and bracket names.
-            if decl.name().is_prefix_name() || decl.name().is_brackets_name() {
+            if name.is_prefix_name() || name.is_brackets_name() {
                 continue;
             }
 
-            match min_prio.get(&scope) {
-                Some(i) if prio < *i => { min_prio.insert(scope, prio); },
-                None => { min_prio.insert(scope, prio); },
+            match min_prio.get(&*scope) {
+                Some(i) if *prio < *i => { min_prio.insert(*scope, *prio); },
+                None => { min_prio.insert(*scope, *prio); },
                 _ => {},
             }
-            match max_prio.get(&scope) {
-                Some(i) if prio > *i => { max_prio.insert(scope, prio+1); },
-                None => { max_prio.insert(scope, prio+1); },
+
+            match max_prio.get(&*scope) {
+                Some(i) if *prio > *i => { max_prio.insert(*scope, prio.add_one()); },
+                None => { max_prio.insert(*scope, prio.add_one()); },
                 _ => {},
             }
         }
 
-        for decl in first_decls.values() {
-            let scope = decl.scope();
-            let prio = decl.prio().0;
+        for (name, scope, prio, assoc) in first_decls.values() {
+            let rhs = self.make_rhs_from_name(*name, *assoc, *prio, *scope);
 
-            let rhs = self.make_rule_from_decl(decl);
-
-            if decl.name().is_prefix_name() {
+            if name.is_prefix_name() {
                 self.grammar.rule(self.prefix).rhs(rhs);
             }
-            else if decl.name().is_brackets_name() {
+            else if name.is_brackets_name() {
                 self.grammar.rule(self.brackets).rhs(rhs);
             }
             else {
-                let lhs = self.nonterm_name(scope, prio);
+                let lhs = self.nonterm_name(*scope, *prio);
                 self.grammar.rule(lhs).rhs(rhs);
             }
         }
@@ -429,24 +449,28 @@ impl<'a> EarleyBuilder<'a> {
         }
 
         for scope in min_prio.keys() {
-            if let (Some(min), Some(max)) = (min_prio.get(scope), max_prio.get(scope)) {
+            if let (Some(&min), Some(&max)) = (min_prio.get(scope), max_prio.get(scope)) {
                 // M{min} -> M{n} -> M{n+1} -> ... -> M{max}
-                for k in *min .. *max {
-                    let lhs = self.nonterm_name(*scope, k);
-                    let rhs = self.nonterm_name(*scope, k+1);
+                for prio in min .. max {
+                    let lhs = self.nonterm_name(*scope, prio);
+                    let rhs = self.nonterm_name(*scope, prio.add_one());
                     self.grammar.rule(lhs).rhs([rhs]);
                 }
 
-                let min = self.nonterm_name(*scope, *min);
-                let max = self.nonterm_name(*scope, *max);
+                let min_sym = self.nonterm_name(*scope, min);
+                let max_sym = self.nonterm_name(*scope, max);
 
                 // E -> M{min}
-                self.grammar.rule(self.exp).rhs([min]);
+                self.grammar.rule(self.exp).rhs([min_sym]);
 
                 // M{max} -> Br
-                self.grammar.rule(max).rhs([self.prefix]);
+                self.grammar.rule(max_sym).rhs([self.prefix]);
             }
         }
+
+        // FIXME: this maps to the full decl and we should map to the mixfix part.
+        let decls_map = decls.iter().cloned().collect();
+        let part_decls_map = part_decls.iter().cloned().collect();
 
         Earley {
             grammar: self.grammar.into_internal_grammar(),
@@ -457,11 +481,13 @@ impl<'a> EarleyBuilder<'a> {
             prefix: self.prefix,
             brackets: self.brackets,
             primary: self.primary,
+            decls: decls_map,
+            part_decls: part_decls_map,
         }
     }
 
     /// Convert a scope and priority into a nonterminal symbol.
-    fn nonterm_name(&mut self, scope: Scope, prio: usize) -> Symbol {
+    fn nonterm_name(&mut self, scope: Ref, prio: Prio) -> Symbol {
         match self.nonterminals.get(&(scope, prio)) {
             Some(sym) => sym.clone(),
             None => {
@@ -484,40 +510,32 @@ impl<'a> EarleyBuilder<'a> {
         }
     }
 
-    fn make_rule_from_decl(&mut self, decl: &Decl) -> Vec<Symbol> {
-        let name = decl.name();
-        let assoc = decl.assoc();
-        let scope = decl.scope();
-        let prio = decl.prio();
-        self.make_rhs_from_name(&name, assoc, prio, scope)
-    }
-
-    fn make_rhs_from_name(&mut self, x: &Name, assoc: Option<usize>, prio: Prio, scope: Scope) -> Vec<Symbol> {
+    fn make_rhs_from_name(&mut self, name: Name, assoc: Option<usize>, prio: Prio, scope: Ref) -> Vec<Symbol> {
         let lowest = self.exp;
         let highest = self.brackets;
-        let current = self.nonterm_name(scope, prio.0);
-        let next = self.nonterm_name(scope, prio.0 + 1);
+        let current = self.nonterm_name(scope, prio);
+        let next = self.nonterm_name(scope, prio.add_one());
 
-        match x {
+        match name {
             Name::Op(x) => {
-                vec![self.term_name(Part::Op(x.clone()))]
+                vec![self.term_name(Part::Op(x))]
             },
             Name::Id(x) => {
-                vec![self.term_name(Part::Id(x.clone()))]
+                vec![self.term_name(Part::Id(x))]
             },
             Name::Mixfix(s) => {
-                let parts = Name::decode_parts(*s);
+                let parts = Name::decode_parts(s);
 
                 match parts.as_slice() {
                     [] => vec![],
 
                     [Part::Op(x), Part::Placeholder] => {
                         // Unary prefix operators are right associative.
-                        vec![self.term_name(Part::Op(x.clone())), current]
+                        vec![self.term_name(Part::Op(*x)), current]
                     },
                     [Part::Placeholder, Part::Op(x)] => {
                         // Unary postfix operators are left associative.
-                        vec![current, self.term_name(Part::Op(x.clone()))]
+                        vec![current, self.term_name(Part::Op(*x))]
                     },
                     // FIXME: prefix rules too...
                     parts => {
@@ -537,7 +555,7 @@ impl<'a> EarleyBuilder<'a> {
                             }).collect();
 
                         // For prefix names, all symbosl on the RHS should be brackets.
-                        if x.is_prefix_name() {
+                        if name.is_prefix_name() {
                             return rhs.iter().map(|sym| match sym {
                                 Sym::Nonterm(x) => x.clone(),
                                 Sym::Term(x) => self.term_name(x.clone()),

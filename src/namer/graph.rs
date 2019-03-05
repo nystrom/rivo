@@ -32,10 +32,13 @@ pub struct ScopeGraph {
     // store the refs in the graph and refer to the them by index.
     pub(super) lookups: Vec<LookupRef>,
     pub(super) mixfixes: Vec<MixfixRef>,
-    pub(super) pre_resolved: Vec<Option<Vec<Located<Decl>>>>,
+
+    // Map from lookup index to results of that lookup.
+    pub(super) pre_resolved: Vec<Option<Vec<GlobalRef>>>,
 
     // This is the vector of environments (mutable scopes).
-    pub(super) envs: Vec<Env>,
+    // Indexed by LocalRef.
+    pub(super) envs: Vec<Located<Decl>>,
 }
 
 // To build the graph, essentially we have a little algebra of scoping operations
@@ -52,18 +55,10 @@ impl ScopeGraph {
         }
     }
 
-    pub fn new_env(&mut self) -> Scope {
+    pub fn add_env(&mut self, d: Located<Decl>) -> LocalRef {
         let index = self.envs.len();
-        self.envs.push(Env {
-            index: EnvIndex(index),
-            decls: BTreeMap::new(),
-            imports: Vec::new(),
-            parents: Vec::new(),
-            includes: Vec::new(),
-            supers: Vec::new(),
-            path: None,
-        });
-        Scope::Env(EnvIndex(index))
+        self.envs.push(d);
+        EnvIndex(index)
     }
 
     pub fn get_lookup(&self, index: &LookupIndex) -> LookupRef {
@@ -71,21 +66,26 @@ impl ScopeGraph {
             LookupIndex(i) => self.lookups.get(*i).unwrap().clone()
         }
     }
+
     pub fn get_mixfix(&self, index: &MixfixIndex) -> MixfixRef {
         match index {
             MixfixIndex(i) => self.mixfixes.get(*i).unwrap().clone()
         }
     }
-    pub fn get_env(&self, index: &EnvIndex) -> Env {
-        match index {
-            EnvIndex(i) => self.envs.get(*i).unwrap().clone()
-        }
+
+    pub fn get_env(&self, index: EnvIndex) -> &Located<Decl> {
+        self.envs.get(index.0).unwrap()
     }
-    pub fn get_pre_resolved(&self, index: &LookupIndex) -> Option<&Vec<Located<Decl>>> {
+
+    // pub fn get_env_mut(&mut self, index: EnvIndex) -> &mut Located<Decl> {
+    //     self.envs.get_mut(index.0).unwrap()
+    // }
+
+    pub fn get_pre_resolved(&self, index: &LookupIndex) -> Option<Vec<GlobalRef>> {
         match index {
             LookupIndex(i) => {
                 match self.pre_resolved.get(*i) {
-                    Some(Some(vs)) => Some(vs),
+                    Some(Some(vs)) => Some(vs.clone()),
                     Some(None) => None,
                     None => None,
                 }
@@ -93,136 +93,115 @@ impl ScopeGraph {
         }
     }
 
-    pub fn resolve(&mut self, index: &LookupIndex, decl: &Located<Decl>) {
-        match index {
-            LookupIndex(i) => {
-                match self.pre_resolved.get_mut(*i) {
-                    Some(Some(vs)) => {
-                        vs.push(decl.clone());
-                    },
-                    Some(None) | None => {
-                        if *i >= self.pre_resolved.len() {
-                            self.pre_resolved.resize_default(*i+1);
-                        }
-                        let vs = vec![decl.clone()];
-                        self.pre_resolved[*i] = Some(vs);
-                    },
+    pub fn resolve(&mut self, index: LookupIndex, gref: GlobalRef) {
+        let i = index.0;
+        match self.pre_resolved.get_mut(i) {
+            Some(Some(vs)) => {
+                vs.push(gref);
+            },
+            Some(None) | None => {
+                if i >= self.pre_resolved.len() {
+                    self.pre_resolved.resize_with(i+1, || None);
                 }
+                let vs = vec![gref];
+                self.pre_resolved[i] = Some(vs);
+            },
+        }
+    }
+
+    pub fn get_scope_of_lookup(&self, r: LookupIndex) -> Ref {
+        Ref::Lookup(r)
+    }
+
+    pub fn get_scope_of_mixfix(&self, r: MixfixIndex) -> Ref {
+        Ref::Mixfix(r)
+    }
+
+    // HACK needed for blocks, which are created with the wrong parent.
+    pub fn set_parent(&mut self, scope: LocalRef, parent_ref: LocalRef) {
+        if let Some(ref mut env) = self.envs.get_mut(scope.0) {
+            match &mut env.value {
+                Decl::Block { ref mut parent, .. } => {
+                    *parent = parent_ref;
+                },
+                _ => unimplemented!(),
             }
         }
     }
 
-    pub fn get_scope_of_lookup(&self, r: LookupIndex) -> Scope {
-        Scope::Lookup(r)
-    }
-
-    pub fn get_scope_of_mixfix(&self, r: MixfixIndex) -> Scope {
-        Scope::Mixfix(r)
-    }
-
-    pub fn set_path(&mut self, scope: Scope, path: Located<StablePath>) {
-        match scope.to_here() {
-            Scope::EnvHere(EnvIndex(index)) => {
-                if let Some(ref mut env) = self.envs.get_mut(index) {
-                    env.path = Some(path)
-                }
-            }
-            _ => {},
-        }
-    }
-
-    pub fn get_path(&self, scope: Scope) -> Option<Located<StablePath>> {
-        match scope.to_here() {
-            Scope::EnvHere(EnvIndex(index)) => {
-                if let Some(ref env) = self.envs.get(index) {
-                    return env.path.clone()
-                }
-            }
-            _ => {},
-        }
-        None
-    }
-
-    pub fn declare(&mut self, scope: Scope, decl: &Located<Decl>) {
-        match scope.to_here() {
-            Scope::EnvHere(EnvIndex(index)) => {
-                if let Some(ref mut env) = self.envs.get_mut(index) {
-                    match env.decls.get_mut(&decl.name()) {
-                        Some(decls) => {
-                            decls.push(decl.clone());
-                        },
-                        None => {
-                            env.decls.insert(decl.name(), vec![decl.clone()]);
-                        }
+    pub fn declare(&mut self, scope: LocalRef, name: Name, decl: LocalRef) {
+        if let Some(ref mut env) = self.envs.get_mut(scope.0) {
+            match &mut env.value {
+                Decl::Bundle { ref mut members, .. } => {
+                    match members.get_mut(&name) {
+                        Some(decls) => { decls.push(decl); },
+                        None => { members.insert(name, vec![decl]); },
                     }
-                }
-            },
-            _ => {},
+                },
+                Decl::Block { ref mut members, .. } => {
+                    match members.get_mut(&name) {
+                        Some(decls) => { decls.push(decl); },
+                        None => { members.insert(name, vec![decl]); },
+                    }
+                },
+                Decl::Trait { ref mut members, .. } => {
+                    match members.get_mut(&name) {
+                        Some(decls) => { decls.push(decl); },
+                        None => { members.insert(name, vec![decl]); },
+                    }
+                },
+                d => unimplemented!("{:?}", d),
+            }
         }
     }
 
-    pub fn set_parent(&mut self, scope: Scope, parent: Scope) {
-        if parent == Scope::Empty {
-            return;
-        }
-        match scope.to_here() {
-            Scope::EnvHere(EnvIndex(index)) => {
-                if let Some(ref mut env) = self.envs.get_mut(index) {
-                    env.parents.push(parent)
-                }
-            },
-            _ => {},
+    pub fn add_super(&mut self, scope: LocalRef, sup: Ref) {
+        if let Some(ref mut env) = self.envs.get_mut(scope.0) {
+            match &mut env.value {
+                Decl::Trait { ref mut supers, .. } => supers.push(sup),
+                _ => unimplemented!(),
+            }
         }
     }
 
-    pub fn set_super(&mut self, scope: Scope, parent: Scope) {
-        if parent == Scope::Empty {
-            return;
-        }
-        match scope.to_here() {
-            Scope::EnvHere(EnvIndex(index)) => {
-                if let Some(ref mut env) = self.envs.get_mut(index) {
-                    assert_ne!(index, 0, "WTF!");
-                    env.supers.push(parent)
-                }
-            },
-            _ => {},
-        }
-    }
-
-    pub fn import(&mut self, scope: Scope, import: &Located<Import>) {
-        if import.value.path() == Scope::Empty {
-            return;
-        }
-        match scope.to_here() {
-            Scope::EnvHere(EnvIndex(index)) => {
-                if let Some(ref mut env) = self.envs.get_mut(index) {
-                    env.imports.push(import.clone())
-                }
-            },
-            _ => {},
+    pub fn import(&mut self, scope: LocalRef, import: Located<Import>) {
+        if let Some(ref mut env) = self.envs.get_mut(scope.0) {
+            match &mut env.value {
+                Decl::Bundle { ref mut imports, .. } => {
+                    imports.push(import)
+                },
+                Decl::Block { ref mut imports, .. } => {
+                    imports.push(import)
+                },
+                Decl::Trait { ref mut imports, .. } => {
+                    imports.push(import)
+                },
+                _ => unimplemented!(),
+            }
         }
     }
 
-    pub fn include(&mut self, scope: Scope, include: Scope) {
-        if include == Scope::Empty {
-            return;
-        }
-        match scope.to_here() {
-            Scope::EnvHere(EnvIndex(index)) => {
-                if let Some(ref mut env) = self.envs.get_mut(index) {
-                    unimplemented!("includes are deprecated");
-                    env.includes.push(include)
-                }
-            },
-            _ => {},
-        }
-    }
-
-    pub fn lookup(&mut self, scope: Scope, name: Name) -> LookupIndex {
+    pub fn lookup_from(&mut self, scope: LocalRef, name: Name, follow_imports: bool) -> LookupIndex {
         // SLOW HACK: we should have a table for this, but waste time rather than space.
         // Previous lookups in the same scope are more likely to be toward the end of the vec, so search backward.
-        let r = LookupRef::new(scope, name);
+        let r = LookupRef::new(scope, name, follow_imports);
+
+        for (i, s) in self.lookups.iter().enumerate().rev() {
+            if s == &r {
+                return LookupIndex(i)
+            }
+        }
+
+        let index = self.lookups.len();
+        self.lookups.push(r);
+        LookupIndex(index)
+    }
+
+    pub fn lookup_inside(&mut self, scope: Ref, name: Name) -> LookupIndex {
+        // SLOW HACK: we should have a table for this, but waste time rather than space.
+        // Previous lookups in the same scope are more likely to be toward the end of the vec, so search backward.
+        // TODO: use a map rather than a vec.
+        let r = LookupRef::as_member(scope, name);
 
         for (i, s) in self.lookups.iter().enumerate().rev() {
             if s == &r {
@@ -248,16 +227,5 @@ impl ScopeGraph {
         let index = self.mixfixes.len();
         self.mixfixes.push(r);
         MixfixIndex(index)
-    }
-
-    pub fn select_frame(&mut self, scope: Scope, name: Name) -> Scope {
-        let r = self.lookup(scope, name);
-        self.get_scope_of_lookup(r)
-    }
-
-    pub fn new_child_scope(&mut self, parent: Scope) -> Scope {
-        let env = self.new_env();
-        self.set_parent(env, parent);
-        env
     }
 }

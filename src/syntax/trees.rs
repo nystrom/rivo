@@ -7,11 +7,11 @@ use syntax::names::Name;
 use namer::graph::LookupIndex;
 use namer::graph::MixfixIndex;
 
+
+
+
 // FIXME: create two different syntaxes (HACK? use include!).
 // Or parameterize on the scopes somehow?
-// add a id to nodes that create a new scope.
-// don't use String, but use &'a str where 'a is the lifetime of the
-// ast.
 
 // We use node ids to index into the naming data structures.
 // Only nodes that introduce interact with naming have identifiers.
@@ -55,13 +55,6 @@ pub enum Lit {
     Nothing,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub enum Path {
-    Root,
-    Fresh,
-    Member { parent: Box<Path>, child: Name },
-}
-
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum FormulaFlag {
     Val,
@@ -72,7 +65,6 @@ pub enum FormulaFlag {
 pub enum MixfixFlag {
     Fun,
     Trait,
-    Struct,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -113,17 +105,19 @@ pub enum Cmd {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Def {
-    FormulaDef { attrs: Vec<Located<Attr>>, flag: FormulaFlag, formula: Box<Located<Exp>> },
+pub struct MixfixHeader {
+    attrs: Vec<Located<Attr>>,
+    name: Name,
+    opt_guard: Option<Box<Located<Exp>>>,
+    params: Vec<Located<Param>>
+}
 
-    // Accept input parameters.
-    // Solve guard formula.
-    // Now matched.
-    // Under a thunk...
-    // Solve body formula.
-    // Evaluate output parameters.
-    MixfixDef { id: NodeId, attrs: Vec<Located<Attr>>, flag: MixfixFlag, name: Name, opt_guard: Option<Box<Located<Exp>>>, opt_body: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param>, supers: Vec<Located<Exp>> },
+#[derive(Clone, Debug, PartialEq)]
+pub enum Def {
     ImportDef { opt_path: Option<Box<Located<Exp>>>, selector: Selector },
+    FormulaDef { attrs: Vec<Located<Attr>>, flag: FormulaFlag, formula: Box<Located<Exp>> },
+    FunDef { id: NodeId, attrs: Vec<Located<Attr>>, name: Name, opt_guard: Option<Box<Located<Exp>>>, opt_body: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, ret: Located<Param> },
+    TraitDef { id: NodeId, attrs: Vec<Located<Attr>>, name: Name, opt_guard: Option<Box<Located<Exp>>>, params: Vec<Located<Param>>, supers: Vec<Located<Exp>>, defs: Vec<Located<Def>> },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -165,7 +159,6 @@ pub enum Attr {
     Val,
     Var,
     Trait,
-    Struct,
     Where,
     With,
 
@@ -182,7 +175,6 @@ pub struct Field {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Exp {
     Layout { id: NodeId, cmds: Vec<Located<Cmd>> },
-    Record { id: NodeId, tag: Path, defs: Vec<Located<Def>> },
 
     // A with B
     Union { e1: Box<Located<Exp>>, e2: Box<Located<Exp>> },

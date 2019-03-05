@@ -4,7 +4,6 @@ use std::fmt::Debug;
 
 use syntax::loc::*;
 use syntax::trees::*;
-use syntax::trees::Path;
 use syntax::names::*;
 
 use parser::tokens::*;
@@ -237,19 +236,19 @@ impl<'a> Parser<'a> {
     pub fn parse_bundle(&mut self) -> PResult<Located<Root>> {
         located_ok!(self, {
             let id = self.alloc_node_id();
-            let cmds = self.parse_cmds(&Path::Root)?;
+            let cmds = self.parse_cmds()?;
             Ok(Root::Bundle { id, cmds })
         })
     }
 
-    fn parse_block(&mut self, path: &Path) -> PResult<Vec<Located<Cmd>>> {
+    fn parse_block(&mut self) -> PResult<Vec<Located<Cmd>>> {
         consume!(self, Token::Lc)?;
-        let cmds = self.parse_cmds(path)?;
+        let cmds = self.parse_cmds()?;
         consume!(self, Token::Rc)?;
         Ok(cmds)
     }
 
-    fn parse_cmds(&mut self, path: &Path) -> PResult<Vec<Located<Cmd>>> {
+    fn parse_cmds(&mut self) -> PResult<Vec<Located<Cmd>>> {
         let mut cmds = Vec::new();
 
         loop {
@@ -265,7 +264,7 @@ impl<'a> Parser<'a> {
                     self.eat();
                 },
                 _ => {
-                    match self.parse_cmd(path) {
+                    match self.parse_cmd() {
                         Ok(cs) => {
                             for c in cs {
                                 cmds.push(c);
@@ -278,7 +277,10 @@ impl<'a> Parser<'a> {
                                 Token::Rc => {},
                                 Token::EOF => {},
                                 _ => {
-                                    return self.error_unexpected(vec![Token::Semi, Token::Rc, Token::EOF], &t);
+                                    // FIXME: this error is wrong since if we forget an `=` before block in a fun or trait def,
+                                    // we'll pop out to here. The error should really be about the missing `=`.
+                                    // For now, just add the `=` as an expected token.
+                                    return self.error_unexpected(vec![Token::Eq, Token::Semi, Token::Rc, Token::EOF], &t);
                                 },
                             }
                         },
@@ -327,7 +329,6 @@ impl<'a> Parser<'a> {
                 Token::Let => { self.eat(); Ok(Attr::Let) },
                 Token::Val => { self.eat(); Ok(Attr::Val) },
                 Token::Var => { self.eat(); Ok(Attr::Var) },
-                Token::Struct => { self.eat(); Ok(Attr::Struct) },
                 Token::Trait => { self.eat(); Ok(Attr::Trait) },
                 Token::With => { self.eat(); Ok(Attr::With) },
                 Token::Where => { self.eat(); Ok(Attr::Where) },
@@ -418,7 +419,7 @@ impl<'a> Parser<'a> {
         Ok(e)
     }
 
-    fn parse_cmd(&mut self, path: &Path) -> PResult<Vec<Located<Cmd>>> {
+    fn parse_cmd(&mut self) -> PResult<Vec<Located<Cmd>>> {
         let mut attrs = Vec::new();
 
         while let Token::Hash = *self.lookahead()? {
@@ -442,39 +443,39 @@ impl<'a> Parser<'a> {
 
         match *self.lookahead()? {
             Token::Fun => {
-                let cmd = self.parse_fun_cmd(attrs, path)?;
+                let cmd = self.parse_fun_cmd(attrs)?;
                 Ok(vec![cmd])
             },
-            Token::Struct | Token::Trait => {
-                let r = self.parse_struct_def(attrs, path)?;
+            Token::Trait => {
+                let r = self.parse_trait_def(attrs)?;
                 Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Val => {
-                let r = self.parse_val_def(attrs, path)?;
+                let r = self.parse_val_def(attrs)?;
                 Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Var => {
-                let r = self.parse_var_def(attrs, path)?;
+                let r = self.parse_var_def(attrs)?;
                 Ok(vec![r.map(|d| Cmd::Def(d))])
             },
             Token::Import => {
                 if ! attrs.is_empty() {
                     self.error_here("Unexpected token `import`: import statements cannot have attributes.")?;
                 }
-                let r = self.parse_import_def(path)?;
+                let r = self.parse_import_def()?;
                 Ok(r.iter().map(|Located { loc, value }| Located { loc: *loc, value: Cmd::Def(value.clone()) }).collect())
             },
             _ => {
                 if ! attrs.is_empty() {
                     self.error_here("Unexpected token. Expressions cannot have attributes.")?;
                 }
-                let r = self.parse_exp(path)?;
+                let r = self.parse_exp()?;
                 Ok(vec![r.map(|e| Cmd::Exp(e))])
             },
         }
     }
 
-    fn parse_mixfix_return(&mut self, mode_given: bool, path: &Path) -> PResult<(bool, Located<Param>)> {
+    fn parse_mixfix_return(&mut self, mode_given: bool) -> PResult<(bool, Located<Param>)> {
         let first_token = self.lookahead()?;
 
         let (mode_given2, param) = match self.lookahead()? {
@@ -483,7 +484,7 @@ impl<'a> Parser<'a> {
                 match *self.lookahead()? {
                     Token::Question => {
                         self.eat();
-                        let e = self.parse_tuple(path)?;
+                        let e = self.parse_tuple()?;
                         consume!(self, Token::Rp)?;
                         Ok(
                             (
@@ -501,7 +502,7 @@ impl<'a> Parser<'a> {
                     },
                     Token::Bang => {
                         self.eat();
-                        let e = self.parse_tuple(path)?;
+                        let e = self.parse_tuple()?;
                         consume!(self, Token::Rp)?;
                         Ok(
                             (
@@ -527,7 +528,7 @@ impl<'a> Parser<'a> {
                         // This may consume past the end of the tuple we're starting.
                         self.push_back(Located { loc, value: Token::Lp });
 
-                        let e = self.parse_exp(path)?;
+                        let e = self.parse_exp()?;
 
                         Ok(
                             (
@@ -550,7 +551,7 @@ impl<'a> Parser<'a> {
                 match *self.lookahead()? {
                     Token::Question => {
                         self.eat();
-                        let e = self.parse_tuple(path)?;
+                        let e = self.parse_tuple()?;
                         consume!(self, Token::Rc)?;
                         Ok(
                             (
@@ -575,7 +576,7 @@ impl<'a> Parser<'a> {
                         // We should parse as an expression, but we've already eaten the {.
                         self.push_back(Located { loc, value: Token::Lc });
 
-                        let e = self.parse_exp(path)?;
+                        let e = self.parse_exp()?;
 
                         Ok(
                             (
@@ -598,7 +599,7 @@ impl<'a> Parser<'a> {
                     return self.error_here("Invalid return attribute. Expected `(` or `{` and an attribute mode.")
                 }
 
-                let e = self.parse_exp(path)?;
+                let e = self.parse_exp()?;
 
                 Ok(
                     (
@@ -620,11 +621,11 @@ impl<'a> Parser<'a> {
     }
 
     // where Exp
-    fn parse_opt_guard(&mut self, path: &Path) -> PResult<Option<Located<Exp>>> {
+    fn parse_opt_guard(&mut self) -> PResult<Option<Located<Exp>>> {
         consume_or_else!(self,
             Token::Where,
             {
-                let e = self.parse_exp0(path)?;
+                let e = self.parse_exp0()?;
                 Ok(Some(e))
             },
             {
@@ -635,7 +636,7 @@ impl<'a> Parser<'a> {
 
     // returns the vec of mixfix elements plus a bool indicating if any element specified a mode
     // (in which case the return must also specify a mode)
-    fn parse_mixfix_elements(&mut self, path: &Path) -> PResult<(bool, Vec<MixfixParam>)> {
+    fn parse_mixfix_elements(&mut self) -> PResult<(bool, Vec<MixfixParam>)> {
         let mut mode_given = false;
         let mut elements = Vec::new();
 
@@ -671,7 +672,7 @@ impl<'a> Parser<'a> {
                                     Token::Bang => {
                                         mode_given = true;
                                         self.eat();
-                                        let e = self.parse_tuple(path)?;
+                                        let e = self.parse_tuple()?;
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
@@ -686,7 +687,7 @@ impl<'a> Parser<'a> {
                                     Token::Question => {
                                         mode_given = true;
                                         self.eat();
-                                        let e = self.parse_tuple(path)?;
+                                        let e = self.parse_tuple()?;
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
@@ -702,7 +703,7 @@ impl<'a> Parser<'a> {
                                         if mode_given {
                                             return self.error_here("Invalid function header. Either all attributes, or none, must have a mode.")
                                         }
-                                        let e = self.parse_tuple(path)?;
+                                        let e = self.parse_tuple()?;
                                         consume!(self, Token::Rp)?;
                                         consume!(self, Token::Rp)?;
                                         Param {
@@ -719,7 +720,7 @@ impl<'a> Parser<'a> {
                             Token::Bang => {
                                 mode_given = true;
                                 self.eat();
-                                let e = self.parse_tuple(path)?;
+                                let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
                                     attr: ParamAttr {
@@ -733,7 +734,7 @@ impl<'a> Parser<'a> {
                             Token::Question => {
                                 mode_given = true;
                                 self.eat();
-                                let e = self.parse_tuple(path)?;
+                                let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
                                     attr: ParamAttr {
@@ -748,7 +749,7 @@ impl<'a> Parser<'a> {
                                 if mode_given {
                                     return self.error_here("Invalid function header. Either all attributes, or none, must have a mode.")
                                 }
-                                let e = self.parse_tuple(path)?;
+                                let e = self.parse_tuple()?;
                                 consume!(self, Token::Rp)?;
                                 Param {
                                     attr: ParamAttr {
@@ -773,7 +774,7 @@ impl<'a> Parser<'a> {
                                     Token::Bang => {
                                         mode_given = true;
                                         self.eat();
-                                        let e = self.parse_tuple(path)?;
+                                        let e = self.parse_tuple()?;
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
@@ -788,7 +789,7 @@ impl<'a> Parser<'a> {
                                     Token::Question => {
                                         mode_given = true;
                                         self.eat();
-                                        let e = self.parse_tuple(path)?;
+                                        let e = self.parse_tuple()?;
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
@@ -804,7 +805,7 @@ impl<'a> Parser<'a> {
                                         if mode_given {
                                             return self.error_here("Invalid function header. Either all attributes, or none, must have a mode.")
                                         }
-                                        let e = self.parse_tuple(path)?;
+                                        let e = self.parse_tuple()?;
                                         consume!(self, Token::Rc)?;
                                         consume!(self, Token::Rc)?;
                                         Param {
@@ -821,7 +822,7 @@ impl<'a> Parser<'a> {
                             Token::Bang => {
                                 mode_given = true;
                                 self.eat();
-                                let e = self.parse_tuple(path)?;
+                                let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
                                     attr: ParamAttr {
@@ -835,7 +836,7 @@ impl<'a> Parser<'a> {
                             Token::Question => {
                                 mode_given = true;
                                 self.eat();
-                                let e = self.parse_tuple(path)?;
+                                let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
                                     attr: ParamAttr {
@@ -850,7 +851,7 @@ impl<'a> Parser<'a> {
                                 if mode_given {
                                     return self.error_here("Invalid function header. Either all attributes, or none, must have a mode.")
                                 }
-                                let e = self.parse_tuple(path)?;
+                                let e = self.parse_tuple()?;
                                 consume!(self, Token::Rc)?;
                                 Param {
                                     attr: ParamAttr {
@@ -874,12 +875,12 @@ impl<'a> Parser<'a> {
         return Ok((mode_given, elements))
     }
 
-    fn parse_fun_cmd(&mut self, attrs: Vec<Located<Attr>>, path: &Path) -> PResult<Located<Cmd>> {
+    fn parse_fun_cmd(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Cmd>> {
         located_ok!(self, {
             consume_without_check!(self, Token::Fun);
 
-            let (mode_given, elements) = self.parse_mixfix_elements(path)?;
-            let opt_guard = self.parse_opt_guard(path)?;
+            let (mode_given, elements) = self.parse_mixfix_elements()?;
+            let opt_guard = self.parse_opt_guard()?;
 
             let mut has_name = false;
 
@@ -917,7 +918,7 @@ impl<'a> Parser<'a> {
 
                 consume!(self, Token::Arrow)?;
 
-                let body = self.parse_exp(path)?;
+                let body = self.parse_exp()?;
 
                 let id = self.alloc_node_id();
 
@@ -940,27 +941,25 @@ impl<'a> Parser<'a> {
                     Token::Eq => {
                         self.eat();
 
-                        let (mode_given_in_ret, e) = self.parse_mixfix_return(mode_given, &Path::Fresh)?;
+                        let (mode_given_in_ret, e) = self.parse_mixfix_return(mode_given)?;
 
                         // If a mode was given or there are no parameters, we require a mode.
                         let opt_body;
                         if mode_given || mode_given_in_ret {
-                            opt_body = self.parse_opt_guard(path)?;
+                            opt_body = self.parse_opt_guard()?;
                         }
                         else {
                             opt_body = None;
                         }
 
-                        Ok(Cmd::Def(Def::MixfixDef {
+                        Ok(Cmd::Def(Def::FunDef {
                             id,
                             attrs,
-                            flag: MixfixFlag::Fun,
                             name,
                             opt_guard: opt_guard.map(|e| Box::new(e)),
                             params,
                             ret: e,
                             opt_body: opt_body.map(|e| Box::new(e)),
-                            supers: vec![],
                         }))
                     },
                     _ => {
@@ -978,16 +977,14 @@ impl<'a> Parser<'a> {
                             None => Some(nothing.clone())
                         };
 
-                        Ok(Cmd::Def(Def::MixfixDef {
+                        Ok(Cmd::Def(Def::FunDef {
                             id,
                             attrs,
-                            flag: MixfixFlag::Fun,
                             name,
                             opt_guard: opt_guard2.map(|e| Box::new(e)),
                             params,
                             ret: Parser::make_param_from_exp(nothing, CallingMode::Output),
                             opt_body: None,
-                            supers: vec![],
                         }))
                     },
                 }
@@ -995,11 +992,11 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_val_def(&mut self, attrs: Vec<Located<Attr>>, path: &Path) -> PResult<Located<Def>> {
+    fn parse_val_def(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Def>> {
         located_ok!(self, {
             assert_eq!(*self.lookahead()?, Token::Val);
             self.eat();
-            let e = self.parse_exp(path)?;
+            let e = self.parse_exp()?;
             Ok(Def::FormulaDef {
                 attrs,
                 flag: FormulaFlag::Val,
@@ -1008,11 +1005,11 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_var_def(&mut self, attrs: Vec<Located<Attr>>, path: &Path) -> PResult<Located<Def>> {
+    fn parse_var_def(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Def>> {
         located_ok!(self, {
             assert_eq!(*self.lookahead()?, Token::Var);
             self.eat();
-            let e = self.parse_exp(path)?;
+            let e = self.parse_exp()?;
             Ok(Def::FormulaDef {
                 attrs,
                 flag: FormulaFlag::Var,
@@ -1021,10 +1018,10 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_import_def(&mut self, path: &Path) -> PResult<Vec<Located<Def>>> {
+    fn parse_import_def(&mut self) -> PResult<Vec<Located<Def>>> {
         assert_eq!(*self.lookahead()?, Token::Import);
         self.eat();
-        let e = self.parse_exp(path)?;
+        let e = self.parse_exp()?;
         self.convert_imports(e)
     }
 
@@ -1038,7 +1035,7 @@ impl<'a> Parser<'a> {
             Exp::Union { box e1, box e2 } => [e1, e2].iter().flat_map(|e| self.flatten_exp(e.clone())).collect(),
             Exp::Select { exp, name } => {
                 self.flatten_exp(*exp).iter().map(
-                    |e| Located::new(e.loc, Exp::Select { exp: Box::new(e.clone()), name: name.clone() })
+                    |e| Located::new(e.loc, Exp::Select { exp: box e.clone(), name: name.clone() })
                 ).collect()
             },
             Exp::Within { id, e1, e2 } => {
@@ -1048,7 +1045,7 @@ impl<'a> Parser<'a> {
                 let loc = e.loc;
                 v1.iter().flat_map(
                     |e1| v2.iter().map(
-                        move |e2| Located::new(loc, Exp::Within { id, e1: Box::new(e1.clone()), e2: Box::new(e2.clone()) })
+                        move |e2| Located::new(loc, Exp::Within { id, e1: box e1.clone(), e2: box e2.clone() })
                     )
                 ).collect()
             },
@@ -1071,15 +1068,15 @@ impl<'a> Parser<'a> {
         let r = match e.value {
             Exp::Lit { lit: Lit::Nothing } => {
                 Located::new(e.loc,
-                    Def::ImportDef { opt_path: opt_path.map(|p| Box::new(p)), selector: Selector::Nothing })
+                    Def::ImportDef { opt_path: opt_path.map(|p| box p), selector: Selector::Nothing })
             },
             Exp::Lit { lit: Lit::Wildcard } => {
                 Located::new(e.loc,
-                    Def::ImportDef { opt_path: opt_path.map(|p| Box::new(p)), selector: Selector::All })
+                    Def::ImportDef { opt_path: opt_path.map(|p| box p), selector: Selector::All })
             },
             Exp::Name { name, .. } => {
                 Located::new(e.loc,
-                    Def::ImportDef { opt_path: opt_path.map(|p| Box::new(p)), selector: Selector::Including { name } })
+                    Def::ImportDef { opt_path: opt_path.map(|p| box p), selector: Selector::Including { name } })
             }
             Exp::Arrow { id, arg, ret } => {
                 match self.convert_import(opt_path, *arg)? {
@@ -1109,7 +1106,7 @@ impl<'a> Parser<'a> {
                     },
                     Some(e0) => {
                         let id = self.alloc_node_id();
-                        self.convert_import(Some(Located::new(e.loc, Exp::Within { id, e1: Box::new(e0), e2: exp })), Located::new(e.loc, Exp::Name { id, name }))?
+                        self.convert_import(Some(Located::new(e.loc, Exp::Within { id, e1: box e0, e2: exp })), Located::new(e.loc, Exp::Name { id, name }))?
                     },
                 }
             },
@@ -1120,7 +1117,7 @@ impl<'a> Parser<'a> {
                     },
                     Some(e0) => {
                         let id = self.alloc_node_id();
-                        self.convert_import(Some(Located::new(e.loc, Exp::Within { id, e1: Box::new(e0), e2: e1 })), *e2)?
+                        self.convert_import(Some(Located::new(e.loc, Exp::Within { id, e1: box e0, e2: e1 })), *e2)?
                     },
                 }
             },
@@ -1132,104 +1129,13 @@ impl<'a> Parser<'a> {
         Ok(r)
     }
 
-    // A trait is just a memoized function.
-    // TODO: We can have anonymous (forward) traits too (like lambdas).
-    // The body of a trait must be stable.
-    fn parse_trait_def(&mut self, attrs: Vec<Located<Attr>>, path: &Path) -> PResult<Located<Def>> {
+    // A trait has a block for a body.
+    fn parse_trait_def(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Def>> {
         located_ok!(self, {
             consume_without_check!(self, Token::Trait);
 
-            let (mode_given, elements) = self.parse_mixfix_elements(path)?;
-            let opt_guard = self.parse_opt_guard(path)?;
-
-            let mut has_name = false;
-
-            for element in &elements {
-                match element {
-                    MixfixParam::Name(_) => { has_name = true; },
-                    _ => {},
-                }
-            }
-
-            let params = Parser::make_params(&elements);
-
-            if ! has_name {
-                self.error_here("Missing trait name.")
-            }
-            else {
-                // We have a trait definition.
-                let name = Parser::make_mixfix_name(&elements);
-
-                let id = self.alloc_node_id();
-
-                match *self.lookahead()? {
-                    Token::Eq => {
-                        self.eat();
-
-                        let (mode_given_in_return, e) = self.parse_mixfix_return(mode_given, &Path::Member { parent: box path.clone(), child: name })?;
-
-                        // If a mode was given, we can have an optional guard, to bind the output parameters.
-                        // If not, we are a forward mode trait.
-                        let opt_body;
-
-                        if mode_given || mode_given_in_return {
-                            opt_body = self.parse_opt_guard(path)?;
-                        }
-                        else {
-                            opt_body = None;
-                        }
-
-                        Ok(Def::MixfixDef {
-                            id,
-                            attrs,
-                            flag: MixfixFlag::Trait,
-                            name,
-                            opt_guard: opt_guard.map(|e| Box::new(e)),
-                            params,
-                            ret: e,
-                            opt_body: opt_body.map(|e| Box::new(e)),
-                            supers: vec![],
-                        })
-                    },
-                    _ => {
-                        // Just the function signature (without return).
-                        // We add a () guard to make sure the function cannot be
-                        // invoked.
-
-                        let nothing = Located {
-                            loc: Loc::from(&self.last_token),
-                            value: Exp::Lit { lit: Lit::Nothing },
-                        };
-
-                        let opt_guard2 = match opt_guard {
-                            Some(g) => Some(g),
-                            None => Some(nothing.clone())
-                        };
-
-                        Ok(Def::MixfixDef {
-                            id,
-                            attrs,
-                            flag: MixfixFlag::Trait,
-                            name,
-                            opt_guard: opt_guard2.map(|e| Box::new(e)),
-                            params,
-                            ret: Parser::make_param_from_exp(nothing, CallingMode::Output),
-                            opt_body: None,
-                            supers: vec![],
-                        })
-                    },
-                }
-            }
-        })
-    }
-
-    // A struct has a block for a body.
-    fn parse_struct_def(&mut self, attrs: Vec<Located<Attr>>, path: &Path) -> PResult<Located<Def>> {
-        located_ok!(self, {
-            consume_without_check!(self, Token::Trait);
-
-            let (mode_given, elements) = self.parse_mixfix_elements(path)?;
-            let opt_guard = self.parse_opt_guard(path)?;
+            let (mode_given, elements) = self.parse_mixfix_elements()?;
+            let opt_guard = self.parse_opt_guard()?;
 
             let mut has_name = false;
 
@@ -1265,7 +1171,7 @@ impl<'a> Parser<'a> {
 
             while let Token::With = *self.lookahead()? {
                 self.eat();
-                let s = self.parse_primary(path)?;
+                let s = self.parse_primary()?;
                 match s {
                     Located { loc, value: Exp::Tuple { es } } => {
                         for e in es {
@@ -1282,13 +1188,13 @@ impl<'a> Parser<'a> {
                 }
             }
 
-            let body = match *self.lookahead()? {
+            let defs = match *self.lookahead()? {
                 Token::Eq => {
                     self.eat();
 
                     let loc = self.lookahead()?.loc;
 
-                    let cmds = self.parse_block(path)?;
+                    let cmds = self.parse_block()?;
 
                     for cmd in &cmds {
                         match **cmd {
@@ -1299,75 +1205,59 @@ impl<'a> Parser<'a> {
                         }
                     }
 
-                    let defs: Vec<Located<Def>> = filter_collect_loc!(cmds, Cmd::Def(d), d);
-
-                    Located::new(
-                        Loc::span(loc, self.last_token.loc),
-                        Exp::Record {
-                            id: self.alloc_node_id(),
-                            tag: path.clone(),
-                            defs: defs
-                        })
+                    filter_collect_loc!(cmds, Cmd::Def(d), d)
                 },
                 _ => {
-                    Located::new(
-                        self.last_token.loc,
-                        Exp::Record {
-                            id: self.alloc_node_id(),
-                            tag: path.clone(),
-                            defs: vec![]
-                        })
+                    vec![]
                 }
             };
 
-            Ok(Def::MixfixDef {
+            Ok(Def::TraitDef {
                 id,
                 attrs,
-                flag: MixfixFlag::Struct,
                 name,
-                opt_guard: opt_guard.map(|e| Box::new(e)),
+                opt_guard: opt_guard.map(|e| box e),
                 params,
-                ret: Parser::make_param_from_exp(body, CallingMode::Output),
-                opt_body: None,
+                defs: defs,
                 supers: supers.clone()
             })
         })
     }
 
-    fn parse_exp(&mut self, path: &Path) -> PResult<Located<Exp>> {
+    fn parse_exp(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
-            let left = self.parse_exp0(path)?;
+            let left = self.parse_exp0()?;
 
             match *self.lookahead()? {
                 Token::Assign => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
-                    Ok(Exp::Assign { lhs: Box::new(left), rhs: Box::new(right) })
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Assign { lhs: box left, rhs: box right })
                 },
                 Token::Eq => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
-                    Ok(Exp::Bind { lhs: Box::new(left), rhs: Box::new(right) })
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Bind { lhs: box left, rhs: box right })
                 },
                 Token::Backarrow => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
-                    Ok(Exp::Generator { lhs: Box::new(left), rhs: Box::new(right) })
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Generator { lhs: box left, rhs: box right })
                 },
                 Token::Arrow => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
-                    Ok(Exp::Arrow { id: self.alloc_node_id(), arg: Box::new(left), ret: Box::new(right) })
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Arrow { id: self.alloc_node_id(), arg: box left, ret: box right })
                 },
                 Token::With => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
+                    let right = self.parse_exp()?;
                     Ok(Exp::Union { e1: box left, e2: box right })
                 },
                 Token::Where => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
-                    Ok(Exp::Where { pat: Box::new(left), guard: Box::new(right) })
+                    let right = self.parse_exp()?;
+                    Ok(Exp::Where { pat: box left, guard: box right })
                 },
                 _ => {
                     Ok(left.value)
@@ -1376,23 +1266,23 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_exp0(&mut self, path: &Path) -> PResult<Located<Exp>> {
+    fn parse_exp0(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
-            let left = self.parse_mixfix_exp(path)?;
+            let left = self.parse_mixfix_exp()?;
 
             match *self.lookahead()? {
                 Token::At => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
+                    let right = self.parse_exp()?;
                     Ok(Exp::Intersect { e1: box left, e2: box right })
                 },
                 Token::Arrow => {
                     self.eat();
-                    let right = self.parse_exp(path)?;
+                    let right = self.parse_exp()?;
                     Ok(Exp::Arrow {
                         id : self.alloc_node_id(),
-                        arg: Box::new(left),
-                        ret: Box::new(right)
+                        arg: box left,
+                        ret: box right
                     })
                 },
                 _ => {
@@ -1402,20 +1292,20 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_mixfix_exp(&mut self, path: &Path) -> PResult<Located<Exp>> {
+    fn parse_mixfix_exp(&mut self) -> PResult<Located<Exp>> {
         match *self.lookahead()? {
             Token::For => {
                 located_ok!(self, {
                     self.eat();
 
                     let id = self.alloc_node_id();
-                    let formula = self.parse_select(path)?;
-                    let body = self.parse_exp(path)?;
+                    let formula = self.parse_select()?;
+                    let body = self.parse_exp()?;
 
                     Ok(Exp::For {
                         id,
-                        formula: Box::new(formula),
-                        body: Box::new(body)
+                        formula: box formula,
+                        body: box body
                     })
                 })
             },
@@ -1424,13 +1314,13 @@ impl<'a> Parser<'a> {
                     self.eat();
 
                     let id = self.alloc_node_id();
-                    let formula = self.parse_select(path)?;
-                    let body = self.parse_exp(path)?;
+                    let formula = self.parse_select()?;
+                    let body = self.parse_exp()?;
 
                     Ok(Exp::Let {
                         id,
-                        formula: Box::new(formula),
-                        body: Box::new(body)
+                        formula: box formula,
+                        body: box body
                     })
                 })
             },
@@ -1439,13 +1329,13 @@ impl<'a> Parser<'a> {
                     self.eat();
 
                     let id = self.alloc_node_id();
-                    let formula = self.parse_select(path)?;
-                    let body = self.parse_exp(path)?;
+                    let formula = self.parse_select()?;
+                    let body = self.parse_exp()?;
 
                     Ok(Exp::LetVar {
                         id,
-                        formula: Box::new(formula),
-                        body: Box::new(body)
+                        formula: box formula,
+                        body: box body
                     })
                 })
             },
@@ -1457,19 +1347,19 @@ impl<'a> Parser<'a> {
                     let mut params = Vec::new();
 
                     while *self.lookahead()? == Token::Lp {
-                        let arg = located_ok!(self, self.parse_tuple_exp(path))?;
+                        let arg = located_ok!(self, self.parse_tuple_exp())?;
                         params.push(arg);
                     }
 
-                    let opt_guard = self.parse_opt_guard(path)?;
+                    let opt_guard = self.parse_opt_guard()?;
                     consume!(self, Token::Arrow)?;
-                    let body = self.parse_exp(path)?;
+                    let body = self.parse_exp()?;
 
                     Ok(Exp::Lambda {
                         id,
-                        opt_guard: opt_guard.map(|e| Box::new(e)),
+                        opt_guard: opt_guard.map(|e| box e),
                         params,
-                        ret: Box::new(body),
+                        ret: box body,
                     })
                 })
             },
@@ -1478,7 +1368,7 @@ impl<'a> Parser<'a> {
                     let mut es = vec![];
 
                     loop {
-                        let first = self.parse_select(path)?;
+                        let first = self.parse_select()?;
                         es.push(first);
 
                         // If the lookahead can start a primary expression,
@@ -1512,25 +1402,25 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_select(&mut self, path: &Path) -> PResult<Located<Exp>> {
-        let exp = self.parse_primary(path)?;
+    fn parse_select(&mut self) -> PResult<Located<Exp>> {
+        let exp = self.parse_primary()?;
 
         match *self.lookahead()? {
             Token::Dot =>
-                self.parse_selectors(exp, path),
+                self.parse_selectors(exp),
             _ =>
                 Ok(exp),
         }
     }
 
-    fn parse_selectors(&mut self, left: Located<Exp>, path: &Path) -> PResult<Located<Exp>> {
+    fn parse_selectors(&mut self, left: Located<Exp>) -> PResult<Located<Exp>> {
         consume_without_check!(self, Token::Dot);
 
         match *self.lookahead()? {
             Token::Id(_) | Token::Op(_) | Token::Tick | Token::Bang | Token::Question => {
                 // In this case we have e.x, e.+, e.`foo _`.
                 // Here we should just do a normal select.
-                let right = self.parse_primary(path)?;
+                let right = self.parse_primary()?;
 
                 // clone the locs now so we can move left and right.
                 let loc = Loc::span_from(&left, &right);
@@ -1540,7 +1430,7 @@ impl<'a> Parser<'a> {
                         Ok(Located::new(
                             loc,
                             Exp::Select {
-                                exp: Box::new(left),
+                                exp: box left,
                                 name: name.clone()
                             })),
                     ref t =>
@@ -1548,26 +1438,26 @@ impl<'a> Parser<'a> {
                 }?;
 
                 match *self.lookahead()? {
-                    Token::Dot => self.parse_selectors(sel, path),
+                    Token::Dot => self.parse_selectors(sel),
                     _ => Ok(sel)
                 }
             },
             Token::Underscore | Token::Lp => {
                 let id = self.alloc_node_id();
 
-                let right = self.parse_primary(path)?;
+                let right = self.parse_primary()?;
                 let loc = Loc::span_from(&left, &right);
 
                 let lsel = Located::new(
                     loc,
                     Exp::Within {
                         id,
-                        e1: Box::new(left),
-                        e2: Box::new(right),
+                        e1: box left,
+                        e2: box right,
                     });
 
                 match *self.lookahead()? {
-                    Token::Dot => self.parse_selectors(lsel, path),
+                    Token::Dot => self.parse_selectors(lsel),
                     _ => Ok(lsel)
                 }
             },
@@ -1622,7 +1512,7 @@ impl<'a> Parser<'a> {
     // () is nothing
     // (e) is just e
     // (e1, e2) is a tuple
-    fn parse_tuple_exp(&mut self, path: &Path) -> PResult<Exp> {
+    fn parse_tuple_exp(&mut self) -> PResult<Exp> {
         consume_without_check!(self, Token::Lp);
 
         match *self.lookahead()? {
@@ -1632,7 +1522,7 @@ impl<'a> Parser<'a> {
                 Ok(Exp::Lit { lit: Lit::Nothing })
             },
             _ => {
-                let first = self.parse_exp(path)?;
+                let first = self.parse_exp()?;
 
                 let t = self.lookahead()?;
 
@@ -1654,7 +1544,7 @@ impl<'a> Parser<'a> {
                                 break;
                             }
 
-                            let e = self.parse_exp(path)?;
+                            let e = self.parse_exp()?;
                             es.push(e);
 
                             if *self.lookahead()? == Token::Comma {
@@ -1680,14 +1570,14 @@ impl<'a> Parser<'a> {
     // () is nothing
     // (e) is just e
     // (e1, e2) is a tuple
-    fn parse_tuple(&mut self, path: &Path) -> PResult<Located<Exp>> {
+    fn parse_tuple(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
             match *self.lookahead()? {
                 Token::Rp | Token::Rb | Token::Rc => {
                     Ok(Exp::Lit { lit: Lit::Nothing })
                 },
                 _ => {
-                    let first = self.parse_exp(path)?;
+                    let first = self.parse_exp()?;
 
                     match *self.lookahead()? {
                         Token::Comma => {
@@ -1698,7 +1588,7 @@ impl<'a> Parser<'a> {
                             es.push(first);
 
                             loop {
-                                let e = self.parse_exp(path)?;
+                                let e = self.parse_exp()?;
                                 es.push(e);
 
                                 if *self.lookahead()? == Token::Comma {
@@ -1801,7 +1691,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_list_exp(&mut self, path: &Path) -> PResult<Exp> {
+    fn parse_list_exp(&mut self) -> PResult<Exp> {
         consume_without_check!(self, Token::Lb);
 
         let mut es = Vec::new();
@@ -1810,7 +1700,7 @@ impl<'a> Parser<'a> {
             Token::Rb => {
             },
             _ => {
-                let first = self.parse_exp(path)?;
+                let first = self.parse_exp()?;
 
                 match *self.lookahead()? {
                     Token::Comma => {
@@ -1822,7 +1712,7 @@ impl<'a> Parser<'a> {
                                 Token::Comma => {
                                     self.eat();
                                     if *self.lookahead()? != Token::Rb {
-                                        let e = self.parse_exp(path)?;
+                                        let e = self.parse_exp()?;
                                         es.push(e);
                                     }
                                 },
@@ -1843,7 +1733,7 @@ impl<'a> Parser<'a> {
         Ok(Exp::List { es })
     }
 
-    fn parse_primary(&mut self, path: &Path) -> PResult<Located<Exp>> {
+    fn parse_primary(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
             match *self.lookahead()? {
                 Token::Underscore => {
@@ -1867,15 +1757,15 @@ impl<'a> Parser<'a> {
                     Ok(Exp::Lit { lit: Lit::Char { value: n.clone() } })
                 },
                 Token::Lp => {
-                    self.parse_tuple_exp(path)
+                    self.parse_tuple_exp()
                 },
                 Token::Lb => {
-                    self.parse_list_exp(path)
+                    self.parse_list_exp()
                 }
                 Token::Lc => {
                     let loc = self.lookahead()?.loc;
 
-                    let cmds = self.parse_block(path)?;
+                    let cmds = self.parse_block()?;
 
                     let all_arrows = cmds.iter().all(|cmd|
                         match &cmd.value {
@@ -2130,7 +2020,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(1),
                                 attrs: vec![],
-                                flag: MixfixFlag::Struct,
+                                flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
                                 opt_body: None,
@@ -2148,10 +2038,6 @@ mod tests {
                                             loc: Loc::new(6, 6),
                                             value: Exp::Record {
                                                 id: NodeId(2),
-                                                tag: Box::new(Located {
-                                                    loc: Loc::new(6, 6),
-                                                    value: Exp::Outer { id: NodeId(3) }
-                                                }),
                                                 defs: vec![]
                                             }
                                         })
@@ -2177,11 +2063,11 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(1),
                                 attrs: vec![],
-                                flag: MixfixFlag::Struct,
+                                flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
                                 opt_body: None,
-
+                                supers: vec![],
                                 params: vec![],
                                 ret: Located {
                                     loc: Loc::new(10, 11),
@@ -2217,7 +2103,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(1),
                                 attrs: vec![],
-                                flag: MixfixFlag::Struct,
+                                flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
                                 opt_body: None,
@@ -2274,7 +2160,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(2),
                                 attrs: vec![],
-                                flag: MixfixFlag::Struct,
+                                flag: MixfixFlag::Trait,
                                 name: Name::Mixfix(Name::encode_parts(&vec![Part::Id(Interned::new("T")), Part::Placeholder])),
                                 opt_guard: None,
                                 opt_body: None,
@@ -2313,10 +2199,6 @@ mod tests {
                                                 Loc::new(10,10),
                                                 Exp::Record {
                                                     id: NodeId(3),
-                                                    tag: Box::new(Located {
-                                                        loc: Loc::new(10, 10),
-                                                        value: Exp::Outer { id: NodeId(4) }
-                                                    }),
                                                     defs: vec![]
                                                 }
                                             )
@@ -2333,7 +2215,7 @@ mod tests {
 
     #[test]
     fn test_trait_with_union_with_empty() {
-        test_parse_ok!("trait T = A with {}",
+        test_parse_ok!("trait T with A = {}",
             Root::Bundle {
                 id: NodeId(0),
                 cmds: vec![
@@ -2343,12 +2225,20 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(1),
                                 attrs: vec![],
-                                flag: MixfixFlag::Struct,
+                                flag: MixfixFlag::Trait,
                                 name: Name::Id(Interned::new("T")),
                                 opt_guard: None,
                                 opt_body: None,
                                 params: vec![],
-
+                                supers: vec![
+                                    Located {
+                                        loc: Loc::new(10, 10),
+                                        value: Exp::Name {
+                                            name: Name::Id(Interned::new("A")),
+                                            id: NodeId(2),
+                                        }
+                                    }
+                                ],
                                 ret: Located {
                                     loc: Loc::new(10, 18),
                                     value: Param {
@@ -2357,24 +2247,10 @@ mod tests {
                                             by_name: CallingConv::ByValue,
                                             mode: CallingMode::Output,
                                         },
-                                        pat: Box::new(Located {
-                                            loc: Loc::new(10, 18),
-                                            value: Exp::Union {
-                                                e1: box
-                                                    Located {
-                                                        loc: Loc::new(10, 10),
-                                                        value: Exp::Name {
-                                                            name: Name::Id(Interned::new("A")),
-                                                            id: NodeId(2),
-                                                        }
-                                                    },
-                                                e2: box
-                                                    Located {
-                                                        loc: Loc::new(17, 18),
-                                                        value: Exp::Lit { lit: Lit::Nothing }
-                                                    }
-                                            }
-                                        })
+                                        pat: box Located {
+                                            loc: Loc::new(17, 18),
+                                            value: Exp::Lit { lit: Lit::Nothing }
+                                        }
                                     }
                                 }
                             }
@@ -2397,7 +2273,7 @@ mod tests {
                             Def::MixfixDef {
                                 id: NodeId(3),
                                 attrs: vec![],
-                                flag: MixfixFlag::Struct,
+                                flag: MixfixFlag::Trait,
                                 name: Name::Mixfix(Name::encode_parts(&vec![Part::Id(Interned::new("T")), Part::Placeholder])),
                                 opt_guard: Some(
                                     Box::new(

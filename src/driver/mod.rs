@@ -5,15 +5,12 @@ use std::collections::HashMap;
 
 use namer::graph::ScopeGraph;
 use namer::graph::EnvIndex;
-use namer::symbols::Scope;
-use namer::symbols::Env;
 
 use self::bundle::*;
 use self::loader::*;
 use self::stats::*;
 
 pub mod bundle;
-pub mod errors;
 pub mod loader;
 pub mod stats;
 
@@ -24,7 +21,7 @@ trace::init_depth_var!();
 // One of the bundles is the current bundle being processed.
 // The others are to-be-processed.
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BundleIndex(usize);
 
 #[derive(Debug)]
@@ -309,6 +306,7 @@ impl Driver {
                         lookups: &mut HashMap::new(),
                         mixfixes: &mut HashMap::new(),
                         node_id_generator: &mut node_id_generator1,
+                        bundle: index,
                         driver: self
                     };
 
@@ -375,18 +373,9 @@ impl Driver {
                 let mut node_id_generator1 = *node_id_generator;
 
                 use namer::namer::Namer;
-                use namer::namer::Cache;
                 use namer::rename::RenamerCtx;
 
-                let mut cache = Cache {
-                    lookup_cache: &mut HashMap::new(),
-                    tree_cache: &mut HashMap::new(),
-                };
-
-                let mut namer = Namer {
-                    driver: self,
-                    cache: &mut cache,
-                };
+                let mut namer = Namer::new(self);
 
                 {
                     let mut renamer = Renamer {

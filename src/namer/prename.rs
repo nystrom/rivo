@@ -19,13 +19,11 @@ trace::init_depth_var!();
 #[derive(Clone)]
 pub struct PrenameCtx {
     /// The current lexical scope.
-    scope: Scope,
-    /// The current stable path.
-    path: Option<Located<StablePath>>,
+    scope: Option<LocalRef>,
     /// Names declared or imported in this scope or a parent scope.
     names: Vec<Name>,
     /// Unknowns declared in this scope.
-    unknowns: Vec<Located<Decl>>,
+    unknowns: Vec<Name>,
     /// Are we inside a mixfix expression?
     in_mixfix: bool,
     /// Priority of declarations.
@@ -35,181 +33,179 @@ pub struct PrenameCtx {
 impl PrenameCtx {
     pub fn new() -> PrenameCtx {
         PrenameCtx {
-            // The initial environment is Empty, not Global.
+            // The initial environment is just a dummy.
             // When we enter the Bundle during the tree traversal,
             // the imports should reference Global. Global is not
             // a parent of the Bundle scope.
-            scope: Scope::Empty,
-            path: None,
+            scope: None,
             names: vec![],
             unknowns: vec![],
             in_mixfix: false,
-            prio: Prio(0)
+            prio: Prio(0),
         }
     }
 }
 
 pub struct Prenamer<'a> {
-    pub scopes: &'a mut HashMap<NodeId, Scope>,
+    // Map from node id to the environment of that node
+    pub scopes: &'a mut HashMap<NodeId, LocalRef>,
     pub lookups: &'a mut HashMap<NodeId, LookupIndex>,
     pub mixfixes: &'a mut HashMap<NodeId, MixfixIndex>,
     pub driver: &'a mut driver::Driver,
     pub node_id_generator: &'a mut NodeIdGenerator,
+    pub bundle: driver::BundleIndex,
 }
 
-impl<'a> Prenamer<'a> {
-    fn get_unknowns_from_exps(flag: FormulaFlag, params: &Vec<Located<Exp>>, defined_names: &Vec<Name>, scope: Scope) -> Vec<Located<Decl>> {
-        let mut decls = Vec::new();
-        for e in params {
-            Prenamer::add_unknowns_for_exp(&mut decls, flag, e, defined_names, scope);
+struct AddUnknowns<'a> {
+    flag: FormulaFlag,
+    defined_names: &'a Vec<Name>,
+    new_names: &'a mut Vec<Name>,
+    graph: &'a mut ScopeGraph,
+    scope: LocalRef,
+}
+
+impl<'a> AddUnknowns<'a> {
+    fn declare_unknowns_in_exps(&mut self, es: &Vec<Located<Exp>>) {
+        for e in es {
+            self.declare_unknowns_in_exp(e);
         }
-        decls
     }
 
-    fn get_unknowns_from_exp(flag: FormulaFlag, e: &Located<Exp>, defined_names: &Vec<Name>, scope: Scope) -> Vec<Located<Decl>> {
-        let mut decls = Vec::new();
-        Prenamer::add_unknowns_for_exp(&mut decls, flag, e, defined_names, scope);
-        decls
-    }
-
-    #[cfg_attr(debug_assertions, trace(disable(ctx)))]
-    fn add_unknown_for_name(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, name: Name, defined_names: &Vec<Name>, scope: Scope, loc: &Loc) -> Vec<Located<Decl>> {
-        for decl in decls.iter() {
-            if decl.name() == name {
-                // already declared here
-                return vec![];
-            }
+    #[cfg_attr(debug_assertions, trace)]
+    fn declare_unknown_for_name(&mut self, name: Name, loc: &Loc) {
+        if self.defined_names.contains(&name) {
+            // already declared in outer scope
+            return;
         }
-        for defined in defined_names {
-            if *defined == name {
-                // already declared in outer scope
-                return vec![];
-            }
+        if self.new_names.contains(&name) {
+            // already declared here
+            return;
         }
 
-        let decl = match flag {
-            FormulaFlag::Val => Decl::Val { scope, name },
-            FormulaFlag::Var => Decl::Var { scope, name },
+        self.new_names.push(name);
+
+        let decl = match self.flag {
+            FormulaFlag::Val => Decl::Val { parent: self.scope, name },
+            FormulaFlag::Var => Decl::Var { parent: self.scope, name },
         };
 
-        decls.push(Located { loc: *loc, value: decl });
-
-        decls.clone()
+        let r = self.graph.add_env(Located::new(*loc, decl));
+        self.graph.declare(self.scope, name, r);
     }
 
     #[cfg_attr(debug_assertions, trace(disable(ctx)))]
-    fn add_unknowns_for_exp(decls: &mut Vec<Located<Decl>>, flag: FormulaFlag, e: &Located<Exp>, defined_names: &Vec<Name>, scope: Scope) {
+    fn declare_unknowns_in_exp(&mut self, e: &Located<Exp>) {
         match &e.value {
             Exp::Union { box e1, box e2 } => {
                 // TODO: we need to verify that all members of the union bind the same unknowns
                 // because we don't know which member will match.
-                Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &e2, defined_names, scope);
+                self.declare_unknowns_in_exp(&e1);
+                self.declare_unknowns_in_exp(&e2);
             },
             Exp::Intersect { box e1, box e2 } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &e2, defined_names, scope);
+                self.declare_unknowns_in_exp(&e1);
+                self.declare_unknowns_in_exp(&e2);
             },
             Exp::Tuple { es } => {
                 for e in es {
-                    Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
+                    self.declare_unknowns_in_exp(&e);
                 }
             },
             Exp::List { es } => {
                 for e in es {
-                    Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
+                    self.declare_unknowns_in_exp(&e);
                 }
             },
-            Exp::Where { pat, guard } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &pat, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &guard, defined_names, scope);
+            Exp::Where { box pat, box guard } => {
+                self.declare_unknowns_in_exp(&pat);
+                self.declare_unknowns_in_exp(&guard);
             },
-            Exp::Arrow { id, arg, ret } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &arg, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &ret, defined_names, scope);
+            Exp::Arrow { id, box arg, box ret } => {
+                self.declare_unknowns_in_exp(&arg);
+                self.declare_unknowns_in_exp(&ret);
             },
-            Exp::Assign { lhs, rhs } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &rhs, defined_names, scope);
+            Exp::Assign { box lhs, box rhs } => {
+                self.declare_unknowns_in_exp(&lhs);
+                self.declare_unknowns_in_exp(&rhs);
                 // Names on the left of a binding are also unknowns, regardless of their case.
-                match **lhs {
+                match lhs {
                     Located { ref loc, value: Exp::Name { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                        self.declare_unknown_for_name(*name, &e.loc);
                     },
                     Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                        self.declare_unknown_for_name(*name, &e.loc);
                     },
                     _ => {},
                 }
             },
-            Exp::Bind { lhs, rhs } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &rhs, defined_names, scope);
+            Exp::Bind { box lhs, box rhs } => {
+                self.declare_unknowns_in_exp(&lhs);
+                self.declare_unknowns_in_exp(&rhs);
                 // Names on the left of a binding are also unknowns, regardless of their case.
-                match **lhs {
+                match lhs {
                     Located { ref loc, value: Exp::Name { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                        self.declare_unknown_for_name(*name, &e.loc);
                     },
                     Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                        self.declare_unknown_for_name(*name, &e.loc);
                     },
                     _ => {},
                 }
             },
-            Exp::Generator { lhs, rhs } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &lhs, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &rhs, defined_names, scope);
+            Exp::Generator { box lhs, box rhs } => {
+                self.declare_unknowns_in_exp(&lhs);
+                self.declare_unknowns_in_exp(&rhs);
                 // Names on the left of a binding are also unknowns, regardless of their case.
-                match **lhs {
+                match lhs {
                     Located { ref loc, value: Exp::Name { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                        self.declare_unknown_for_name(*name, &e.loc);
                     },
                     Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
-                        Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                        self.declare_unknown_for_name(*name, &e.loc);
                     },
                     _ => {},
                 }
             },
-            Exp::Select { exp, name } => {
-                match **exp {
+            Exp::Select { box exp, name } => {
+                match exp {
                     Located { ref loc, value: Exp::Name { .. } } => {},
                     Located { ref loc, value: Exp::Var { .. } } => {},
                     Located { ref loc, value: Exp::MixfixPart { .. } } => {},
-                    _ => { Prenamer::add_unknowns_for_exp(decls, flag, &exp, defined_names, scope); }
+                    _ => { self.declare_unknowns_in_exp(&exp); }
                 }
             },
-            Exp::Within { id, e1, e2 } => {
-                match **e1 {
+            Exp::Within { id, box e1, box e2 } => {
+                match e1 {
                     Located { ref loc, value: Exp::Name { .. } } => {},
                     Located { ref loc, value: Exp::Var { .. } } => {},
                     Located { ref loc, value: Exp::MixfixPart { .. } } => {},
-                    _ => { Prenamer::add_unknowns_for_exp(decls, flag, &e1, defined_names, scope); }
+                    _ => { self.declare_unknowns_in_exp(&e1); }
                 }
-                Prenamer::add_unknowns_for_exp(decls, flag, &e2, defined_names, scope);
+                self.declare_unknowns_in_exp(&e2);
 
             },
-            Exp::Apply { fun, arg } => {
-                Prenamer::add_unknowns_for_exp(decls, flag, &fun, defined_names, scope);
-                Prenamer::add_unknowns_for_exp(decls, flag, &arg, defined_names, scope);
+            Exp::Apply { box fun, box arg } => {
+                self.declare_unknowns_in_exp(&fun);
+                self.declare_unknowns_in_exp(&arg);
             },
             Exp::Name { id, name } => {
-                Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                self.declare_unknown_for_name(*name, &e.loc);
             },
             Exp::Unknown { id, name } => {
-                Prenamer::add_unknown_for_name(decls, flag, *name, defined_names, scope, &e.loc);
+                self.declare_unknown_for_name(*name, &e.loc);
             },
             Exp::Var { id, name } => {},
             Exp::MixfixPart { id, name } => {},
             Exp::MixfixApply { es, id } => {
                 for e in es {
-                    Prenamer::add_unknowns_for_exp(decls, flag, &e, defined_names, scope);
+                    self.declare_unknowns_in_exp(&e);
                 }
             },
             Exp::Layout { id, cmds } => {
                 for cmd in cmds {
                     match cmd {
                         Located { loc, value: Cmd::Exp(e) } => {
-                            Prenamer::add_unknowns_for_exp(decls, flag, &Located { loc: *loc, value: e.clone() }, defined_names, scope);
+                            self.declare_unknowns_in_exp(&Located { loc: *loc, value: e.clone() });
                         },
                         _ => {},
                     }
@@ -219,7 +215,9 @@ impl<'a> Prenamer<'a> {
             _ => {},
         }
     }
+}
 
+impl<'a> Prenamer<'a> {
     fn get_imported_names(cmds: &Vec<Located<Cmd>>) -> Vec<Name> {
         // FIXME cloning!
         let defs = cmds.iter().filter_map(|cmd|
@@ -290,13 +288,12 @@ impl<'a> Prenamer<'a> {
         let mut names = Vec::new();
         for def in defs {
             match def {
-                Located { loc, value: Def::MixfixDef { name, .. } } => {
+                Located { loc, value: Def::TraitDef { name, .. } } => {
                     names.extend(Prenamer::get_names(&name).iter().cloned());
                 },
-                // Located { loc, value: Def::GroupDef { defs, .. } } => {
-                //     let mut nested = Prenamer::get_declared_names_from_defs(defs);
-                //     names.append(&mut nested);
-                // },
+                Located { loc, value: Def::FunDef { name, .. } } => {
+                    names.extend(Prenamer::get_names(&name).iter().cloned());
+                },
                 _ => {},
             }
         }
@@ -304,7 +301,7 @@ impl<'a> Prenamer<'a> {
         names
     }
 
-    fn add_imports(&mut self, import_into_scope: Scope, parent_scope: Scope, cmds: &Vec<Located<Cmd>>, is_root: bool) {
+    fn add_imports(&mut self, import_into_scope: LocalRef, parent_scope: LocalRef, cmds: &Vec<Located<Cmd>>) {
         // FIXME cloning!
         let defs = cmds.iter().filter_map(|cmd|
             match cmd {
@@ -312,10 +309,36 @@ impl<'a> Prenamer<'a> {
                 _ => None,
             }
         );
-        self.add_imports_from_defs(import_into_scope, parent_scope, defs, is_root);
+        self.add_imports_from_defs(import_into_scope, parent_scope, defs);
     }
 
-    fn add_imports_from_defs<T>(&mut self, import_into_scope: Scope, parent_scope: Scope, defs: T, is_root: bool)
+    fn add_root_imports(&mut self, import_into_scope: LocalRef, parent_scope: Ref, cmds: &Vec<Located<Cmd>>) {
+        // FIXME cloning!
+        let defs = cmds.iter().filter_map(|cmd|
+            match cmd {
+                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: *loc, value: d.clone() }),
+                _ => None,
+            }
+        );
+        self.add_root_imports_from_defs(import_into_scope, parent_scope, defs);
+    }
+
+    fn add_imports_from_defs<T>(&mut self, import_into_scope: LocalRef, parent_scope: LocalRef, defs: T)
+        where T : Iterator<Item = Located<Def>>
+    {
+        for def in defs {
+            match def {
+                Located { loc, value: Def::ImportDef { opt_path, selector } } => {
+// FIXME: when importing into a trait body, the parent should include the unknowns of the trait.
+// This means we need a block scope as a child of the trait. and we should search the block for members.
+                    self.add_import(import_into_scope, parent_scope.to_ref(self.bundle), &opt_path.map(|bx| *bx), &selector, loc);
+                },
+                _ => {},
+            }
+        }
+    }
+
+    fn add_root_imports_from_defs<T>(&mut self, import_into_scope: LocalRef, parent_scope: Ref, defs: T)
         where T : Iterator<Item = Located<Def>>
     {
         let mut imports_none = false;
@@ -323,73 +346,80 @@ impl<'a> Prenamer<'a> {
         for def in defs {
             match def {
                 Located { loc, value: Def::ImportDef { opt_path, selector } } => {
-                    match selector {
-                        Selector::Nothing => {
-                            imports_none = true;
-                        },
-                        _ => {},
-                    }
-
-                    self.add_import(import_into_scope, import_into_scope.without_imports(), parent_scope, &opt_path.map(|bx| *bx), selector, loc);
+                    imports_none |= selector == Selector::Nothing;
+                    self.add_import(import_into_scope, parent_scope, &opt_path.map(|bx| *bx), &selector, loc);
                 },
                 _ => {},
             }
         }
 
         // If this is in the root scope and there is no import (), add import Prelude._.
-        // FIXME: should we just make the parent of the top-level scope include an import of Prelude.
+        // FIXME: should we just make the parent of the top-level scope include an import of Prelude?
         // import () will prevent following the parent link.
-        if is_root && ! imports_none {
-            let lookup = self.driver.graph.lookup(Scope::Global, Name::Id(Interned::new("Prelude")));
+        if ! imports_none {
+            let lookup = self.driver.graph.lookup_inside(Ref::Root, Name::Id(Interned::new("Prelude")));
             let scope = self.driver.graph.get_scope_of_lookup(lookup);
-            self.driver.graph.import(import_into_scope, &Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
+            self.driver.graph.import(import_into_scope, Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
         }
     }
 
     #[cfg_attr(debug_assertions, trace)]
-    fn add_import(&mut self, import_into_scope: Scope, lookup_scope: Scope, parent_scope: Scope, opt_path: &Option<Located<Exp>>, selector: Selector, loc: Loc) {
-        match opt_path {
-            None => {
-                match selector {
-                    Selector::All => {
-                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::All { path: parent_scope } });
-                    },
-                    Selector::Nothing => {
-                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::None { path: parent_scope } });
-                    },
-                    Selector::Including { name } => {
-                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::Including { path: parent_scope, name: name } });
-                    },
-                    Selector::Excluding { name } => {
-                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::Excluding { path: parent_scope, name: name } });
-                    },
-                    Selector::Renaming { name, rename } => {
-                        self.driver.graph.import(import_into_scope, &Located { loc, value: Import::Renaming { path: parent_scope, name: name, rename: rename } });
-                    },
-                }
+    fn add_path_import(&mut self, import_into_scope: LocalRef, path: Ref, selector: &Selector, loc: Loc) {
+        match selector {
+            Selector::All => {
+                self.driver.graph.import(import_into_scope, Located { loc, value: Import::All { path } });
             },
-            Some(e) => {
-                let inner_scope = self.lookup_frame(lookup_scope, e);
-                self.add_import(import_into_scope, inner_scope, inner_scope, &None, selector, loc)
+            Selector::Nothing => {
+                self.driver.graph.import(import_into_scope, Located { loc, value: Import::None { path } });
+            },
+            Selector::Including { name } => {
+                self.driver.graph.import(import_into_scope, Located { loc, value: Import::Including { path, name: *name } });
+            },
+            Selector::Excluding { name } => {
+                self.driver.graph.import(import_into_scope, Located { loc, value: Import::Excluding { path, name: *name } });
+            },
+            Selector::Renaming { name, rename } => {
+                self.driver.graph.import(import_into_scope, Located { loc, value: Import::Renaming { path, name: *name, rename: *rename } });
             },
         }
     }
 
-    pub fn lookup(&mut self, id: NodeId, scope: Scope, name: Name) -> LookupIndex {
-        let lookup = self.driver.graph.lookup(scope, name);
+    #[cfg_attr(debug_assertions, trace)]
+    fn add_import(&mut self, import_into_scope: LocalRef, parent_scope: Ref, opt_path: &Option<Located<Exp>>, selector: &Selector, loc: Loc) {
+        match opt_path {
+            None => {
+                self.add_path_import(import_into_scope, parent_scope, selector, loc);
+            },
+            Some(e) => {
+                let inner_scopes = self.lookup_frame_from(import_into_scope, e, false);
+                for inner_scope in inner_scopes {
+                    self.add_path_import(import_into_scope, inner_scope, selector, loc);
+                }
+            },
+        }
+    }
+
+    pub fn lookup_from(&mut self, id: NodeId, scope: LocalRef, name: Name, follow_imports: bool) -> LookupIndex {
+        let lookup = self.driver.graph.lookup_from(scope, name, follow_imports);
         self.lookups.insert(id, lookup);
         lookup
     }
 
-    pub fn parse_mixfix(&mut self, id: NodeId, scope: Scope, es: &Vec<Located<Exp>>) -> MixfixIndex {
+    pub fn lookup_inside(&mut self, id: NodeId, scope: Ref, name: Name) -> LookupIndex {
+        let lookup = self.driver.graph.lookup_inside(scope, name);
+        self.lookups.insert(id, lookup);
+        lookup
+    }
+
+    pub fn parse_mixfix(&mut self, id: NodeId, scope: LocalRef, es: &Vec<Located<Exp>>, follow_imports: bool) -> MixfixIndex {
         let parts = es.iter().map(|e|
             match e.value {
                 Exp::Name { ref name, id } => {
-                    let lookup = self.lookup(id, scope, *name);
+                    let lookup = self.lookup_from(id, scope, *name, follow_imports);
                     MixfixPart { name_ref: Some(lookup) }
                 },
                 Exp::MixfixPart { ref name, id } => {
-                    let lookup = self.lookup(id, scope, *name);
+                    let lookup = self.lookup_from(id, scope, *name, follow_imports);
                     MixfixPart { name_ref: Some(lookup) }
                 },
                 _ =>
@@ -402,60 +432,95 @@ impl<'a> Prenamer<'a> {
         lookup
     }
 
-    pub fn lookup_frame(&mut self, scope: Scope, e: &Located<Exp>) -> Scope {
+    pub fn lookup_frame_from(&mut self, scope: LocalRef, e: &Located<Exp>, follow_imports: bool) -> Vec<Ref> {
         match &e.value {
             Exp::Name { name, id } => {
-                let lookup = self.lookup(*id, scope, *name);
-                self.driver.graph.get_scope_of_lookup(lookup)
+                let lookup = self.lookup_from(*id, scope, *name, follow_imports);
+                vec![Ref::Lookup(lookup)]
             },
             Exp::Var { name, id } => {
-                let lookup = self.lookup(*id, scope, *name);
-                self.driver.graph.get_scope_of_lookup(lookup)
+                let lookup = self.lookup_from(*id, scope, *name, follow_imports);
+                vec![Ref::Lookup(lookup)]
             },
             Exp::MixfixApply { es, id } => {
-                let lookup = self.parse_mixfix(*id, scope, es);
-                self.driver.graph.get_scope_of_mixfix(lookup)
+                let lookup = self.parse_mixfix(*id, scope, es, follow_imports);
+                vec![Ref::Mixfix(lookup)]
             },
             Exp::Apply { fun, arg } => {
                 // When looking up (`List _` Int) it's sufficient to just lookup
                 // `List _`. The `Int` will be substituted in at runtime.
-                self.lookup_frame(scope, &*fun)
-            },
-            Exp::Record { id, .. } => {
-                let scope = self.scopes.get(&id);
-                assert!(scope.is_some());
-                *scope.unwrap_or(&Scope::Empty)
+                self.lookup_frame_from(scope, &*fun, follow_imports)
             },
             Exp::Within { id, e1, e2 } => {
                 let scope = self.scopes.get(&id);
                 assert!(scope.is_some());
-                *scope.unwrap_or(&Scope::Empty)
+                scope.iter().map(|local| Ref::Resolved(local.to_global_ref(self.bundle))).collect()
             }
             Exp::Select { exp, name } => {
-                let inner_scope = self.lookup_frame(scope, &*exp);
-                let id = self.node_id_generator.new_id();  // FIXME: id shouldn't be needed
-                let lookup = self.lookup(id, inner_scope, *name);
-                self.driver.graph.get_scope_of_lookup(lookup)
+                let inner_scopes = self.lookup_frame_from(scope, &*exp, follow_imports);
+                inner_scopes.iter().map(|inner_scope| {
+                    let lookup = self.driver.graph.lookup_inside(*inner_scope, *name);
+                    Ref::Lookup(lookup)
+                }).collect()
             }
             Exp::Union { box e1, box e2 } => {
-                let env = self.driver.graph.new_env();
-                let s1 = self.lookup_frame(scope, e1);
-                let s2 = self.lookup_frame(scope, e2);
-                // self.driver.graph.import(env, &Located::new(e.loc, Import::All { path: s }));
-                self.driver.graph.include(env, s1);
-                self.driver.graph.include(env, s2);
-                env.to_here()
+                let s1 = self.lookup_frame_from(scope, e1, follow_imports);
+                let s2 = self.lookup_frame_from(scope, e2, follow_imports);
+                s1.iter().chain(s2.iter()).cloned().collect()
+            },
+            Exp::Lit { lit } => {
+                vec![]
             },
             e => {
-                // unimplemented!("{:?}", e);
-                Scope::Empty
+                println!("unexpected lookup_frame_from({:?})", &e);
+                vec![]
+            },
+        }
+    }
+
+    pub fn lookup_frame_inside(&mut self, scope: Ref, e: &Located<Exp>) -> Vec<Ref> {
+        match &e.value {
+            Exp::Name { name, id } => {
+                let lookup = self.lookup_inside(*id, scope, *name);
+                vec![Ref::Lookup(lookup)]
+            },
+            Exp::Var { name, id } => {
+                let lookup = self.lookup_inside(*id, scope, *name);
+                vec![Ref::Lookup(lookup)]
+            },
+            // Exp::MixfixApply { es, id } => {
+            //     let lookup = self.parse_mixfix(*id, scope, es);
+            //     vec![Ref::Mixfix(lookup)]
+            // },
+            Exp::Apply { box fun, arg: _ } => {
+                // When looking up (`List _` Int) it's sufficient to just lookup
+                // `List _`. The `Int` will be substituted in at runtime.
+                self.lookup_frame_inside(scope, &fun)
+            },
+            Exp::Select { exp, name } => {
+                let inner_scopes = self.lookup_frame_inside(scope, &*exp);
+                inner_scopes.iter().map(|inner_scope| {
+                    let lookup = self.driver.graph.lookup_inside(*inner_scope, *name);
+                    Ref::Lookup(lookup)
+                }).collect()
+            }
+            Exp::Union { box e1, box e2 } => {
+                let s1 = self.lookup_frame_inside(scope, e1);
+                let s2 = self.lookup_frame_inside(scope, e2);
+                s1.iter().chain(s2.iter()).cloned().collect()
+            },
+            e => {
+                vec![]
             },
         }
     }
 
     pub fn prio(c: &Located<Cmd>) -> Option<usize> {
         match &c.value {
-            Cmd::Def(Def::MixfixDef { attrs, .. }) => {
+            Cmd::Def(Def::TraitDef { attrs, .. }) => {
+                Prenamer::get_prio_from_attributes(attrs)
+            },
+            Cmd::Def(Def::FunDef { attrs, .. }) => {
                 Prenamer::get_prio_from_attributes(attrs)
             },
             Cmd::Def(Def::FormulaDef { attrs, .. }) => {
@@ -521,14 +586,16 @@ impl<'a> Prenamer<'a> {
             };
 
             match cmd {
-                Located { loc, value: Cmd::Def(Def::FormulaDef { attrs, flag, formula }) } => {
+                Located { loc, value: Cmd::Def(Def::FormulaDef { attrs, flag, box formula }) } => {
                     let names = &ctx1.names;
-                    let unknowns = Prenamer::get_unknowns_from_exp(*flag, &*formula, names, ctx1.scope);
-
-                    for decl in &unknowns {
-                        new_names.push(decl.name());
-                        self.driver.graph.declare(ctx1.scope, decl);
-                    }
+                    let mut add_unknowns = AddUnknowns { 
+                        flag: *flag, 
+                        defined_names: names, 
+                        new_names: &mut new_names, 
+                        scope: ctx1.scope.unwrap(), 
+                        graph: &mut self.driver.graph
+                    };
+                    add_unknowns.declare_unknowns_in_exp(&formula);
 
                     let cmd1 = self.visit_cmd(&cmd.value, &ctx1, &cmd.loc);
                     result.push(Located { loc: cmd.loc, value: cmd1 });
@@ -557,14 +624,16 @@ impl<'a> Prenamer<'a> {
             };
 
             match def {
-                Located { loc, value: Def::FormulaDef { attrs, flag, formula } } => {
+                Located { loc, value: Def::FormulaDef { attrs, flag, box formula } } => {
                     let names = &ctx1.names;
-                    let unknowns = Prenamer::get_unknowns_from_exp(*flag, &*formula, names, ctx1.scope);
-
-                    for decl in &unknowns {
-                        new_names.push(decl.name());
-                        self.driver.graph.declare(ctx1.scope, decl);
-                    }
+                    let mut add_unknowns = AddUnknowns { 
+                        flag: *flag, 
+                        defined_names: names, 
+                        new_names: &mut new_names, 
+                        scope: ctx1.scope.unwrap(), 
+                        graph: &mut self.driver.graph 
+                    };
+                    add_unknowns.declare_unknowns_in_exp(&formula);
 
                     let def1 = self.visit_def(&def.value, &ctx1, &def.loc);
                     result.push(Located { loc: def.loc, value: def1 });
@@ -586,13 +655,10 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
     fn visit_root(&mut self, s: &'a Root, ctx: &PrenameCtx, loc: &Loc) -> Root {
         match s {
             Root::Bundle { id, cmds } => {
-                let path = Located::new(*loc, StablePath::Root);
-
-                let scope = self.driver.graph.new_env();
-                self.scopes.insert(*id, scope);
-
-                self.driver.graph.set_path(scope, path.clone());
-                self.driver.graph.set_parent(scope, Scope::Global);
+                // Create the new scope.
+                let scope = Decl::new_bundle(self.bundle);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
                 let names = &ctx.names;
                 let imported_names = Prenamer::get_imported_names(cmds);
@@ -604,8 +670,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 new_names.extend(decl_names.iter().cloned());
 
                 let child_ctx = PrenameCtx {
-                    scope,
-                    path: Some(path),
+                    scope: Some(scope_ref),
                     names: new_names,
                     ..ctx.clone()
                 };
@@ -618,7 +683,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Add imports.
                 match new_node {
                     Root::Bundle { ref cmds, .. } => {
-                        self.add_imports(scope, Scope::Global, cmds, true);
+                        self.add_root_imports(scope_ref, Ref::Root, cmds);
                     },
                 }
 
@@ -629,39 +694,49 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
     fn visit_def(&mut self, s: &'a Def, ctx: &PrenameCtx, loc: &Loc) -> Def {
         match s {
-            Def::MixfixDef { id, attrs, flag, name, opt_guard, opt_body, params, ret, supers } => {
-                let root_path = match &ctx.path {
-                    Some(p) => Located::new(*loc, StablePath::Select { outer: box p.clone(), name: *name }),
-                    None => Located::new(*loc, StablePath::Unstable),
-                };
+            Def::TraitDef { id, attrs, name, opt_guard, params, supers, defs } => {
+                // TODO: this is a bit messy. We should create a block scope containing the unknowns, then create an inner scope for the body, distinct from
+                // that. I think we're confusing decls and envs too much here.
+                // The problem is the trait scope should be a _child_ of the header, not the parent.
 
-                fn mk_path_from_pat(pat: &Located<Exp>) -> Located<StablePath> {
-                    match pat {
-                        Located { loc, value: Exp::Lit { lit } } => Located { loc: *loc, value: StablePath::Lit { lit: lit.clone() } },
-                        Located { loc, .. } => Located { loc: *loc, value: StablePath::Unstable },
-                    }
-                }
+                let parent = ctx.scope.unwrap();
+                let param_attrs = params.iter().map(|p| p.attr).collect();
 
-                let path = params.iter().fold(root_path,
-                    |path, param| {
-                        match path {
-                            Located { value: StablePath::Unstable, .. } => path,
-                            Located { loc, .. } => match param {
-                                Located { value: Param { box pat, attr: ParamAttr { mode: CallingMode::Input, .. } }, .. } => {
-                                    let v = mk_path_from_pat(pat);
-                                    Located { loc, value: StablePath::Apply { fun: box path, arg: box v } }
-                                },
-                                _ => path,
-                            }
+                // Create a block scope for the unknowns.
+                let header = Decl::new_block(parent);
+                let header_ref = self.driver.graph.add_env(Located::new(*loc, header));
+
+                // Create a scope for the trait itself.
+                let scope = Decl::new_trait(header_ref, *name, ctx.prio, param_attrs);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
+
+                // Declare in the parent scope.
+                // If parent is a Bundle or Block or Trait, we add it to the members.
+                self.driver.graph.declare(parent, *name, scope_ref);
+
+                // Declare mixfix parts in the parent scope.
+                if let Name::Mixfix(s) = name {
+                    let parts = Name::decode_parts(*s);
+
+                    for (i, part) in parts.iter().enumerate() {
+                        match part {
+                            Part::Id(x) => {
+                                let short_name = Name::Id(*x);
+                                let mixfix_decl = Located::new(*loc, Decl::MixfixPart { name: short_name, index: i, full: *name, orig: scope_ref });
+                                let r = self.driver.graph.add_env(mixfix_decl);
+                                self.driver.graph.declare(parent, short_name, r);
+                            },
+                            Part::Op(x) => {
+                                let short_name = Name::Op(*x);
+                                let mixfix_decl = Located::new(*loc, Decl::MixfixPart { name: short_name, index: i, full: *name, orig: scope_ref });
+                                let r = self.driver.graph.add_env(mixfix_decl);
+                                self.driver.graph.declare(parent, short_name, r);
+                            },
+                            _ => {},
                         }
                     }
-                );
-
-                let scope = self.driver.graph.new_env();
-                self.scopes.insert(*id, scope);
-
-                self.driver.graph.set_path(scope, path.clone());
-                self.driver.graph.set_parent(scope, ctx.scope);
+                }
 
                 // First visit the input parameters, collecting unknowns there.
                 // Then visit the guard.
@@ -671,94 +746,44 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Collect the unknowns in the input parameters.
                 let mut input_unknowns = Vec::new();
 
-                for Located { loc, value: Param { pat, attr: ParamAttr { mode, .. } } } in params {
-                    if let CallingMode::Input = mode {
-                        Prenamer::add_unknowns_for_exp(&mut input_unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
-                    }
-                }
+                let mut add_input_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Val,
+                    defined_names: &ctx.names,
+                    scope: header_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut input_unknowns
+                };
 
-                if let Located { loc, value: Param { pat, attr: ParamAttr { mode: CallingMode::Input, .. } } } = ret {
-                    Prenamer::add_unknowns_for_exp(&mut input_unknowns, FormulaFlag::Val, pat, &ctx.names, scope);
+                // TODO: we've combined trait and fun defs, but they're really different.
+                // Traits defs are always forward mode.
+
+                for Located { loc, value: Param { pat, attr: ParamAttr { mode, .. } } } in params {
+                    assert_eq!(*mode, CallingMode::Input);
+
+                    if let CallingMode::Input = mode {
+                        add_input_unknowns.declare_unknowns_in_exp(pat);
+                    }
                 }
 
                 // Unknowns in the guard are also in scope.
                 if let Some(guard) = opt_guard {
-                    Prenamer::add_unknowns_for_exp(&mut input_unknowns, FormulaFlag::Val, &*guard, &ctx.names, scope);
+                    add_input_unknowns.declare_unknowns_in_exp(guard);
                 }
 
-                // Collect the unknowns in the body.
-                let mut body_unknowns = Vec::new();
-
-                // The body is evaluated before the output parameters are bound.
-                // Unknowns in the body are in scope in the output parameters.
-                if let Some(body) = opt_body {
-                    Prenamer::add_unknowns_for_exp(&mut body_unknowns, FormulaFlag::Val, &*body, &ctx.names, scope);
-                }
-
-                // Declare the unknowns.
-                for decl in &input_unknowns {
-                    self.driver.graph.declare(scope, decl);
-                }
-
-                for decl in &body_unknowns {
-                    self.driver.graph.declare(scope, decl);
-                }
-
-                // Add the names of the input_unknowns to the child scope.
-                let new_input_names: Vec<Name> = ctx.names.iter().cloned().chain(input_unknowns.iter().map(|decl| decl.name())).collect();
-                let new_names: Vec<Name> = new_input_names.iter().cloned().chain(body_unknowns.iter().map(|decl| decl.name())).collect();
+                // Add the names of the unknowns to the set of defined names for the child contexts.
+                let new_names: Vec<Name> = ctx.names.iter().cloned().chain(input_unknowns.iter().cloned()).collect();
 
                 let input_params_ctx = PrenameCtx {
-                    scope,
-                    path: None,
-                    names: new_input_names.clone(),
+                    scope: Some(header_ref),
+                    names: new_names.clone(),
                     unknowns: input_unknowns,
                     ..ctx.clone()
                 };
 
-                let guard_ctx = PrenameCtx {
-                    scope,
-                    path: None,
-                    names: new_input_names,
-                    ..ctx.clone()
-                };
-
-                let body_ctx = PrenameCtx {
-                    scope,
-                    path: Some(path),
-                    names: new_names.clone(),
-                    unknowns: body_unknowns,
-                    ..ctx.clone()
-                };
-
                 let output_params_ctx = PrenameCtx {
-                    scope,
-                    path: None,
-                    names: new_names,
+                    scope: Some(scope_ref),
+                    names: new_names.clone(),
                     ..ctx.clone()
-                };
-
-                let opt_guard1 = opt_guard.clone().map(|x|
-                    match *x {
-                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &guard_ctx, &loc) })
-                    }
-                );
-
-                let opt_body1 = opt_body.clone().map(|x|
-                    match *x {
-                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &body_ctx, &loc) })
-                    }
-                );
-
-                let ret1 = match ret {
-                    Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Input, .. } } } => {
-                        Located { loc: ret.loc, value:
-                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), attr: ret.attr } }
-                    },
-                    Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } => {
-                        Located { loc: ret.loc, value:
-                            Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &output_params_ctx, &e.loc) }), attr: ret.attr } }
-                    },
                 };
 
                 let mut params1 = Vec::new();
@@ -766,85 +791,78 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 for param in params {
                     match param {
                         Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Input, .. } } } => {
-                            let param1 = Located { loc: ret.loc, value:
-                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }), attr: param.attr } };
+                            let param1 = Located { loc: param.loc, value:
+                                Param { pat: box Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }, attr: param.attr } };
                             params1.push(param1);
                         },
                         Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } => {
-                            let param1 = Located { loc: ret.loc, value:
-                                Param { pat: Box::new(Located { loc: e.loc, value: self.visit_exp(&e.value, &output_params_ctx, &e.loc) }), attr: param.attr } };
+                            let param1 = Located { loc: param.loc, value:
+                                Param { pat: box Located { loc: e.loc, value: self.visit_exp(&e.value, &output_params_ctx, &e.loc) }, attr: param.attr } };
                             params1.push(param1);
                         },
                     }
                 }
 
+                let opt_guard1 = opt_guard.clone().map(|box Located { loc, value: e }|
+                    box Located { loc, value: self.visit_exp(&e, &input_params_ctx, &loc) }
+                );
+
                 let supers1 = supers.iter().map(|Located { loc, value: e }|
-                    Located { loc: *loc, value: self.visit_exp(&e, &body_ctx, &loc) }
+                    Located { loc: *loc, value: self.visit_exp(&e, &output_params_ctx, &loc) }
                 ).collect();
 
-                let param_attrs = params.iter().map(|Located { value: Param { attr, .. }, .. }| *attr).collect();
-                let ret_attr = match ret {
-                    Located { loc: _, value: Param { attr, .. } } => attr
-                };
-
-                let prio = ctx.prio;
-
-                let mut inner_scopes = vec![];
-
-                for param in params {
-                    if let Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } = param {
-                        inner_scopes.push(self.lookup_frame(scope, e));
-                    }
-                }
-
-                if let Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } = ret {
-                    inner_scopes.push(self.lookup_frame(scope, e));
-                }
-
-                let mut super_scopes = vec![];
-
+                // Declare the supers.
                 for e in supers {
-                    let super_scope = self.lookup_frame(scope, e);
-                    super_scopes.push(super_scope);
-                    for inner_scope in &inner_scopes {
-                        self.driver.graph.set_super(*inner_scope, super_scope);
+                    let super_scopes = self.lookup_frame_from(header_ref, e, true);
+                    for super_scope_ref in super_scopes {
+                        self.driver.graph.add_super(scope_ref, super_scope_ref);
                     }
                 }
 
-                let decl = match flag {
-                    MixfixFlag::Fun => {
-                        Located {
-                            loc: *loc,
-                            value: Decl::Fun {
-                                scope: ctx.scope,
-                                name: *name,
-                                params: param_attrs,
-                                ret: *ret_attr,
-                                prio,
-                            }
-                        }
-                    },
-                    MixfixFlag::Trait => {
-                        unimplemented!()
-                    },
-                    MixfixFlag::Struct => {
-                        Located {
-                            loc: *loc,
-                            value: Decl::Struct {
-                                scope: ctx.scope,
-                                name: *name,
-                                params: param_attrs,
-                                ret: *ret_attr,
-                                prio,
-                                supers: super_scopes,
-                                body: inner_scopes.first().unwrap_or(&Scope::Empty).clone(),
-                            }
-                        }
-                    },
+                let imported_names = Prenamer::get_imported_names_from_defs(defs.iter().cloned());
+                let decl_names = Prenamer::get_declared_names_from_defs(defs.iter().cloned());
+
+                let mut body_names = Vec::new();
+                body_names.extend(new_names.iter().cloned());
+                body_names.extend(imported_names.iter().cloned());
+                body_names.extend(decl_names.iter().cloned());
+
+                let child_ctx = PrenameCtx {
+                    scope: Some(scope_ref),
+                    in_mixfix: false,
+                    names: body_names,
+                    ..ctx.clone()
                 };
+
+                // Add imports.
+                println!("IMPORT scope = {:?}", scope_ref);
+                println!("IMPORT parent = {:?}", header_ref);
+                self.add_imports_from_defs(scope_ref, header_ref, defs.iter().cloned());
+
+                let defs1 = defs.iter().map(|def|
+                    Located { loc: def.loc, value: self.visit_def(&def.value, &child_ctx, &def.loc) }
+                ).collect();
+
+                Def::TraitDef { id: *id, attrs: attrs.clone(), name: *name, opt_guard: opt_guard1, params: params1, supers: supers1, defs: defs1 }
+            },
+            Def::FunDef { id, attrs, name, opt_guard, opt_body, params, ret } => {
+                // Construct the new scope.
+                let parent = ctx.scope.unwrap();
+                let param_attrs = params.iter().map(|p| p.attr).collect();
+
+                let header = Decl::new_block(parent);
+                let header_ref = self.driver.graph.add_env(Located::new(*loc, header));
+
+                let scope = Decl::new_fun(header_ref, *name, ctx.prio, param_attrs, ret.attr);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
+
+                let block = Decl::new_block(scope_ref);
+                let block_ref = self.driver.graph.add_env(Located::new(*loc, block));
 
                 // Declare in the parent scope.
-                self.driver.graph.declare(ctx.scope, &decl);
+                // If parent is a Bundle or Block or Trait, we add it to the members.
+                self.driver.graph.declare(parent, *name, scope_ref);
 
                 // Declare mixfix parts in the parent scope.
                 if let Name::Mixfix(s) = name {
@@ -853,31 +871,151 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     for (i, part) in parts.iter().enumerate() {
                         match part {
                             Part::Id(x) => {
-                                let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Id(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
-                                self.driver.graph.declare(ctx.scope, &mixfix_decl);
+                                let short_name = Name::Id(*x);
+                                let mixfix_decl = Located::new(*loc, Decl::MixfixPart { name: short_name, index: i, full: *name, orig: scope_ref });
+                                let r = self.driver.graph.add_env(mixfix_decl);
+                                self.driver.graph.declare(parent, short_name, r);
                             },
                             Part::Op(x) => {
-                                let mixfix_decl = Located { loc: *loc, value: Decl::MixfixPart { name: Name::Op(*x), index: i, full: *name, orig: Box::new(decl.value.clone()) } };
-                                self.driver.graph.declare(ctx.scope, &mixfix_decl);
+                                let short_name = Name::Op(*x);
+                                let mixfix_decl = Located::new(*loc, Decl::MixfixPart { name: short_name, index: i, full: *name, orig: scope_ref });
+                                let r = self.driver.graph.add_env(mixfix_decl);
+                                self.driver.graph.declare(parent, short_name, r);
                             },
                             _ => {},
                         }
                     }
                 }
 
-                Def::MixfixDef { id: *id, attrs: attrs.clone(), flag: *flag, name: *name, opt_guard: opt_guard1, opt_body: opt_body1, params: params1, ret: ret1, supers: supers1 }
-            },
-            Def::FormulaDef { attrs, flag, formula } => {
-                let mut unknowns = Vec::new();
+                // First visit the input parameters, collecting unknowns there.
+                // Then visit the guard.
+                // Then visit the body, collecting more unknowns.
+                // Then visit the output parameters.
 
-                Prenamer::add_unknowns_for_exp(&mut unknowns, *flag, &*formula, &ctx.names, ctx.scope);
+                // Collect the unknowns in the input parameters.
+                let mut input_unknowns = Vec::new();
 
-                // Declare the unknowns.
-                for decl in &unknowns {
-                    self.driver.graph.declare(ctx.scope, decl);
+                let mut add_input_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Val,
+                    defined_names: &ctx.names,
+                    scope: header_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut input_unknowns
+                };
+
+                // TODO: we've combined trait and fun defs, but they're really different.
+                // Traits defs are always forward mode.
+
+                for Located { loc, value: Param { pat, attr: ParamAttr { mode, .. } } } in params {
+                    if let CallingMode::Input = mode {
+                        add_input_unknowns.declare_unknowns_in_exp(pat);
+                    }
                 }
 
-                let new_names: Vec<Name> = ctx.names.iter().cloned().chain(unknowns.iter().map(|decl| decl.name())).collect();
+                if let Located { loc, value: Param { pat, attr: ParamAttr { mode: CallingMode::Input, .. } } } = ret {
+                    add_input_unknowns.declare_unknowns_in_exp(pat);
+                }
+
+                // Unknowns in the guard are also in scope.
+                if let Some(guard) = opt_guard {
+                    add_input_unknowns.declare_unknowns_in_exp(&*guard);
+                }
+
+                // Collect the unknowns in the body.
+                let mut body_unknowns = Vec::new();
+                let new_names = ctx.names.iter().cloned().chain(input_unknowns.iter().cloned()).collect();
+
+                let mut add_body_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Val,
+                    defined_names: &new_names,
+                    scope: block_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut body_unknowns
+                };
+
+                // The body is evaluated before the output parameters are bound.
+                // Unknowns in the body are in scope in the output parameters.
+                if let Some(body) = opt_body {
+                    add_body_unknowns.declare_unknowns_in_exp(&*body);
+                }
+
+                // Add the names of the unknowns to the set of defined names for the child contexts.
+                let new_input_names: Vec<Name> = ctx.names.iter().cloned().chain(input_unknowns.iter().cloned()).collect();
+                let new_names: Vec<Name> = new_input_names.iter().cloned().chain(body_unknowns.iter().cloned()).collect();
+
+                let input_params_ctx = PrenameCtx {
+                    scope: Some(header_ref),
+                    names: new_input_names.clone(),
+                    unknowns: input_unknowns,
+                    ..ctx.clone()
+                };
+
+                let body_ctx = PrenameCtx {
+                    scope: Some(block_ref),
+                    names: new_names.clone(),
+                    unknowns: body_unknowns,
+                    ..ctx.clone()
+                };
+
+                let output_params_ctx = PrenameCtx {
+                    scope: Some(block_ref),
+                    names: new_names,
+                    ..ctx.clone()
+                };
+
+                // Now, rewrite the children.
+                let mut params1 = Vec::new();
+
+                for param in params {
+                    match param {
+                        Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Input, .. } } } => {
+                            let param1 = Located { loc: param.loc, value:
+                                Param { pat: box Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }, attr: param.attr } };
+                            params1.push(param1);
+                        },
+                        Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } => {
+                            let param1 = Located { loc: param.loc, value:
+                                Param { pat: box Located { loc: e.loc, value: self.visit_exp(&e.value, &output_params_ctx, &e.loc) }, attr: param.attr } };
+                            params1.push(param1);
+                        },
+                    }
+                }
+
+                let opt_guard1 = opt_guard.clone().map(|box Located { loc, value: e }|
+                    box Located { loc, value: self.visit_exp(&e, &input_params_ctx, &loc) }
+                );
+
+                let opt_body1 = opt_body.clone().map(|box Located { loc, value: e }|
+                    box Located { loc, value: self.visit_exp(&e, &body_ctx, &loc) }
+                );
+
+                let ret1 = match ret {
+                    Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Input, .. } } } => {
+                        Located { loc: ret.loc, value:
+                            Param { pat: box Located { loc: e.loc, value: self.visit_exp(&e.value, &input_params_ctx, &e.loc) }, attr: ret.attr } }
+                    },
+                    Located { loc, value: Param { pat: e, attr: ParamAttr { mode: CallingMode::Output, .. } } } => {
+                        Located { loc: ret.loc, value:
+                            Param { pat: box Located { loc: e.loc, value: self.visit_exp(&e.value, &output_params_ctx, &e.loc) }, attr: ret.attr } }
+                    },
+                };
+
+                Def::FunDef { id: *id, attrs: attrs.clone(), name: *name, opt_guard: opt_guard1, opt_body: opt_body1, params: params1, ret: ret1 }
+            },
+            Def::FormulaDef { attrs, flag, formula } => {
+                let mut unknowns = vec![];
+
+                let mut add_unknowns = AddUnknowns {
+                    flag: *flag,
+                    defined_names: &ctx.names,
+                    scope: ctx.scope.unwrap(),
+                    graph: &mut self.driver.graph,
+                    new_names: &mut unknowns
+                };
+
+                add_unknowns.declare_unknowns_in_exp(&*formula);
+
+                let new_names: Vec<Name> = ctx.names.iter().cloned().chain(unknowns.iter().cloned()).collect();
 
                 let child_ctx = PrenameCtx {
                     unknowns,
@@ -888,17 +1026,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 self.walk_def(s, &child_ctx, loc)
             },
             Def::ImportDef { .. } => {
-                // Swap the environment with the weaker import env.
-                // This prevents import resolution from searching the frame with
-                // the imports themselves.
-                let new_scope = ctx.scope.without_imports();
-
-                let child_ctx = PrenameCtx {
-                    scope: new_scope,
-                    ..ctx.clone()
-                };
-
-                self.walk_def(s, &child_ctx, loc)
+                self.walk_def(s, &ctx, loc)
             },
         }
     }
@@ -907,9 +1035,11 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
     fn visit_exp(&mut self, e: &'a Exp, ctx: &PrenameCtx, loc: &Loc) -> Exp {
         match e {
             Exp::Layout { id, cmds } => {
-                let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, ctx.scope);
-                self.scopes.insert(*id, scope);
+                // Construct the new scope.
+                let parent = ctx.scope.unwrap();
+                let scope = Decl::new_block(parent);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
                 let names = &ctx.names;
                 let imported_names = Prenamer::get_imported_names(cmds);
@@ -921,7 +1051,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 new_names.extend(decl_names.iter().cloned());
 
                 let child_ctx = PrenameCtx {
-                    scope,
+                    scope: Some(scope_ref),
                     in_mixfix: false,
                     names: new_names,
                     ..ctx.clone()
@@ -931,103 +1061,43 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 // Add imports.
                 if let Exp::Layout { ref cmds, .. } = new_node {
-                    self.add_imports(scope, ctx.scope, cmds, false);
+                    self.add_imports(scope_ref, parent, cmds);
                 }
 
                 new_node
             },
-            Exp::Record { id, tag, defs } => {
-                let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, ctx.scope);
-                self.scopes.insert(*id, scope);
-
-                let names = &ctx.names;
-                let imported_names = Prenamer::get_imported_names_from_defs(defs.iter().cloned());
-                let decl_names = Prenamer::get_declared_names_from_defs(defs.iter().cloned());
-
-                let mut new_names = Vec::new();
-                new_names.extend(names.iter().cloned());
-                new_names.extend(imported_names.iter().cloned());
-                new_names.extend(decl_names.iter().cloned());
-
-                let child_ctx = PrenameCtx {
-                    scope,
-                    in_mixfix: false,
-                    names: new_names,
-                    ..ctx.clone()
-                };
-
-                let new_node = self.walk_exp(e, &child_ctx, &loc);
-
-                // Add imports.
-                if let Exp::Record { ref defs, .. } = new_node {
-                    self.add_imports_from_defs(scope, ctx.scope, defs.iter().cloned(), false);
-                }
-
-                new_node
-            },
-            Exp::Union { .. } => {
-                let scope = ctx.scope;
-                let new_node = self.walk_exp(e, &ctx, &loc);
-
-                // Import the other frames into the records in the union.
-                match &new_node {
-                    Exp::Union { box e1, box e2 } => {
-                        match e1.value {
-                            Exp::Record { id, .. } => {
-                                if let Some(s) = self.scopes.get(&id) {
-                                    let scope_1 = *s; // copy out so we stop borrowing self.
-                                    let scope_2 = self.lookup_frame(scope, e2);
-                                    self.driver.graph.import(scope_1, &Located::new(e2.loc, Import::All { path: scope_2 }))
-                                }
-                            },
-                            _ => {},
-                        }
-                        match e2.value {
-                            Exp::Record { id, .. } => {
-                                if let Some(s) = self.scopes.get(&id) {
-                                    let scope_2 = *s; // copy out so we stop borrowing self.
-                                    let scope_1 = self.lookup_frame(scope, e1);
-                                    self.driver.graph.import(scope_2, &Located::new(e1.loc, Import::All { path: scope_1 }))
-                                }
-                            },
-                            _ => {},
-                        }
-                    },
-                    _ => {},
-                }
-
-                new_node
-            }
             Exp::Lambda { id, opt_guard, params, ret } => {
-                let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, ctx.scope);
-                self.scopes.insert(*id, scope);
+                let parent = ctx.scope.unwrap();
+                let scope = Decl::new_block(parent);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
-                let names = &ctx.names;
-                let unknowns = Prenamer::get_unknowns_from_exps(FormulaFlag::Val, params, names, scope);
+                let mut unknowns = Vec::new();
 
-                let mut new_names = names.clone();
+                let mut add_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Val,
+                    defined_names: &ctx.names,
+                    scope: scope_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut unknowns
+                };
 
-                for decl in &unknowns {
-                    new_names.push(decl.name());
-                    self.driver.graph.declare(scope, decl);
-                }
+                add_unknowns.declare_unknowns_in_exps(params);
+
+                let new_names = ctx.names.iter().chain(unknowns.iter()).cloned().collect();
 
                 let child_ctx = PrenameCtx {
-                    scope,
+                    scope: Some(scope_ref),
                     in_mixfix: false,
                     names: new_names,
                     ..ctx.clone()
                 };
 
-                let opt_guard1 = opt_guard.clone().map(|x|
-                    match *x {
-                        Located { loc, value: e } => Box::new(Located { loc, value: self.visit_exp(&e, &child_ctx, &loc) })
-                    }
+                let opt_guard1 = opt_guard.clone().map(|box Located { loc, value: e }|
+                    box Located { loc, value: self.visit_exp(&e, &child_ctx, &loc) }
                 );
 
-                let ret1 = Box::new(Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
+                let ret1 = box Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) };
 
                 let params_ctx = PrenameCtx {
                     unknowns,
@@ -1041,134 +1111,162 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 Exp::Lambda { id: *id, opt_guard: opt_guard1, params: params1, ret: ret1 }
             },
             Exp::For { id, formula, body } => {
-                let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, ctx.scope);
-                self.scopes.insert(*id, scope);
+                let parent = ctx.scope.unwrap();
+                let scope = Decl::new_block(parent);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
                 let names = &ctx.names;
-                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Val, &*formula, names, scope);
 
-                let mut new_names = names.clone();
+                let mut unknowns = Vec::new();
 
-                for decl in &unknowns {
-                    new_names.push(decl.name());
-                    self.driver.graph.declare(scope, decl);
-                }
+                let mut add_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Val,
+                    defined_names: &ctx.names,
+                    scope: scope_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut unknowns
+                };
+
+                add_unknowns.declare_unknowns_in_exp(&*formula);
+
+                let new_names = names.iter().chain(unknowns.iter()).cloned().collect();
 
                 let child_ctx = PrenameCtx {
-                    scope,
+                    scope: Some(scope_ref),
                     in_mixfix: false,
                     names: new_names,
                     ..ctx.clone()
                 };
 
-                let body1 = Box::new(Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
+                let body1 = box Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) };
 
                 let params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
 
-                let formula1 = Box::new(Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) });
+                let formula1 = box Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) };
 
                 Exp::For { id: *id, formula: formula1, body: body1 }
             },
             Exp::Let { id, formula, body } => {
-                let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, ctx.scope);
-                self.scopes.insert(*id, scope);
+                let parent = ctx.scope.unwrap();
+                let scope = Decl::new_block(parent);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
                 let names = &ctx.names;
-                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Val, &*formula, names, scope);
 
-                let mut new_names = names.clone();
+                let mut unknowns = Vec::new();
 
-                for decl in &unknowns {
-                    new_names.push(decl.name());
-                    self.driver.graph.declare(scope, decl);
-                }
+                let mut add_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Val,
+                    defined_names: &ctx.names,
+                    scope: scope_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut unknowns
+                };
+
+                add_unknowns.declare_unknowns_in_exp(&*formula);
+
+                let new_names = names.iter().chain(unknowns.iter()).cloned().collect();
 
                 let child_ctx = PrenameCtx {
-                    scope,
+                    scope: Some(scope_ref),
                     in_mixfix: false,
                     names: new_names,
                     ..ctx.clone()
                 };
 
-                let body1 = Box::new(Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
+                let body1 = box Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) };
 
                 let params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
 
-                let formula1 = Box::new(Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) });
+                let formula1 = box Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) };
 
                 Exp::Let { id: *id, formula: formula1, body: body1 }
             },
             Exp::LetVar { id, formula, body } => {
-                let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, ctx.scope);
-                self.scopes.insert(*id, scope);
+                let parent = ctx.scope.unwrap();
+                let scope = Decl::new_block(parent);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
                 let names = &ctx.names;
-                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Var, &*formula, names, scope);
 
-                let mut new_names = names.clone();
+                let mut unknowns = Vec::new();
 
-                for decl in &unknowns {
-                    new_names.push(decl.name());
-                    self.driver.graph.declare(scope, decl);
-                }
+                let mut add_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Var,
+                    defined_names: &ctx.names,
+                    scope: scope_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut unknowns
+                };
+
+                add_unknowns.declare_unknowns_in_exp(&*formula);
+
+                let new_names = names.iter().chain(unknowns.iter()).cloned().collect();
 
                 let child_ctx = PrenameCtx {
-                    scope,
+                    scope: Some(scope_ref),
                     in_mixfix: false,
                     names: new_names,
                     ..ctx.clone()
                 };
 
-                let body1 = Box::new(Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) });
+                let body1 = box Located { loc: body.loc, value: self.visit_exp(&body.value, &child_ctx, &body.loc) };
 
                 let params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
 
-                let formula1 = Box::new(Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) });
+                let formula1 = box Located { loc: formula.loc, value: self.visit_exp(&formula.value, &params_ctx, &formula.loc) };
 
                 Exp::LetVar { id: *id, formula: formula1, body: body1 }
             },
             Exp::Arrow { id, arg, ret } => {
-                let scope = self.driver.graph.new_env();
-                self.driver.graph.set_parent(scope, ctx.scope);
-                self.scopes.insert(*id, scope);
+                let parent = ctx.scope.unwrap();
+                let scope = Decl::new_block(parent);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
                 let names = &ctx.names;
-                let unknowns = Prenamer::get_unknowns_from_exp(FormulaFlag::Val, &*arg, names, scope);
 
-                let mut new_names = names.clone();
+                let mut unknowns = Vec::new();
 
-                for decl in &unknowns {
-                    new_names.push(decl.name());
-                    self.driver.graph.declare(scope, decl);
-                }
+                let mut add_unknowns = AddUnknowns {
+                    flag: FormulaFlag::Val,
+                    defined_names: &ctx.names,
+                    scope: scope_ref,
+                    graph: &mut self.driver.graph,
+                    new_names: &mut unknowns
+                };
+
+                add_unknowns.declare_unknowns_in_exp(&*arg);
+
+                let new_names = names.iter().cloned().chain(unknowns.iter().cloned()).collect();
 
                 let child_ctx = PrenameCtx {
-                    scope,
+                    scope: Some(scope_ref),
                     in_mixfix: false,
                     names: new_names,
                     ..ctx.clone()
                 };
 
-                let ret1 = Box::new(Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) });
+                let ret1 = box Located { loc: ret.loc, value: self.visit_exp(&ret.value, &child_ctx, &ret.loc) };
 
                 let params_ctx = PrenameCtx {
                     unknowns,
                     ..child_ctx.clone()
                 };
 
-                let arg1 = Box::new(Located { loc: arg.loc, value: self.visit_exp(&arg.value, &params_ctx, &arg.loc) });
+                let arg1 = box Located { loc: arg.loc, value: self.visit_exp(&arg.value, &params_ctx, &arg.loc) };
 
                 Exp::Arrow { id: *id, arg: arg1, ret: ret1 }
             },
@@ -1185,46 +1283,41 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let e1_1 = self.visit_exp(&e1.value, &ctx, &e1.loc);
                 let e1_2 = Located { loc: e1.loc, value: e1_1 };
 
-                let scope = self.driver.graph.new_child_scope(ctx.scope);
-                self.scopes.insert(*id, scope);
+                let parent = ctx.scope.unwrap();
+                let scope = Decl::new_block(parent);
+                let scope_ref = self.driver.graph.add_env(Located::new(*loc, scope));
+                self.scopes.insert(*id, scope_ref);
 
                 let child_ctx = PrenameCtx {
-                    scope,
+                    scope: Some(scope_ref),
                     in_mixfix: false,
                     ..ctx.clone()
                 };
 
-                let e1_scope = self.lookup_frame(ctx.scope, &e1_2);
-                self.driver.graph.import(scope, &Located { loc: e1.loc, value: Import::All { path: e1_scope } });
+                let e1_scopes = self.lookup_frame_from(parent, &e1_2, true);
+                for e1_scope_ref in e1_scopes {
+                    self.driver.graph.import(scope_ref, Located { loc: e1.loc, value: Import::All { path: e1_scope_ref } });
+                }
 
                 let e2_1 = self.visit_exp(&e2.value, &child_ctx, &e2.loc);
 
                 Exp::Within {
                     id: *id,
-                    e1: Box::new(e1_2),
-                    e2: Box::new(Located { loc: e2.loc, value: e2_1 })
+                    e1: box e1_2,
+                    e2: box Located { loc: e2.loc, value: e2_1 }
                 }
             },
             Exp::Name { name, id } => {
-                self.scopes.insert(*id, ctx.scope);
+                self.scopes.insert(*id, ctx.scope.unwrap());
 
                 let new_node = self.walk_exp(e, &ctx, &loc);
 
                 match &new_node {
                     Exp::Name { name, id } => {
-                        let lookup = self.lookup(*id, ctx.scope, *name);
-
-                        let mut is_unknown = false;
+                        let lookup = self.lookup_from(*id, ctx.scope.unwrap(), *name, true);
 
                         // Record that the name is an unknown.
-                        for unk in &ctx.unknowns {
-                            if unk.value.name() == *name {
-                                self.driver.graph.resolve(&lookup, &unk);
-                                is_unknown = true;
-                            }
-                        }
-
-                        if is_unknown {
+                        if ctx.unknowns.contains(name) {
                             Exp::Unknown { name: *name, id: *id }
                         }
                         else {
@@ -1237,7 +1330,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 }
             },
             Exp::MixfixApply { es, id } => {
-                self.scopes.insert(*id, ctx.scope);
+                self.scopes.insert(*id, ctx.scope.unwrap());
 
                 let child_ctx = PrenameCtx {
                     in_mixfix: true,
@@ -1250,7 +1343,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     Exp::MixfixApply { es, id } => {
                         // Lookup, but do no rewrite the tree.
                         // Rewrites are done in Renamer.
-                        let lookup = self.parse_mixfix(*id, ctx.scope, es);
+                        let lookup = self.parse_mixfix(*id, ctx.scope.unwrap(), es, true);
                         Exp::MixfixApply { es: es.clone(), id: *id }
                     },
                     _ => {

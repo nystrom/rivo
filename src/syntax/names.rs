@@ -330,6 +330,7 @@ mod tests {
         }
     }
 
+    #[allow(unused_attributes)]
     #[quickcheck]
     fn encode_decode(parts: Vec<Part>) -> bool {
         Name::decode_parts(Name::encode_parts(&parts)) == parts
