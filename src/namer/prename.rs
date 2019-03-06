@@ -331,7 +331,7 @@ impl<'a> Prenamer<'a> {
                 Located { loc, value: Def::ImportDef { opt_path, selector } } => {
 // FIXME: when importing into a trait body, the parent should include the unknowns of the trait.
 // This means we need a block scope as a child of the trait. and we should search the block for members.
-                    self.add_import(import_into_scope, parent_scope.to_ref(self.bundle), &opt_path.map(|bx| *bx), &selector, loc);
+                    self.add_import(import_into_scope, parent_scope.to_ref(), &opt_path.map(|bx| *bx), &selector, loc);
                 },
                 _ => {},
             }
@@ -357,7 +357,8 @@ impl<'a> Prenamer<'a> {
         // FIXME: should we just make the parent of the top-level scope include an import of Prelude?
         // import () will prevent following the parent link.
         if ! imports_none {
-            let lookup = self.driver.graph.lookup_inside(Ref::Root, Name::Id(Interned::new("Prelude")));
+            let root_ref = self.driver.graph.get_root_ref();
+            let lookup = self.driver.graph.lookup_inside(root_ref, Name::Id(Interned::new("Prelude")));
             let scope = self.driver.graph.get_scope_of_lookup(lookup);
             self.driver.graph.import(import_into_scope, Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
         }
@@ -454,7 +455,7 @@ impl<'a> Prenamer<'a> {
             Exp::Within { id, e1, e2 } => {
                 let scope = self.scopes.get(&id);
                 assert!(scope.is_some());
-                scope.iter().map(|local| Ref::Resolved(local.to_global_ref(self.bundle))).collect()
+                scope.iter().map(|local| local.to_ref()).collect()
             }
             Exp::Select { exp, name } => {
                 let inner_scopes = self.lookup_frame_from(scope, &*exp, follow_imports);
@@ -683,7 +684,8 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Add imports.
                 match new_node {
                     Root::Bundle { ref cmds, .. } => {
-                        self.add_root_imports(scope_ref, Ref::Root, cmds);
+                        let root_ref = self.driver.graph.get_root_ref();
+                        self.add_root_imports(scope_ref, root_ref, cmds);
                     },
                 }
 

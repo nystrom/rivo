@@ -86,32 +86,18 @@ pub enum StablePath {
 // and consists of a set of Decl.
 // Each Bundle has its own symbol table.
 // Decls may have references to other decls. These may or may not be resolved.
-// A resolved ref is just a GlobalRef. An unresolved ref requires a lookup/mixfix resolution operation be performed.
+// A resolved ref is just a LocalRef. An unresolved ref requires a lookup/mixfix resolution operation be performed.
 // Each Decl except (Decl::Bundle) has a parent Decl, always a LocalRef.
 // Some Decls have members, always LocalDef.
 // Some Decls have imports, with a unresolved Ref path.
 // Some Decls have supers, a vec of unresolved Ref.
 // The path of a Decl can be computed by following parent links.
-// A GlobalRef refers to a particular Decl, possibly in another Bundle.
+// A LocalRef refers to a particular Decl, possibly in another Bundle.
 // A LocalRef refers to a particular Decl in the same Bundle.
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct GlobalRef {
-    pub bundle: crate::driver::BundleIndex,
-    pub local_ref: LocalRef,
-}
 
 pub type LocalRef = EnvIndex;
 
 impl LocalRef {
-    pub fn to_global_ref(self, bundle: crate::driver::BundleIndex) -> GlobalRef {
-        GlobalRef { bundle, local_ref: self }
-    }
-    pub fn to_ref(self, bundle: crate::driver::BundleIndex) -> Ref {
-        self.to_global_ref(bundle).to_ref()
-    }
-}
-impl GlobalRef {
     pub fn to_ref(self) -> Ref {
         Ref::Resolved(self)
     }
@@ -119,23 +105,21 @@ impl GlobalRef {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ref {
-    Root,
-    Resolved(GlobalRef),
+    Resolved(LocalRef),
     Lookup(LookupIndex),
     Mixfix(MixfixIndex),
 }
 
 trait Resolver {
-    fn resolve(&self) -> Vec<GlobalRef>;
+    fn resolve(&self) -> Vec<LocalRef>;
 }
 
 impl Resolver for Ref {
-    fn resolve(&self) -> Vec<GlobalRef> {
+    fn resolve(&self) -> Vec<LocalRef> {
         match self {
             Ref::Resolved(r) => vec![*r],
             Ref::Lookup(idx) => unimplemented!(),
             Ref::Mixfix(idx) => unimplemented!(),
-            Ref::Root => unimplemented!(),
         }
     }
 }
@@ -163,8 +147,6 @@ impl DeclEnv for Decl {
             Decl::Fun { parent, .. } => Some(*parent),
             Decl::Val { parent, .. } => Some(*parent),
             Decl::Var { parent, .. } => Some(*parent),
-            // Decl::Val { scope: Scope::Env(index), .. } => *index,
-            // Decl::Var { scope: Scope::Env(index), .. } => *index,
             _ => unimplemented!(),
         }
     }
@@ -437,7 +419,7 @@ pub struct MixfixPart {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum MixfixTree {
-    Name(Name, Vec<GlobalRef>), // store the grefs and the decls in the name to avoid lookups. FIXME: borrow the decl to avoid cloning.
+    Name(Name, Vec<LocalRef>), // store the grefs and the decls in the name to avoid lookups. FIXME: borrow the decl to avoid cloning.
     Apply(Box<MixfixTree>, Box<MixfixTree>),
     Exp,
 }

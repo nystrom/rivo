@@ -34,7 +34,7 @@ pub struct ScopeGraph {
     pub(super) mixfixes: Vec<MixfixRef>,
 
     // Map from lookup index to results of that lookup.
-    pub(super) pre_resolved: Vec<Option<Vec<GlobalRef>>>,
+    pub(super) pre_resolved: Vec<Option<Vec<LocalRef>>>,
 
     // This is the vector of environments (mutable scopes).
     // Indexed by LocalRef.
@@ -51,8 +51,14 @@ impl ScopeGraph {
             lookups: Vec::new(),
             mixfixes: Vec::new(),
             pre_resolved: Vec::new(),
-            envs: Vec::new(),
+            envs: vec![Located::new(Loc::no_loc(), Decl::Root)],
         }
+    }
+
+    pub fn get_root_env(&self) -> LocalRef {
+        assert!(! self.envs.is_empty());
+        assert!(self.envs.first().unwrap().value == Decl::Root); 
+        EnvIndex(0)
     }
 
     pub fn add_env(&mut self, d: Located<Decl>) -> LocalRef {
@@ -81,7 +87,7 @@ impl ScopeGraph {
     //     self.envs.get_mut(index.0).unwrap()
     // }
 
-    pub fn get_pre_resolved(&self, index: &LookupIndex) -> Option<Vec<GlobalRef>> {
+    pub fn get_pre_resolved(&self, index: &LookupIndex) -> Option<Vec<LocalRef>> {
         match index {
             LookupIndex(i) => {
                 match self.pre_resolved.get(*i) {
@@ -93,7 +99,7 @@ impl ScopeGraph {
         }
     }
 
-    pub fn resolve(&mut self, index: LookupIndex, gref: GlobalRef) {
+    pub fn resolve(&mut self, index: LookupIndex, gref: LocalRef) {
         let i = index.0;
         match self.pre_resolved.get_mut(i) {
             Some(Some(vs)) => {
@@ -107,6 +113,10 @@ impl ScopeGraph {
                 self.pre_resolved[i] = Some(vs);
             },
         }
+    }
+
+    pub fn get_root_ref(&self) -> Ref {
+        self.get_root_env().to_ref()
     }
 
     pub fn get_scope_of_lookup(&self, r: LookupIndex) -> Ref {

@@ -128,7 +128,7 @@ impl<'a> Renamer<'a> {
         }
     }
 
-    fn lookup_by_id(&mut self, id: NodeId) -> Result<Vec<GlobalRef>, Located<String>> {
+    fn lookup_by_id(&mut self, id: NodeId) -> Result<Vec<LocalRef>, Located<String>> {
         println!("id = {:?}", id);
         let lookup = self.lookups.get(&id).unwrap();
         println!("lookup = {:?}", lookup);
@@ -152,33 +152,37 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
     #[cfg_attr(debug_assertions, trace)]
     fn visit_exp(&mut self, e: &'a Exp, ctx: &RenamerCtx, loc: &Loc) -> Exp {
         match e {
-            // Exp::Within { id, e1, e2 } => {
-            //     // TODO: verify that e2 is in the scope of e1, not an enclosing scope.
-            //     let new_node = self.walk_exp(e, ctx, loc);
-            //
-            //     // Rewrite e1.((f x) y) as ((e1.f) x) y
-            //     match new_node {
-            //         Exp::Within { id, e1, e2 } => {
-            //             fn insert_select(e1: Located<Exp>, e2: Located<Exp>) -> Option<Located<Exp>> {
-            //                 match e2 {
-            //                     Exp::Name { id, name } => Some(Exp::Select { exp: e1, name }),
-            //                     Exp::Apply { fun, arg } => {
-            //                         insert_select(e1, fun).map(|fun| Exp::Apply { fun, arg })
-            //                     },
-            //                     _ => None,
-            //                 }
-            //             }
-            //
-            //             match insert_select(e1, e2) {
-            //                 Some(e) => e,
-            //                 None => {
-            //                     self.namer.driver.error(Located::new(loc.clone(), format!("Could not resolve selected expression to a name or function application. ({})", id)));
-            //                 },
-            //             }
-            //         }
-            //         _ => new_node
-            //     }
-            // },
+            Exp::Within { id, e1, e2 } => {
+                // TODO: verify that e2 is in the scope of e1, not an enclosing scope.
+                let new_node = self.walk_exp(e, ctx, loc);
+            
+                // Rewrite e1.((f x) y) as ((e1.f) x) y
+                match new_node {
+                    Exp::Within { id, box e1, box e2 } => {
+                        // fn insert_select(e1: Located<Exp>, e2: Located<Exp>) -> Option<Located<Exp>> {
+                        //     match e2.value {
+                        //         Exp::Name { id, name } => Some(e2.map(|_| Exp::Select { exp: box e1, name })),
+                        //         Exp::Apply { box fun, box arg } => {
+                        //             insert_select(e1, fun).map(|new_fun| new_fun.map(|_| Exp::Apply { fun: box new_fun, arg: box arg }))
+                        //         },
+                        //         _ => None,
+                        //     }
+                        // }
+            
+                        // match insert_select(e1, e2) {
+                        //     Some(e) => e.value,
+                        //     None => {
+                        //         self.namer.driver.error(Located::new(loc.clone(), format!("Could not resolve selected expression to a name or function application. ({})", id)));
+                        //         new_node
+                        //     },
+                        // }
+                        
+                        // Discard the scope. e2 should be fully renamed.
+                        e2.value
+                    },
+                    _ => new_node,
+                }
+            },
             Exp::Name { .. } => {
                 let new_node = self.walk_exp(e, ctx, loc);
 
@@ -207,13 +211,68 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                 else {
                                     let graph = &self.namer.driver.graph;
 
+                                    fn path_to_exp(p: &StablePath, node_id_generator: &mut NodeIdGenerator) -> Exp {
+                                        match p {
+                                            StablePath::Select { outer: box StablePath::Fresh, name } => {
+                                                Exp::Var { name: *name, id: node_id_generator.new_id() }
+                                            },
+                                            StablePath::Select { outer: box StablePath::Root, name } => {
+                                                Exp::Var { name: *name, id: node_id_generator.new_id() }
+                                            },
+                                            StablePath::Select { outer: box outer, name } => {
+                                                let o = path_to_exp(outer, node_id_generator);
+                                                match o {
+                                                    Exp::Lit { lit: Lit::Nothing } => o,
+                                                    o => Exp::Select { exp: box Located::new(Loc::no_loc(), o), name: *name }
+                                                }
+                                            },
+                                            StablePath::Lit { lit } => {
+                                                Exp::Lit { lit: lit.clone() }
+                                            },
+                                            StablePath::Apply { box fun, box arg } => {
+                                                let o1 = path_to_exp(fun, node_id_generator);
+                                                let o2 = path_to_exp(arg, node_id_generator);
+                                                match o1 {
+                                                    Exp::Lit { lit: Lit::Nothing } => o1,
+                                                    o1 => Exp::Apply { 
+                                                        fun: box Located::new(Loc::no_loc(), o1), 
+                                                        arg: box Located::new(Loc::no_loc(), o2),
+                                                    },
+                                                }
+                                            },
+                                            _ => {
+                                                Exp::Lit { lit: Lit::Nothing }
+                                            },
+                                        }
+                                    };
+
+                                    let mut paths = vec![];
+
                                     for gref in grefs {
-                                        let d = graph.get_env(gref.local_ref);
+                                        let d = graph.get_env(gref);
                                         let path = d.path(&graph);
-                                        println!("d {:?} path {:?}", d, path);
+                                        let exp = path_to_exp(&path, &mut self.node_id_generator);
+                                        println!("decl {:?}", d);
+                                        println!("path {:?}", path);
+                                        println!("exp {:?}", exp);
+                                        match exp {
+                                            Exp::Lit { lit: Lit::Nothing } => {},
+                                            exp => {
+                                                paths.push(exp);
+                                            },
+                                        }
                                     }
 
-                                    Exp::Var { id: *id, name: *name }
+                                    if let Some((e, es)) = paths.split_first() {
+                                        es.iter().fold(e.clone(), |e1, e2| Exp::Union { 
+                                            e1: box Located::new(Loc::no_loc(), e1), 
+                                            e2: box Located::new(Loc::no_loc(), e2.clone()), 
+                                        })
+                                    }
+                                    else {
+                                        self.namer.driver.error(Located::new(loc.clone(), format!("Name {} did not resolve to a stable path.", name)));
+                                        Exp::Lit { lit: Lit::Nothing }
+                                    }
                                 }
                             },
                             Err(_) => {

@@ -29,7 +29,7 @@ trace::init_depth_var!();
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Exp(MixfixTree),
-    Name(Part, Vec<GlobalRef>),
+    Name(Part, Vec<LocalRef>),
 }
 
 #[derive(Debug)]
@@ -48,8 +48,8 @@ pub(super) struct Earley {
     prefix: Symbol,
     brackets: Symbol,
     primary: Symbol,
-    decls: HashMap<GlobalRef, Located<Decl>>,
-    part_decls: HashMap<GlobalRef, Located<Decl>>,
+    decls: HashMap<LocalRef, Located<Decl>>,
+    part_decls: HashMap<LocalRef, Located<Decl>>,
 }
 
 pub(super) struct EarleyBuilder<'a> {
@@ -64,7 +64,7 @@ pub(super) struct EarleyBuilder<'a> {
 }
 
 impl Earley {
-    pub fn new(decls: &Vec<(GlobalRef, Located<Decl>)>, part_decls: &Vec<(GlobalRef, Located<Decl>)>) -> Earley {
+    pub fn new(decls: &Vec<(LocalRef, Located<Decl>)>, part_decls: &Vec<(LocalRef, Located<Decl>)>) -> Earley {
         EarleyBuilder::new(&mut HashMap::new(), &mut HashMap::new()).from_decls(decls, part_decls)
     }
 
@@ -72,7 +72,7 @@ impl Earley {
     fn make_tree(&self, children: &[&Option<MixfixTree>]) -> Option<MixfixTree> {
         // Accumulate the name parts and the declarations of those names.
         let mut parts: Vec<Part> = Vec::new();
-        let mut grefs_with_names: Vec<(Name, GlobalRef)> = Vec::new();
+        let mut grefs_with_names: Vec<(Name, LocalRef)> = Vec::new();
 
         // Accumulate the call arguments.
         let mut args: Vec<MixfixTree> = Vec::new();
@@ -94,8 +94,7 @@ impl Earley {
                     for gref in grefs {
                         match self.part_decls.get(gref) {
                             Some(Located { loc, value: Decl::MixfixPart { full, orig, .. } }) => {
-                                let orig_gref = orig.to_global_ref(gref.bundle);
-                                grefs_with_names.push((*full, orig_gref));
+                                grefs_with_names.push((*full, *orig));
                             },
                             Some(xd) => {
                                 // This should not happen.
@@ -150,7 +149,7 @@ impl Earley {
 
 
     #[trace]
-    fn make_symbol_tree(&self, sym: &Symbol, decls_map: &HashMap<Part, &Vec<GlobalRef>>) -> Option<MixfixTree> {
+    fn make_symbol_tree(&self, sym: &Symbol, decls_map: &HashMap<Part, &Vec<LocalRef>>) -> Option<MixfixTree> {
         if sym == &self.start {
             return Some(MixfixTree::Exp);
         }
@@ -367,7 +366,7 @@ impl<'a> EarleyBuilder<'a> {
         }
     }
 
-    fn from_decls(&mut self, decls: &Vec<(GlobalRef, Located<Decl>)>, part_decls: &Vec<(GlobalRef, Located<Decl>)>) -> Earley {
+    fn from_decls(&mut self, decls: &Vec<(LocalRef, Located<Decl>)>, part_decls: &Vec<(LocalRef, Located<Decl>)>) -> Earley {
         println!("from_decls {:?}", decls);
 
         // terminals
@@ -386,7 +385,7 @@ impl<'a> EarleyBuilder<'a> {
         let mut first_decls: HashMap<(Name, Ref), (Name, Ref, Prio, Option<usize>)> = HashMap::new();
 
         for (gref, Located { loc, value: decl }) in decls {
-            let scope = decl.parent().unwrap().to_ref(gref.bundle);
+            let scope = decl.parent().unwrap().to_ref();
             let prio = decl.prio();
             let name = decl.name();
             let assoc = decl.assoc();
