@@ -13,11 +13,9 @@
 #![feature(step_trait)]
 #![feature(drain_filter)]
 
-extern crate term;
 extern crate num;
 extern crate unicode_categories;
 extern crate pretty;
-extern crate lazycell;
 extern crate rpds;
 // #[macro_use]
 // extern crate failure;

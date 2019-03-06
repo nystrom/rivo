@@ -16,14 +16,12 @@ lto = true
 
 [dependencies]
 clap = "*"
-term = "*"
 num = "*"
 unicode_categories = "*"
-lazycell = "*"
 pretty = "*"
 rpds = "*"
-failure = "*"
 trace = "*"
+rayon = "*"
 
 lazy_static = "*"
 string-interner = "0.7.0"
@@ -33,8 +31,6 @@ cfg = "*"
 
 [patch.crates-io]
 trace = { git = "https://github.com/gsingh93/trace.git" }
-# quickcheck = { git = "https://github.com/nystrom/quickcheck.git" }
-# quickcheck_macros = { git = "https://github.com/nystrom/quickcheck.git" }
 
 [dev-dependencies]
 pretty_assertions = "*"
