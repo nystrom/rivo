@@ -915,17 +915,23 @@ impl<'a> Namer<'a> {
             }
         }
 
-        let mut paths = Vec::new();
-        paths.append(&mut include_all);
+        // sort and dedup because remove_item just removes the first occurrence.
+        // (sorting is needed just because dedup only removes consequetive dups).
+        include_all.sort();
+        include_all.dedup();
+
         for r in exclude_all {
-            paths.remove_item(&r);
+            include_all.remove_item(&r);
         }
         for r in exclude {
-            paths.remove_item(&r);
+            include_all.remove_item(&r);
         }
+
+        let mut paths = Vec::new();
+        paths.append(&mut include_all);
         paths.append(&mut include);
 
-        // Sort the paths and remove duplicates (sorting is needed just because dedup only removes consequetive dups).
+        // Dedup the paths 
         paths.sort();
         paths.dedup();
 

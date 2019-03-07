@@ -41,7 +41,7 @@ impl PrenameCtx {
             names: vec![],
             unknowns: vec![],
             in_mixfix: false,
-            prio: Prio(0),
+            prio: Prio::new(0)
         }
     }
 }
@@ -581,7 +581,7 @@ impl<'a> Prenamer<'a> {
             }
 
             let ctx1 = PrenameCtx {
-                prio: Prio(prio),
+                prio: Prio::new(prio),
                 names: new_names.clone(),
                 ..ctx.clone()
             };
@@ -619,7 +619,7 @@ impl<'a> Prenamer<'a> {
 
         for def in body {
             let ctx1 = PrenameCtx {
-                prio: Prio(prio),
+                prio: Prio::new(prio),
                 names: new_names.clone(),
                 ..ctx.clone()
             };

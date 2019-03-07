@@ -19,18 +19,19 @@ use std::collections::BTreeMap;
 
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Prio(pub usize);
+pub struct Prio(usize);
 
+impl Prio {
+    pub fn new(prio: usize) -> Prio {
+        Prio(prio)
+    }
+}
+
+// Implement Step so we can use ..
 impl std::iter::Step for Prio {
-    fn add_one(&self) -> Prio {
-        Prio(self.0+1)
-    }
-    fn sub_one(&self) -> Prio {
-        Prio(self.0-1)
-    }
-    fn add_usize(&self, n: usize) -> Option<Prio> {
-        Some(Prio(self.0+n))
-    }
+    fn add_one(&self) -> Prio { Prio(self.0+1) }
+    fn sub_one(&self) -> Prio { Prio(self.0-1) }
+    fn add_usize(&self, n: usize) -> Option<Prio> { Some(Prio(self.0+n)) }
     fn steps_between(fst: &Prio, snd: &Prio) -> Option<usize> {
         if snd.0 >= fst.0 {
             Some(snd.0 - fst.0)
