@@ -3,23 +3,59 @@
 /// When rewriting trees, it is important to maintain the NodeId.
 
 use super::trees::NodeId;
+use crate::driver::BundleIndex;
+use std::collections::HashMap;
+
+// Each node in the tree has a unique node id.
+// Each bundle in the compilation has a set of attributes that map from node id to attribute.
+// Attribute references are either local or global.
+
+pub struct LocalRef<T> {
+    id: NodeId,
+    _phantom: std::marker::PhantomData<T>
+}
+
+pub struct GlobalRef<T> {
+    local_ref: LocalRef<T>,
+    bundle: BundleIndex,
+}
 
 /// An example Bundle might look like this.
 struct Example {
     // location of the current node
-    loc: Attribute<crate::syntax::loc::Loc>,
+    loc: DenseAttribute<crate::syntax::loc::Loc>,
     // scope of the current node
-    scope: Attribute<crate::namer::symbols::Scope>,
+    scope: SparseAttribute<crate::namer::symbols::LocalRef>,
     // parent of the current node
-    parent: Attribute<crate::syntax::attr::NodeId>,
+    parent: DenseAttribute<crate::syntax::attr::NodeId>,
 }
 
-pub struct Attribute<T: Clone> {
+/// An Attribute is a map from a node id to a T.
+pub trait Attribute<T: Clone> {
+    fn get(&self, id: NodeId) -> Option<T>;
+    fn put(&mut self, id: NodeId, t: T);
+
+    fn get_or(&self, id: NodeId, t: T) -> T {
+        self.get(id).unwrap_or(t)
+    }
+    fn get_or_default(&self, id: NodeId) -> T where T: Default {
+        self.get(id).unwrap_or_default()
+    }
+
+    fn put_if_absent(&mut self, id: NodeId, t: T) {
+        match self.get(id) {
+            Some(t) => {},
+            None => self.put(id, t),
+        }
+    }
+}
+
+pub struct DenseAttribute<T: Clone> {
     vec: Vec<Option<T>>
 }
 
-impl<T: Clone> Attribute<T> {
-    pub fn get(&self, id: NodeId) -> Option<T> {
+impl<T: Clone> Attribute<T> for DenseAttribute<T> {
+    fn get(&self, id: NodeId) -> Option<T> {
         if id.0 < self.vec.len() {
             self.vec[id.0].clone()
         }
@@ -28,27 +64,24 @@ impl<T: Clone> Attribute<T> {
         }
     }
 
-    pub fn get_or(&self, id: NodeId, t: T) -> T {
-        self.get(id).unwrap_or(t)
-    }
-
-    pub fn get_or_default(&self, id: NodeId) -> T
-        where T: Default
-    {
-        self.get(id).unwrap_or_default()
-    }
-
-    pub fn put(&mut self, id: NodeId, t: T) {
+    fn put(&mut self, id: NodeId, t: T) {
         if id.0 >= self.vec.len() {
-            self.vec.resize_default(id.0+1);
+            self.vec.resize_with(id.0+1, Default::default);
         }
         self.vec[id.0] = Some(t)
     }
+}
 
-    pub fn put_if_absent(&mut self, id: NodeId, t: T) {
-        match self.get(id) {
-            Some(t) => {},
-            None => self.put(id, t),
-        }
+pub struct SparseAttribute<T: Clone> {
+    map: HashMap<NodeId, T>
+}
+
+impl<T: Clone> Attribute<T> for SparseAttribute<T> {
+    fn get(&self, id: NodeId) -> Option<T> {
+        self.map.get(&id).cloned()
+    }
+
+    fn put(&mut self, id: NodeId, t: T) {
+        self.map.insert(id, t);
     }
 }
