@@ -54,14 +54,14 @@ pub struct TokenVec(pub Vec<Token>);
 impl fmt::Display for TokenVec {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0.len() {
-            0 => Ok({}),
+            0 => Ok(()),
             1 => {
                 write!(f, "{}", self.0[0])?;
-                Ok({})
+                Ok(())
             },
             2 => {
                 write!(f, "{} or {}", self.0[0], self.0[1])?;
-                Ok({})
+                Ok(())
             }
             n => {
                 for (i, t) in self.0.iter().enumerate() {
@@ -73,7 +73,7 @@ impl fmt::Display for TokenVec {
                         write!(f, ", or ")?;
                     }
                 }
-                Ok({})
+                Ok(())
             }
         }
     }
@@ -101,8 +101,8 @@ impl fmt::Display for Token {
 
             Token::Lb => write!(f, "`[`"),
             Token::Rb => write!(f, "`]`"),
-            Token::Lc => write!(f, "`{}`", "{"),
-            Token::Rc => write!(f, "`{}`", "}"),
+            Token::Lc => write!(f, "`{{`"),
+            Token::Rc => write!(f, "`}}`"),
             Token::Lp => write!(f, "`(`"),
             Token::Rp => write!(f, "`)`"),
 

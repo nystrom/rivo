@@ -59,7 +59,7 @@ impl<'a> Lexer<'a> {
     pub fn new(source: &'a Source, input: &'a str) -> Lexer<'a> {
         Lexer {
             offset: 0,
-            source: source,
+            source,
             stack: vec![],
             token_buffer: VecDeque::new(),
             prev_token_can_end_statement: false,
@@ -588,7 +588,7 @@ impl<'a> Lexer<'a> {
                     self.read_char();
                 },
                 _ => {
-                    if text.len() == 0 {
+                    if text.is_empty() {
                         return self.locate_error(LexError::BadInt, text.len() as u32)
                     }
                     break;
@@ -1075,21 +1075,21 @@ impl<'a> Lexer<'a> {
         )
     }
 
-    fn mk_rat(i: BigInt, f: BigRational, e: i32) -> BigRational {
+    fn mk_rat(int_part: BigInt, frac_part: BigRational, exponent: i32) -> BigRational {
         let ten = BigRational::from_integer(BigInt::from(10));
 
-        if e > 0 {
-            let r = Lexer::mk_rat(i, f, e-1);
+        if exponent > 0 {
+            let r = Lexer::mk_rat(int_part, frac_part, exponent-1);
             let v = r * ten;
             return v
         }
-        else if e < 0 {
-            let r = Lexer::mk_rat(i, f, e+1);
+        else if exponent < 0 {
+            let r = Lexer::mk_rat(int_part, frac_part, exponent+1);
             let v = r / ten;
             return v
         }
 
-        BigRational::from(i) + f
+        BigRational::from(int_part) + frac_part
     }
 
     fn can_start_statement(t: &Token) -> bool {

@@ -34,7 +34,7 @@ impl Stats {
 
     pub fn end_timer(&mut self, key: &str, value: Instant) {
         let duration = value.elapsed();
-        let nanosec = (duration.as_secs() * 1_000_000_000) as StatCount + (duration.subsec_nanos() as StatCount);
+        let nanosec = (duration.as_secs() * 1_000_000_000) as StatCount + StatCount::from(duration.subsec_nanos());
         self.accum(key, nanosec);
         self.times.insert(key.to_owned());
     }
@@ -86,11 +86,11 @@ impl Stats {
                 let sum_time = (*sum as f64) * 1e-9;
                 let max_time = (*max as f64) * 1e-9;
                 let min_time = (*min as f64) * 1e-9;
-                let mean_time = if *cnt != 0 { sum_time / (*cnt as f64) } else { 0 as f64 };
+                let mean_time = if *cnt != 0 { sum_time / (*cnt as f64) } else { f64::from(0) };
                 println!("{:<40} | {:>11} | {:>11.6} | {:>11.6} | {:>11.6} | {:>11.6} ", stat, cnt, sum_time, min_time, max_time, mean_time);
             }
             else {
-                let mean = if *cnt != 0 { (*sum as f64) / (*cnt as f64) } else { 0 as f64 };
+                let mean = if *cnt != 0 { (*sum as f64) / (*cnt as f64) } else { f64::from(0) };
                 println!("{:<40} | {:>11} | {:>11} | {:>11} | {:>11} | {:>11.2}", stat, cnt, sum, min, max, mean);
             }
         }

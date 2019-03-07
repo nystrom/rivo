@@ -119,7 +119,7 @@ impl Lower {
         Core::Lit { lit: Lit::Nothing }
     }
 
-    fn contains_attribute(name: Name, attrs: &Vec<Located<Attr>>) -> bool {
+    fn contains_attribute(name: Name, attrs: &[Located<Attr>]) -> bool {
         for attr in attrs {
             if Lower::is_attribute(name, attr) {
                 return true;
@@ -155,12 +155,12 @@ impl Lower {
     // call by name parameters (leave for now and just bake in `if`).
 
     // Lower a mixfix definition.
-    fn lower_lambda(attrs: &Vec<Located<Attr>>,
-                            flag: &MixfixFlag,
-                            name: &Name,
+    fn lower_lambda(attrs: &[Located<Attr>],
+                            flag: MixfixFlag,
+                            name: Name,
                             opt_guard: &Option<Box<Located<Exp>>>,
                             opt_body: &Option<Box<Located<Exp>>>,
-                            params: &Vec<Located<Param>>,
+                            params: &[Located<Param>],
                             ret: &Located<Param>) -> Core {
 
         if ret.attr.mode == CallingMode::Output {
@@ -173,12 +173,12 @@ impl Lower {
     }
 
     // Forward lambda.
-    fn lower_forward_lambda(attrs: &Vec<Located<Attr>>,
-                            flag: &MixfixFlag,
-                            name: &Name,
+    fn lower_forward_lambda(attrs: &[Located<Attr>],
+                            flag: MixfixFlag,
+                            name: Name,
                             opt_guard: &Option<Box<Located<Exp>>>,
                             opt_body: &Option<Box<Located<Exp>>>,
-                            params: &Vec<Located<Param>>,
+                            params: &[Located<Param>],
                             ret: &Located<Param>) -> Core {
 
         // If there are input parameters, make a lambda that matches the first parameter,
@@ -241,7 +241,7 @@ impl Lower {
                     Core::MReturn {
                         exp: box
                         Core::Thunk {
-                            flag: flag,
+                            flag,
                             exp: box
                                 Core::Unwrap {
                                     exp: box Lower::lower_let(body, Lower::TRUE(), Lower::lower_exp(&*ret.pat))
@@ -254,7 +254,7 @@ impl Lower {
                     Core::MReturn {
                         exp: box
                             Core::Thunk {
-                                flag: flag,
+                                flag,
                                 exp: box Lower::lower_exp(&*ret.pat)
                             }
                     }
@@ -263,12 +263,12 @@ impl Lower {
         }
     }
 
-    fn lower_backward_lambda(attrs: &Vec<Located<Attr>>,
-                            flag: &MixfixFlag,
-                            name: &Name,
+    fn lower_backward_lambda(attrs: &[Located<Attr>],
+                            flag: MixfixFlag,
+                            name: Name,
                             opt_guard: &Option<Box<Located<Exp>>>,
                             opt_body: &Option<Box<Located<Exp>>>,
-                            params: &Vec<Located<Param>>,
+                            params: &[Located<Param>],
                             ret: &Located<Param>) -> Core {
 
 
@@ -298,12 +298,12 @@ impl Lower {
             }
     }
 
-    fn lower_backward_lambda_after_ret(attrs: &Vec<Located<Attr>>,
-                        flag: &MixfixFlag,
-                        name: &Name,
+    fn lower_backward_lambda_after_ret(attrs: &[Located<Attr>],
+                        flag: MixfixFlag,
+                        name: Name,
                         opt_guard: &Option<Box<Located<Exp>>>,
                         opt_body: &Option<Box<Located<Exp>>>,
-                        params: &Vec<Located<Param>>) -> Core {
+                        params: &[Located<Param>]) -> Core {
 
         let mut first_input = None;
         let mut remaining = vec![];
@@ -377,7 +377,7 @@ impl Lower {
 
             let mut result;
 
-            match params.as_slice() {
+            match params {
                 [] => {
                     result = Lower::VOID();
                 },
@@ -413,7 +413,7 @@ impl Lower {
             Core::MReturn {
                 exp: box
                     Core::Thunk {
-                        flag: flag,
+                        flag,
                         exp: box result
                     }
             }
@@ -421,18 +421,16 @@ impl Lower {
         }
     }
 
-    fn get_thunk_flag(attrs: &Vec<Located<Attr>>) -> ThunkFlag {
+    fn get_thunk_flag(attrs: &[Located<Attr>]) -> ThunkFlag {
         let is_default = Lower::contains_attribute(Name::new("default"), attrs);
         let is_unique = Lower::contains_attribute(Name::new("unique"), attrs);
 
-        let flag = if is_unique { ThunkFlag::Unique }
-                   else if is_default { ThunkFlag::Default }
-                   else { ThunkFlag::Normal };
-
-        flag
+        if is_unique { ThunkFlag::Unique }
+        else if is_default { ThunkFlag::Default }
+        else { ThunkFlag::Normal }
     }
 
-    fn record_to_struct(tag: &Located<Exp>, defs: &Vec<Located<Def>>) -> Core {
+    fn record_to_struct(tag: &Located<Exp>, defs: &[Located<Def>]) -> Core {
         let mixfixes: Vec<Located<Def>> = defs.iter().filter_map(|c| match &c.value {
             d @ Def::TraitDef { .. } => Some(c.with_value(d.clone())),
             d @ Def::FunDef { .. } => Some(c.with_value(d.clone())),
@@ -463,12 +461,12 @@ impl Lower {
             fields.push((Var { name: x }, Core::Var { var: Var { name: x }}));
         }
 
-        let cmds = defs.iter().map(|d| d.with_value(Cmd::Def(d.value.clone()))).collect();
+        let cmds: Vec<_> = defs.iter().map(|d| d.with_value(Cmd::Def(d.value.clone()))).collect();
 
         Lower::layout_to_letrec(&cmds, Core::Record { fields })
     }
 
-    fn get_unknowns_from_formulas(fs: &Vec<Located<Exp>>) -> Vec<Name> {
+    fn get_unknowns_from_formulas(fs: &[Located<Exp>]) -> Vec<Name> {
         let mut names = vec![];
         for f in fs {
             Lower::add_unknowns_from_exp(f, &mut names)
@@ -519,7 +517,7 @@ impl Lower {
     }
 
     // Desugar a layout into a letrec with the body v.
-    fn layout_to_letrec(cmds: &Vec<Located<Cmd>>, v: Core) -> Core {
+    fn layout_to_letrec(cmds: &[Located<Cmd>], v: Core) -> Core {
         let mixfixes: Vec<Located<Def>> = cmds.iter().filter_map(|c| match &c.value {
             Cmd::Def(d @ Def::TraitDef { .. }) => Some(c.with_value(d.clone())),
             Cmd::Def(d @ Def::FunDef { .. }) => Some(c.with_value(d.clone())),
@@ -591,7 +589,7 @@ impl Lower {
                 Core::Seq {
                     e1: box Core::Assign {
                         lhs: Var { name: *name },
-                        rhs: box Lower::lower_lambda(attrs, &MixfixFlag::Trait, name, opt_guard, &None, params, &ret),
+                        rhs: box Lower::lower_lambda(attrs, MixfixFlag::Trait, *name, opt_guard, &None, params, &ret),
                     },
                     e2: box t
                 }
@@ -601,7 +599,7 @@ impl Lower {
                 Core::Seq {
                     e1: box Core::Assign {
                         lhs: Var { name: *name },
-                        rhs: box Lower::lower_lambda(attrs, &MixfixFlag::Fun, name, opt_guard, opt_body, params, ret),
+                        rhs: box Lower::lower_lambda(attrs, MixfixFlag::Fun, *name, opt_guard, opt_body, params, ret),
                     },
                     e2: box t
                 }
@@ -627,15 +625,13 @@ impl Lower {
             _ => t,
         });
 
-        let unknown_init = unknowns.iter().rev().fold(mixfix_init, |t, x|
+        unknowns.iter().rev().fold(mixfix_init, |t, x|
             Core::Let {
                 var: Var { name: *x },
                 init: box Lower::VOID(),
                 body: box t
             }
-        );
-
-        unknown_init
+        )
     }
 
     fn freshen(e: &Located<Exp>, subst: &mut Vec<(Name, Name)>) -> Located<Exp> {
@@ -969,7 +965,7 @@ impl Lower {
             Exp::Unknown { name, id } => { unimplemented!() },
             Exp::MixfixPart { name, id } => { unimplemented!() },
             Exp::Var { name, id } => {
-                Core::Var { var: Var { name: name.clone() } }
+                Core::Var { var: Var { name: *name } }
             },
             Exp::MixfixApply { es, id } => { unimplemented!() },
 
@@ -989,7 +985,7 @@ impl Lower {
         }
     }
 
-    fn lower_amb_delay(fun: &Located<Exp>, args: &Vec<Located<Exp>>) -> Core {
+    fn lower_amb_delay(fun: &Located<Exp>, args: &[Located<Exp>]) -> Core {
         // (select-θ
         //   (let [(x_11 = ((translate-amb e_1)
         //      >>= (λ [? -> !] x_12 -> (mode-select [μ ... -> !] x_12))))] in

@@ -13,6 +13,15 @@
 #![feature(step_trait)]
 #![feature(drain_filter)]
 
+#![warn(clippy::all)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::single_match)]
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::module_inception)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::wrong_self_convention)]
+
+
 extern crate num;
 extern crate unicode_categories;
 extern crate pretty;

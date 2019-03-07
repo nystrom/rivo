@@ -169,7 +169,7 @@ impl<'a> Parser<'a> {
     }
 
     fn error_unexpected<T: Debug>(&mut self, expected: Vec<Token>, got: &Located<Token>) -> PResult<T> {
-        if expected.len() == 0 {
+        if expected.is_empty() {
             let msg = format!("Unexpected token {}.", got.value);
             self.error(got.loc, &msg)
         }
@@ -189,14 +189,14 @@ impl<'a> Parser<'a> {
     }
 
     fn error<T: Debug>(&mut self, loc: Loc, msg: &str) -> PResult<T> {
-        let lmsg = Located { loc: loc, value: String::from(msg) };
+        let lmsg = Located { loc, value: String::from(msg) };
         self.errors.push(lmsg.clone());
         // panic!("{:?}", lmsg);
         Err(lmsg)
     }
 
     fn error_void(&mut self, loc: Loc, msg: &str) {
-        let lmsg = Located { loc: loc, value: String::from(msg) };
+        let lmsg = Located { loc, value: String::from(msg) };
         self.errors.push(lmsg.clone());
         // panic!("{:?}", lmsg);
     }
@@ -337,7 +337,7 @@ impl<'a> Parser<'a> {
                 Token::Id(ref s) => { self.eat(); Ok(Attr::Name { name: Name::Id(Interned::new(&s)) }) },
                 Token::Op(ref s) => { self.eat(); Ok(Attr::Name { name: Name::Op(Interned::new(&s)) }) },
 
-                Token::Char(ref v) => { self.eat(); Ok(Attr::Lit { lit: Lit::Char { value: v.clone() } }) },
+                Token::Char(ref v) => { self.eat(); Ok(Attr::Lit { lit: Lit::Char { value: *v } }) },
                 Token::Rat(ref v, _) => { self.eat(); Ok(Attr::Lit { lit: Lit::Rat { value: v.clone() } }) },
                 Token::Int(ref v, _) => { self.eat(); Ok(Attr::Lit { lit: Lit::Int { value: v.clone() } }) },
                 Token::String(ref v) => { self.eat(); Ok(Attr::Lit { lit: Lit::String { value: v.clone() } }) },
@@ -872,7 +872,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        return Ok((mode_given, elements))
+        Ok((mode_given, elements))
     }
 
     fn parse_fun_cmd(&mut self, attrs: Vec<Located<Attr>>) -> PResult<Located<Cmd>> {
@@ -900,13 +900,13 @@ impl<'a> Parser<'a> {
                 for param in params {
                     match *param {
                         Param { attr: ParamAttr { assoc: Assoc::Assoc, .. }, .. } => {
-                            return self.error(param.loc.clone(), "Anonymous function parameter cannot be associative.")
+                            return self.error(param.loc, "Anonymous function parameter cannot be associative.")
                         },
                         Param { attr: ParamAttr { by_name: CallingConv::ByName, .. }, .. } => {
-                            return self.error(param.loc.clone(), "Anonymous function parameter cannot be call-by-name.")
+                            return self.error(param.loc, "Anonymous function parameter cannot be call-by-name.")
                         },
                         Param { attr: ParamAttr { mode: CallingMode::Output, .. }, .. } => {
-                            return self.error(param.loc.clone(), "Anonymous function parameter cannot be an output parameter.")
+                            return self.error(param.loc, "Anonymous function parameter cannot be an output parameter.")
                         },
                         Param { pat: ref exp, .. } => {
                             // copy the location from the Param.
@@ -944,13 +944,12 @@ impl<'a> Parser<'a> {
                         let (mode_given_in_ret, e) = self.parse_mixfix_return(mode_given)?;
 
                         // If a mode was given or there are no parameters, we require a mode.
-                        let opt_body;
-                        if mode_given || mode_given_in_ret {
-                            opt_body = self.parse_opt_guard()?;
+                        let opt_body = if mode_given || mode_given_in_ret {
+                            self.parse_opt_guard()?
                         }
                         else {
-                            opt_body = None;
-                        }
+                            None
+                        };
 
                         Ok(Cmd::Def(Def::FunDef {
                             id,
@@ -1035,7 +1034,7 @@ impl<'a> Parser<'a> {
             Exp::Union { box e1, box e2 } => [e1, e2].iter().flat_map(|e| self.flatten_exp(e.clone())).collect(),
             Exp::Select { exp, name } => {
                 self.flatten_exp(*exp).iter().map(
-                    |e| Located::new(e.loc, Exp::Select { exp: box e.clone(), name: name.clone() })
+                    |e| Located::new(e.loc, Exp::Select { exp: box e.clone(), name })
                 ).collect()
             },
             Exp::Within { id, e1, e2 } => {
@@ -1431,7 +1430,7 @@ impl<'a> Parser<'a> {
                             loc,
                             Exp::Select {
                                 exp: box left,
-                                name: name.clone()
+                                name: *name
                             })),
                     ref t =>
                         self.error(loc, "Invalid selection expression. Expected a name.")
@@ -1707,18 +1706,11 @@ impl<'a> Parser<'a> {
                         self.eat();
                         es.push(first);
 
-                        loop {
-                            match *self.lookahead()? {
-                                Token::Comma => {
-                                    self.eat();
-                                    if *self.lookahead()? != Token::Rb {
-                                        let e = self.parse_exp()?;
-                                        es.push(e);
-                                    }
-                                },
-                                _ => {
-                                    break;
-                                }
+                        while let Token::Comma = *self.lookahead()? {
+                            self.eat();
+                            if *self.lookahead()? != Token::Rb {
+                                let e = self.parse_exp()?;
+                                es.push(e);
                             }
                         }
                     },
@@ -1754,7 +1746,7 @@ impl<'a> Parser<'a> {
                 },
                 Token::Char(ref n) => {
                     self.eat();
-                    Ok(Exp::Lit { lit: Lit::Char { value: n.clone() } })
+                    Ok(Exp::Lit { lit: Lit::Char { value: *n } })
                 },
                 Token::Lp => {
                     self.parse_tuple_exp()
@@ -1894,7 +1886,7 @@ impl<'a> Parser<'a> {
         self.node_id_generator.new_id()
     }
 
-    fn make_mixfix_name(elements: &Vec<MixfixParam>) -> Name {
+    fn make_mixfix_name(elements: &[MixfixParam]) -> Name {
         let mut parts = Vec::new();
 
         for element in elements {
@@ -1920,7 +1912,7 @@ impl<'a> Parser<'a> {
         Name::Mixfix(Name::encode_parts(&parts))
     }
 
-    fn make_params(elements: &Vec<MixfixParam>) -> Vec<Located<Param>> {
+    fn make_params(elements: &[MixfixParam]) -> Vec<Located<Param>> {
         let mut params = Vec::new();
         for element in elements {
             match element {
@@ -1939,9 +1931,9 @@ impl<'a> Parser<'a> {
                 attr: ParamAttr {
                     assoc: Assoc::NonAssoc,
                     by_name: CallingConv::ByValue,
-                    mode: mode,
+                    mode,
                 },
-                pat: Box::new(Located{ loc: loc, value: e })
+                pat: Box::new(Located{ loc, value: e })
             }
         )
     }

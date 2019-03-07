@@ -21,7 +21,7 @@ impl Loader {
     pub fn new_with_paths(paths: Vec<PathBuf>) -> Loader {
         Loader {
             loaded_sources: HashMap::new(),
-            paths: paths,
+            paths,
         }
     }
     pub fn new() -> Loader {
@@ -31,7 +31,7 @@ impl Loader {
         ])
     }
 
-    pub fn locate_bundle(&mut self, name: &Name) -> LoaderResult<Source> {
+    pub fn locate_bundle(&mut self, name: Name) -> LoaderResult<Source> {
         match name {
             Name::Id(x) => {
                 if let Some(ch) = x.to_string().chars().next() {

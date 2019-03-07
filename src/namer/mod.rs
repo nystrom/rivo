@@ -5,6 +5,3 @@ pub mod rename;
 pub mod symbols;
 
 mod earley;
-mod worklist;
-
-// mod cheap_renamer;

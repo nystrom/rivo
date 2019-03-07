@@ -45,11 +45,10 @@ pub struct LineMap {
 }
 
 impl LineMap {
-    pub fn new(input: &String) -> LineMap {
+    pub fn new(input: &str) -> LineMap {
         let mut v = vec![0];
         let mut cr = false;
-        let mut i = 0;
-        for ch in input.chars() {
+        for (i, ch) in input.chars().enumerate() {
             match ch {
                 '\r' => {
                     cr = true;
@@ -65,8 +64,6 @@ impl LineMap {
                     }
                 }
             }
-
-            i += 1;
         }
         LineMap { line_offsets: v }
     }
@@ -177,7 +174,7 @@ impl<T> Located<T> {
 
     pub fn new_from(other: Located<T>, value: T) -> Located<T> {
         Located {
-            loc: other.loc.clone(),
+            loc: other.loc,
             value,
         }
     }

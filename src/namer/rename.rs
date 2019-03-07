@@ -67,7 +67,7 @@ impl<'a> Renamer<'a> {
     // }
 
     #[cfg_attr(debug_assertions, trace)]
-    fn apply_mixfix(&mut self, tree: &MixfixTree, es: &Vec<Located<Exp>>) -> Option<Exp> {
+    fn apply_mixfix(&mut self, tree: &MixfixTree, es: &[Located<Exp>]) -> Option<Exp> {
         struct ParseResult {
             e: Located<Exp>,
             rest: Vec<Located<Exp>>
@@ -79,7 +79,7 @@ impl<'a> Renamer<'a> {
                     let id = node_id_generator.new_id();
                     Some(
                         ParseResult {
-                            e: Located::new(NO_LOC, Exp::Var { name: x.clone(), id: id }),
+                            e: Located::new(NO_LOC, Exp::Var { name: *x, id }),
                             rest: es
                         }
                     )
@@ -150,7 +150,7 @@ impl<'a> Renamer<'a> {
 // visit any node that has a node id.
 impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
     #[cfg_attr(debug_assertions, trace)]
-    fn visit_exp(&mut self, e: &'a Exp, ctx: &RenamerCtx, loc: &Loc) -> Exp {
+    fn visit_exp(&mut self, e: &'a Exp, ctx: &RenamerCtx, loc: Loc) -> Exp {
         match e {
             Exp::Within { id, e1, e2 } => {
                 // TODO: verify that e2 is in the scope of e1, not an enclosing scope.
@@ -172,7 +172,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                         // match insert_select(e1, e2) {
                         //     Some(e) => e.value,
                         //     None => {
-                        //         self.namer.driver.error(Located::new(loc.clone(), format!("Could not resolve selected expression to a name or function application. ({})", id)));
+                        //         self.namer.driver.error(Located::new(*loc, format!("Could not resolve selected expression to a name or function application. ({})", id)));
                         //         new_node
                         //     },
                         // }
@@ -195,12 +195,12 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                             Ok(grefs) => {
                                 if self.namer.all_mixfix(&grefs) {
                                     if grefs.is_empty() {
-                                        self.namer.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope. ({})", name, id)));
+                                        self.namer.driver.error(Located::new(loc, format!("Name {} not found in scope. ({})", name, id)));
                                         new_node
                                     }
                                     else {
                                         if ! ctx.in_mixfix {
-                                            self.namer.driver.error(Located::new(loc.clone(), format!("Name {} is a mixfix part, not a name. ({})", name, id)));
+                                            self.namer.driver.error(Located::new(loc, format!("Name {} is a mixfix part, not a name. ({})", name, id)));
                                             new_node
                                         }
                                         else {
@@ -270,7 +270,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                         })
                                     }
                                     else {
-                                        self.namer.driver.error(Located::new(loc.clone(), format!("Name {} did not resolve to a stable path.", name)));
+                                        self.namer.driver.error(Located::new(loc, format!("Name {} did not resolve to a stable path.", name)));
                                         Exp::Lit { lit: Lit::Nothing }
                                     }
                                 }
@@ -278,7 +278,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                             Err(_) => {
                                 // Don't report... should have already been reported.
                                 // assert!(self.namer.driver.has_errors());
-                                self.namer.driver.error(Located::new(loc.clone(), format!("Name {} not found in scope (internal error too).", name)));
+                                self.namer.driver.error(Located::new(loc, format!("Name {} not found in scope (internal error too).", name)));
                                 new_node
                             },
                         }
@@ -294,7 +294,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                     in_mixfix: true,
                 };
 
-                let new_node = self.walk_exp(e, &child_ctx, &loc);
+                let new_node = self.walk_exp(e, &child_ctx, loc);
 
                 match &new_node {
                     Exp::MixfixApply { es, id } => {
@@ -310,7 +310,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                         if trees.len() > 1 {
                                             let mut trees_clone = trees.clone();
                                             trees_clone.sort();
-                                            self.namer.driver.error(Located::new(*loc, format!("Ambiguous mixfix expression: {}; resolves to one of {}. ({})", new_node.pretty(1000), MixfixTreeVec(&trees_clone), id)));
+                                            self.namer.driver.error(Located::new(loc, format!("Ambiguous mixfix expression: {}; resolves to one of {}. ({})", new_node.pretty(1000), MixfixTreeVec(&trees_clone), id)));
                                             new_node
                                         }
                                         else {
@@ -319,20 +319,20 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                                 None => {
                                                     // This should only happen if there were other errors.
                                                     // assert!(self.namer.driver.has_errors());
-                                                    // self.namer.driver.error(Located::new(loc.clone(), "cannot resolve mixfix expression (internal error too)".to_owned()));
+                                                    // self.namer.driver.error(Located::new(*loc, "cannot resolve mixfix expression (internal error too)".to_owned()));
                                                     new_node
                                                 },
                                             }
                                         }
                                     },
                                     None => {
-                                        self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression: {}. ({})", new_node.pretty(1000), id)));
+                                        self.namer.driver.error(Located::new(loc, format!("Cannot resolve mixfix expression: {}. ({})", new_node.pretty(1000), id)));
                                         new_node
                                     },
                                 }
                             }
                             Err(msg) => {
-                                self.namer.driver.error(Located::new(*loc, format!("Cannot resolve mixfix expression: {}. {}. ({})", new_node.pretty(1000), msg.value, id)));
+                                self.namer.driver.error(Located::new(loc, format!("Cannot resolve mixfix expression: {}. {}. ({})", new_node.pretty(1000), msg.value, id)));
                                 new_node
                             },
                         }

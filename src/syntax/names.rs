@@ -50,15 +50,15 @@ impl Name {
         Name::Id(Interned::new(s))
     }
 
-    pub fn parts(&self) -> Vec<Part> {
+    pub fn parts(self) -> Vec<Part> {
         match self {
-            Name::Id(x) => vec![Part::Id(*x)],
-            Name::Op(x) => vec![Part::Op(*x)],
-            Name::Mixfix(x) => Name::decode_parts(*x),
+            Name::Id(x) => vec![Part::Id(x)],
+            Name::Op(x) => vec![Part::Op(x)],
+            Name::Mixfix(x) => Name::decode_parts(x),
         }
     }
 
-    pub fn encode_parts(parts: &Vec<Part>) -> Interned {
+    pub fn encode_parts(parts: &[Part]) -> Interned {
         let mut s = String::new();
         for (i, part) in parts.iter().enumerate() {
             if i != 0 {
@@ -197,27 +197,27 @@ impl fmt::Display for Name {
 }
 
 impl Part {
-    pub fn to_name(&self) -> Name {
+    pub fn to_name(self) -> Name {
         match self {
-            Part::Id(x) => Name::Id(*x),
-            Part::Op(x) => Name::Op(*x),
+            Part::Id(x) => Name::Id(x),
+            Part::Op(x) => Name::Op(x),
             Part::Placeholder => Name::Op(Interned::new("_"))
         }
     }
 
-    pub fn is_id(&self) -> bool {
+    pub fn is_id(self) -> bool {
         match self {
             Part::Id(_) => true,
             _ => false,
         }
     }
-    pub fn is_op(&self) -> bool {
+    pub fn is_op(self) -> bool {
         match self {
             Part::Op(_) => true,
             _ => false,
         }
     }
-    pub fn is_placeholder(&self) -> bool {
+    pub fn is_placeholder(self) -> bool {
         match self {
             Part::Placeholder => true,
             _ => false,
@@ -227,7 +227,7 @@ impl Part {
 }
 
 impl Name {
-    pub fn is_bundle_name(&self) -> bool {
+    pub fn is_bundle_name(self) -> bool {
         match self {
             Name::Id(x) => match x.to_string().chars().next() {
                 None => false,
@@ -241,8 +241,8 @@ impl Name {
         }
     }
 
-    pub fn is_prefix_name(&self) -> bool {
-        match *self {
+    pub fn is_prefix_name(self) -> bool {
+        match self {
             Name::Id(_) => false,
             Name::Op(_) => false,
             Name::Mixfix(ref s) => {
@@ -253,8 +253,8 @@ impl Name {
             },
         }
     }
-    pub fn is_brackets_name(&self) -> bool {
-        match *self {
+    pub fn is_brackets_name(self) -> bool {
+        match self {
             Name::Id(_) => false,
             Name::Op(_) => false,
             Name::Mixfix(ref s) => {
@@ -266,20 +266,20 @@ impl Name {
         }
     }
 
-    pub fn is_id(&self) -> bool {
-        match *self {
+    pub fn is_id(self) -> bool {
+        match self {
             Name::Id(_) => true,
             _ => false,
         }
     }
-    pub fn is_op(&self) -> bool {
-        match *self {
+    pub fn is_op(self) -> bool {
+        match self {
             Name::Op(_) => true,
             _ => false,
         }
     }
-    pub fn is_mixfix(&self) -> bool {
-        match *self {
+    pub fn is_mixfix(self) -> bool {
+        match self {
             Name::Mixfix(_) => true,
             _ => false,
         }

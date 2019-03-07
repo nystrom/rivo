@@ -69,18 +69,18 @@ impl ScopeGraph {
 
     pub fn get_lookup(&self, index: &LookupIndex) -> LookupRef {
         match index {
-            LookupIndex(i) => self.lookups.get(*i).unwrap().clone()
+            LookupIndex(i) => self.lookups[*i]
         }
     }
 
     pub fn get_mixfix(&self, index: &MixfixIndex) -> MixfixRef {
         match index {
-            MixfixIndex(i) => self.mixfixes.get(*i).unwrap().clone()
+            MixfixIndex(i) => self.mixfixes[*i].clone()
         }
     }
 
     pub fn get_env(&self, index: EnvIndex) -> &Located<Decl> {
-        self.envs.get(index.0).unwrap()
+        &self.envs[index.0]
     }
 
     // pub fn get_env_mut(&mut self, index: EnvIndex) -> &mut Located<Decl> {

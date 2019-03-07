@@ -87,7 +87,7 @@ impl Driver {
 
     fn error_count_for_bundle(&self, index: usize, bundle: &Bundle) -> u32 {
         if index < self.errors.len() {
-            let errors = self.errors[index].clone();
+            let errors = &self.errors[index];
             errors.len() as u32
         }
         else {
@@ -97,8 +97,8 @@ impl Driver {
 
     fn bundle_has_errors(&self, index: usize, bundle: &Bundle) -> bool {
         if index < self.errors.len() {
-            let errors = self.errors[index].clone();
-            errors.len() > 0
+            let errors = &self.errors[index];
+            ! errors.is_empty()
         }
         else {
             false
@@ -216,7 +216,7 @@ impl Driver {
 
                 loop {
                     match lex.next_token() {
-                        Ok(Located { loc: _, value: Token::EOF }) => {
+                        Ok(Located { loc, value: Token::EOF }) => {
                             break;
                         },
                         Ok(Located { loc, value }) => {
@@ -238,14 +238,14 @@ impl Driver {
     }
 
     pub fn get_bundle(&mut self, index: BundleIndex) -> Option<Bundle> {
-        self.bundles.get(index.0).map(|b| b.clone())
+        self.bundles.get(index.0).cloned()
     }
 
     pub fn enumerate_bundles<'a>(&'a self) -> Vec<(BundleIndex, &'a Bundle)> {
         self.bundles.iter().enumerate().map(|(i, b)| (BundleIndex(i), b)).collect()
     }
 
-    pub fn load_bundle_by_name(&mut self, name: &Name) -> Result<BundleIndex, Located<String>> {
+    pub fn load_bundle_by_name(&mut self, name: Name) -> Result<BundleIndex, Located<String>> {
         match self.loader.locate_bundle(name) {
             Ok(source) => {
                 self.load_bundle_from_source(&source)
@@ -310,7 +310,7 @@ impl Driver {
                         driver: self
                     };
 
-                    let tree2 = prenamer.visit_root(&tree1.value, &PrenameCtx::new(), &tree1.loc);
+                    let tree2 = prenamer.visit_root(&tree1.value, &PrenameCtx::new(), tree1.loc);
 
                     let new_bundle = Bundle::Prenamed {
                         source: source1,
@@ -386,7 +386,7 @@ impl Driver {
                         node_id_generator: &mut node_id_generator1,
                     };
 
-                    let tree2 = renamer.visit_root(&tree1.value, &RenamerCtx::new(), &tree1.loc);
+                    let tree2 = renamer.visit_root(&tree1.value, &RenamerCtx::new(), tree1.loc);
 
                     let new_bundle = Bundle::Named { source: source1, line_map: line_map1, node_id_generator: *renamer.node_id_generator, tree: Located::new(tree1.loc, tree2), scopes: scopes1 };
                     self.set_bundle(index, new_bundle);

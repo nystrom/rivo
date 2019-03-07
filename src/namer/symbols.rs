@@ -230,17 +230,17 @@ impl DeclEnv for Decl {
 impl Decl {
     pub fn new_bundle(index: crate::driver::BundleIndex) -> Decl {
         Decl::Bundle {
-            index: index,
+            index,
             imports: vec![],
             members: BTreeMap::new(),
         }
     }
     pub fn new_trait(parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>) -> Decl {
         Decl::Trait {
-            parent: parent,
-            name: name,
-            prio: prio,
-            params: params,
+            parent,
+            name,
+            prio,
+            params,
             supers: vec![],
             imports: vec![],
             members: BTreeMap::new(),
@@ -248,30 +248,30 @@ impl Decl {
     }
     pub fn new_fun(parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>, ret: ParamAttr) -> Decl {
         Decl::Fun {
-            parent: parent,
-            name: name,
-            prio: prio,
-            params: params,
-            ret: ret,
+            parent,
+            name,
+            prio,
+            params,
+            ret,
         }
     }
     pub fn new_block(parent: LocalRef) -> Decl {
         Decl::Block {
-            parent: parent,
+            parent,
             imports: vec![],
             members: BTreeMap::new(),
         }
     }
     pub fn new_val(parent: LocalRef, name: Name) -> Decl {
         Decl::Val {
-            parent: parent,
-            name: name
+            parent,
+            name
         }
     }
     fn new_var(parent: LocalRef, name: Name) -> Decl {
         Decl::Var {
-            parent: parent,
-            name: name
+            parent,
+            name
         }
     }
 }
@@ -335,11 +335,11 @@ pub enum Decl {
 impl Decl {
     pub fn name(&self) -> Name {
         match self {
-            Decl::Trait { name, .. } => name.clone(),
-            Decl::Fun { name, .. } => name.clone(),
-            Decl::Val { name, .. } => name.clone(),
-            Decl::Var { name, .. } => name.clone(),
-            Decl::MixfixPart { name, .. } => name.clone(),
+            Decl::Trait { name, .. } => *name,
+            Decl::Fun { name, .. } => *name,
+            Decl::Val { name, .. } => *name,
+            Decl::Var { name, .. } => *name,
+            Decl::MixfixPart { name, .. } => *name,
             _ => unimplemented!(),
         }
     }
@@ -441,14 +441,14 @@ pub struct MixfixTreeVec<'a>(pub &'a Vec<MixfixTree>);
 impl<'a> fmt::Display for MixfixTreeVec<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.0.len() {
-            0 => Ok({}),
+            0 => Ok(()),
             1 => {
                 write!(f, "{}", self.0[0])?;
-                Ok({})
+                Ok(())
             },
             2 => {
                 write!(f, "{} or {}", self.0[0], self.0[1])?;
-                Ok({})
+                Ok(())
             }
             n => {
                 for (i, t) in self.0.iter().enumerate() {
@@ -460,7 +460,7 @@ impl<'a> fmt::Display for MixfixTreeVec<'a> {
                         write!(f, ", or ")?;
                     }
                 }
-                Ok({})
+                Ok(())
             }
         }
     }

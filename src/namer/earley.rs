@@ -64,8 +64,8 @@ pub(super) struct EarleyBuilder<'a> {
 }
 
 impl Earley {
-    pub fn new(decls: &Vec<(LocalRef, Located<Decl>)>, part_decls: &Vec<(LocalRef, Located<Decl>)>) -> Earley {
-        EarleyBuilder::new(&mut HashMap::new(), &mut HashMap::new()).from_decls(decls, part_decls)
+    pub fn new(decls: &[(LocalRef, Located<Decl>)], part_decls: &[(LocalRef, Located<Decl>)]) -> Earley {
+        EarleyBuilder::new(&mut HashMap::new(), &mut HashMap::new()).make_from_decls(decls, part_decls)
     }
 
     #[trace]
@@ -82,8 +82,8 @@ impl Earley {
             match t {
                 Some(MixfixTree::Name(x, grefs)) => {
                     match x {
-                        Name::Id(x) => parts.push(Part::Id(x.clone())),
-                        Name::Op(x) => parts.push(Part::Op(x.clone())),
+                        Name::Id(x) => parts.push(Part::Id(*x)),
+                        Name::Op(x) => parts.push(Part::Op(*x)),
                         _ => {
                             // This should not happen.
                             panic!("unexpected name {:?} in MixfixTree", x);
@@ -169,7 +169,7 @@ impl Earley {
         // Look for the matching symbol and create a tree.
         // If a the symbol is a terminal, create a Name tree.
         // Otherwise, create an Exp tree.
-        for (_, t) in &self.nonterminals {
+        for t in self.nonterminals.values() {
             println!("nonterm {:?} == {:?} ?", t, sym);
             if t == sym {
                 return Some(MixfixTree::Exp);
@@ -180,8 +180,8 @@ impl Earley {
             println!("term {:?} == {:?} ?", t, sym);
             if t == sym {
                 let y = match x {
-                    Part::Id(x) => Name::Id(x.clone()),
-                    Part::Op(x) => Name::Op(x.clone()),
+                    Part::Id(x) => Name::Id(*x),
+                    Part::Op(x) => Name::Op(*x),
                     _ => { return None; },
                 };
                 println!(" x = {}", x);
@@ -195,7 +195,7 @@ impl Earley {
         None
     }
 
-    pub fn parse(&self, tokens: &Vec<Token>) -> Vec<MixfixTree> {
+    pub fn parse(&self, tokens: &[Token]) -> Vec<MixfixTree> {
         let mut decls_map = HashMap::new();
 
         // We assume that each occurrence of the same name part resolves to the same declarations.
@@ -311,8 +311,8 @@ impl Earley {
                     continue;
                 }
 
-                let ri = result.get(i).unwrap();
-                let rj = result.get(j).unwrap();
+                let ri = &result[i];
+                let rj = &result[j];
 
                 if left_is_same_or_longer(ri, rj) {
                     result.remove(j);
@@ -332,12 +332,12 @@ impl Earley {
 
     /// Convert a scope and priority into a nonterminal symbol.
     fn nonterm_name(&self, scope: Ref, prio: Prio) -> Symbol {
-        self.nonterminals.get(&(scope, prio)).unwrap().clone()
+        self.nonterminals[&(scope, prio)]
     }
 
     /// Convert a name part into a terminal symbol.
     fn term_name(&self, part: Part) -> Symbol {
-        self.terminals.get(&part).unwrap().clone()
+        self.terminals[&part]
     }
 }
 
@@ -366,8 +366,8 @@ impl<'a> EarleyBuilder<'a> {
         }
     }
 
-    fn from_decls(&mut self, decls: &Vec<(LocalRef, Located<Decl>)>, part_decls: &Vec<(LocalRef, Located<Decl>)>) -> Earley {
-        println!("from_decls {:?}", decls);
+    fn make_from_decls(&mut self, decls: &[(LocalRef, Located<Decl>)], part_decls: &[(LocalRef, Located<Decl>)]) -> Earley {
+        println!("make_from_decls {:?}", decls);
 
         // terminals
         // S -> E
@@ -382,7 +382,7 @@ impl<'a> EarleyBuilder<'a> {
         self.grammar.set_start(self.start);
 
         // Take the first decl of each (scope, name) pair -- that is, the one with lowest prio.
-        let mut first_decls: HashMap<(Name, Ref), (Name, Ref, Prio, Option<usize>)> = HashMap::new();
+        let mut first_decls = HashMap::new();
 
         for (gref, Located { loc, value: decl }) in decls {
             let scope = decl.parent().unwrap().to_ref();
@@ -488,7 +488,7 @@ impl<'a> EarleyBuilder<'a> {
     /// Convert a scope and priority into a nonterminal symbol.
     fn nonterm_name(&mut self, scope: Ref, prio: Prio) -> Symbol {
         match self.nonterminals.get(&(scope, prio)) {
-            Some(sym) => sym.clone(),
+            Some(sym) => *sym,
             None => {
                 let sym = self.grammar.sym();
                 self.nonterminals.insert((scope, prio), sym);
@@ -500,7 +500,7 @@ impl<'a> EarleyBuilder<'a> {
     /// Convert a name part into a terminal symbol.
     fn term_name(&mut self, part: Part) -> Symbol {
         match self.terminals.get(&part) {
-            Some(sym) => sym.clone(),
+            Some(sym) => *sym,
             None => {
                 let sym = self.grammar.sym();
                 self.terminals.insert(part, sym);
@@ -549,15 +549,15 @@ impl<'a> EarleyBuilder<'a> {
                         // map all expressions to the highest precedence nonterminal.
                         let mut rhs: Vec<Sym> = parts.iter().map(|part|
                             match part {
-                                Part::Placeholder => Sym::Nonterm(highest.clone()),
-                                x => Sym::Term(x.clone()),
+                                Part::Placeholder => Sym::Nonterm(highest),
+                                x => Sym::Term(*x),
                             }).collect();
 
                         // For prefix names, all symbosl on the RHS should be brackets.
                         if name.is_prefix_name() {
                             return rhs.iter().map(|sym| match sym {
-                                Sym::Nonterm(x) => x.clone(),
-                                Sym::Term(x) => self.term_name(x.clone()),
+                                Sym::Nonterm(x) => *x,
+                                Sym::Term(x) => self.term_name(*x),
                             }).collect()
                         }
 
@@ -570,10 +570,10 @@ impl<'a> EarleyBuilder<'a> {
                                 // _ + ...
                                 (Sym::Nonterm(_), Sym::Term(_)) => {
                                     if assoc == Some(0) || assoc == None {
-                                        rhs[0] = Sym::Nonterm(current.clone());
+                                        rhs[0] = Sym::Nonterm(current);
                                     }
                                     else {
-                                        rhs[0] = Sym::Nonterm(next.clone());
+                                        rhs[0] = Sym::Nonterm(next);
                                     }
                                 }
                                 _ => {},
@@ -583,10 +583,10 @@ impl<'a> EarleyBuilder<'a> {
                                 // ... + _
                                 (Sym::Term(_), Sym::Nonterm(_)) => {
                                     if assoc == Some(n-1) {
-                                        rhs[n-1] = Sym::Nonterm(current.clone());
+                                        rhs[n-1] = Sym::Nonterm(current);
                                     }
                                     else {
-                                        rhs[n-1] = Sym::Nonterm(next.clone());
+                                        rhs[n-1] = Sym::Nonterm(next);
                                     }
                                 }
                                 _ => {},
@@ -600,7 +600,7 @@ impl<'a> EarleyBuilder<'a> {
                                 // if _ then _ else
                                 // | _ |
                                 (Sym::Term(_), Sym::Nonterm(_), Sym::Term(_)) => {
-                                    rhs[i] = Sym::Nonterm(lowest.clone());
+                                    rhs[i] = Sym::Nonterm(lowest);
                                 },
                                 _ => {},
                             }
@@ -608,7 +608,7 @@ impl<'a> EarleyBuilder<'a> {
                             match (&rhs[i-1], &rhs[i], &rhs[i+1]) {
                                 // _ _ x --> use lowest.clone() priority before x
                                 (Sym::Nonterm(x), Sym::Nonterm(_), Sym::Term(_)) if *x == highest => {
-                                    rhs[i] = Sym::Nonterm(lowest.clone());
+                                    rhs[i] = Sym::Nonterm(lowest);
                                 },
                                 _ => {},
                             }
@@ -617,7 +617,7 @@ impl<'a> EarleyBuilder<'a> {
                         if n > 2 {
                             match (&rhs[n-2], &rhs[n-1]) {
                                 (Sym::Nonterm(x), Sym::Nonterm(_)) if *x == highest => {
-                                    rhs[n-1] = Sym::Nonterm(lowest.clone());
+                                    rhs[n-1] = Sym::Nonterm(lowest);
                                 }
                                 _ => {},
                             }
@@ -626,8 +626,8 @@ impl<'a> EarleyBuilder<'a> {
                         println!("rhs {:?}", rhs);
 
                         rhs.iter().map(|sym| match sym {
-                            Sym::Nonterm(x) => x.clone(),
-                            Sym::Term(x) => self.term_name(x.clone()),
+                            Sym::Nonterm(x) => *x,
+                            Sym::Term(x) => self.term_name(*x),
                         }).collect()
                     },
                 }

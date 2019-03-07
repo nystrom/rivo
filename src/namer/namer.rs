@@ -472,15 +472,15 @@ impl<'a> Namer<'a> {
 
     #[cfg_attr(debug_assertions, trace)]
     pub fn lookup(&mut self, r: &LookupRef) -> NamerResult<LocalRefs> {
-        return self.do_init_lookup(r)
+        self.do_init_lookup(r)
     }
 
     #[cfg_attr(debug_assertions, trace)]
     pub fn parse_mixfix(&mut self, m: &MixfixRef) -> NamerResult<Trees> {
-        return self.do_init_mixfix(m)
+        self.do_init_mixfix(m)
     }
 
-    fn filter_mixfix(&self, xs: &mut LocalRefs, ys: &LocalRefs) {
+    fn filter_mixfix(&self, xs: &mut LocalRefs, ys: &[LocalRef]) {
         xs.drain_filter(|x| ! {
             match self.driver.graph.get_env(*x) {
                 Located { loc, value: Decl::MixfixPart { full: fullx, .. } } =>
@@ -495,7 +495,7 @@ impl<'a> Namer<'a> {
         });
     }
 
-    pub(super) fn all_mixfix(&self, grefs: &LocalRefs) -> bool {
+    pub(super) fn all_mixfix(&self, grefs: &[LocalRef]) -> bool {
         grefs.iter().all(|gref| {
             match self.driver.graph.get_env(*gref) {
                 Located { loc, value: Decl::MixfixPart { .. } } => true,
@@ -513,11 +513,8 @@ impl<'a> Namer<'a> {
         for part in &r.parts {
             match part.name_ref {
                 Some(LookupIndex(index)) => {
-                    let r = self.driver.graph.lookups.get(index);
-                    match r {
-                        Some(r) => refs.push(Some(r.clone())),
-                        None => refs.push(None),
-                    }
+                    let r = self.driver.graph.lookups.get(index).cloned();
+                    refs.push(r);
                 },
                 None => {
                     refs.push(None);
@@ -690,7 +687,7 @@ impl<'a> Namer<'a> {
         // If all tree results were mixfix parts, try to load a bundle with the same name.
         // If successful, add those results to the results.
         if self.all_mixfix(&results) {
-            match self.driver.load_bundle_by_name(&name) {
+            match self.driver.load_bundle_by_name(name) {
                 Ok(index) => {
                     match self.driver.prename_bundle(index) {
                         Ok(_) => {},
@@ -784,10 +781,10 @@ impl<'a> Namer<'a> {
             if Some(index) != self.driver.current_bundle {
                 match bundle {
                     Bundle::Read { .. } => {
-                        assert!(false);
+                        panic!("found un-named bundle after naming");
                     },
                     Bundle::Parsed { .. } => {
-                        assert!(false);
+                        panic!("found un-named bundle after naming");
                     },
                     _ => {
                         // already named
@@ -846,7 +843,7 @@ impl<'a> Namer<'a> {
 
     // Do fast mixfix parsing. Should be called only when all the decls have a single mixfix name.
     // It just checks that the tokens match the mixfix name and builds the call tree.
-    fn fast_parse(tokens: Vec<Token>, grefs: &LocalRefs, name: Name) -> Option<MixfixTree> {
+    fn fast_parse(tokens: Vec<Token>, grefs: &[LocalRef], name: Name) -> Option<MixfixTree> {
         match name {
             Name::Mixfix(s) => {
                 let parts = Name::decode_parts(s);
@@ -883,7 +880,7 @@ impl<'a> Namer<'a> {
                     _ => None,
                 }).collect();
 
-                Some(MixfixTree::make_call(MixfixTree::Name(name.clone(), grefs.clone()), &args))
+                Some(MixfixTree::make_call(MixfixTree::Name(name, grefs.to_vec()), &args))
             },
             _ => {
                 None
@@ -891,7 +888,7 @@ impl<'a> Namer<'a> {
         }
     }
 
-    fn import_paths(imports: &Vec<Located<Import>>, x: Name) -> Vec<LookupRef> {
+    fn import_paths(imports: &[Located<Import>], x: Name) -> Vec<LookupRef> {
         let mut include = Vec::new();
         let mut include_all = Vec::new();
         let mut exclude = Vec::new();
@@ -946,7 +943,7 @@ impl<'a> Namer<'a> {
         }
     }
 
-    pub fn imports_truncated(imports: &Vec<Located<Import>>, scope: Ref) -> bool {
+    pub fn imports_truncated(imports: &[Located<Import>], scope: Ref) -> bool {
         for import in imports {
             match import {
                 Located { loc, value: Import::None { path } } =>

@@ -7,7 +7,7 @@ macro_rules! walk_located {
     ($visitor: expr, $method: ident, $located: expr, $ctx: expr) => {
         Located {
             loc: $located.loc,
-            value: $visitor.$method(&$located.value, $ctx, &$located.loc)
+            value: $visitor.$method(&$located.value, $ctx, $located.loc)
         }
     };
 }
@@ -42,27 +42,27 @@ macro_rules! walk_located_opt {
 /// 'a is the lifetime of the source tree.
 /// Instances should override visit_xxx and leave walk_xxx alone.
 pub trait Rewriter<'a, Ctx>: Sized {
-    fn visit_root(&mut self, s: &'a Root, ctx: &Ctx, loc: &Loc) -> Root {
+    fn visit_root(&mut self, s: &'a Root, ctx: &Ctx, loc: Loc) -> Root {
         self.walk_root(s, ctx, loc)
     }
 
-    fn visit_cmd(&mut self, s: &'a Cmd, ctx: &Ctx, loc: &Loc) -> Cmd {
+    fn visit_cmd(&mut self, s: &'a Cmd, ctx: &Ctx, loc: Loc) -> Cmd {
         self.walk_cmd(s, ctx, loc)
     }
 
-    fn visit_def(&mut self, s: &'a Def, ctx: &Ctx, loc: &Loc) -> Def {
+    fn visit_def(&mut self, s: &'a Def, ctx: &Ctx, loc: Loc) -> Def {
         self.walk_def(s, ctx, loc)
     }
 
-    fn visit_exp(&mut self, s: &'a Exp, ctx: &Ctx, loc: &Loc) -> Exp {
+    fn visit_exp(&mut self, s: &'a Exp, ctx: &Ctx, loc: Loc) -> Exp {
         self.walk_exp(s, ctx, loc)
     }
 
-    fn visit_param(&mut self, s: &'a Param, ctx: &Ctx, loc: &Loc) -> Param {
+    fn visit_param(&mut self, s: &'a Param, ctx: &Ctx, loc: Loc) -> Param {
         self.walk_param(s, ctx, loc)
     }
 
-    fn walk_root(&mut self, s: &'a Root, ctx: &Ctx, loc: &Loc) -> Root {
+    fn walk_root(&mut self, s: &'a Root, ctx: &Ctx, loc: Loc) -> Root {
         match *s {
             Root::Bundle { id, ref cmds } => {
                 Root::Bundle { id, cmds: walk_located_vec!(self, visit_cmd, &cmds, ctx) }
@@ -70,7 +70,7 @@ pub trait Rewriter<'a, Ctx>: Sized {
         }
     }
 
-    fn walk_cmd(&mut self, s: &'a Cmd, ctx: &Ctx, loc: &Loc) -> Cmd {
+    fn walk_cmd(&mut self, s: &'a Cmd, ctx: &Ctx, loc: Loc) -> Cmd {
         match *s {
             Cmd::Def(ref d) => {
                 Cmd::Def(self.visit_def(&d, ctx, loc))
@@ -81,7 +81,7 @@ pub trait Rewriter<'a, Ctx>: Sized {
         }
     }
 
-    fn walk_def(&mut self, s: &'a Def, ctx: &Ctx, loc: &Loc) -> Def {
+    fn walk_def(&mut self, s: &'a Def, ctx: &Ctx, loc: Loc) -> Def {
         match *s {
             Def::FormulaDef { ref attrs, ref flag, ref formula } => {
                 Def::FormulaDef { attrs: attrs.clone(), flag: *flag, formula: walk_located_box!(self, visit_exp, formula, ctx) }
@@ -108,7 +108,7 @@ pub trait Rewriter<'a, Ctx>: Sized {
         }
     }
 
-    fn walk_exp(&mut self, s: &'a Exp, ctx: &Ctx, loc: &Loc) -> Exp {
+    fn walk_exp(&mut self, s: &'a Exp, ctx: &Ctx, loc: Loc) -> Exp {
         match *s {
             Exp::Layout { id, ref cmds } =>
                 Exp::Layout { id, cmds: walk_located_vec!(self, visit_cmd, cmds, ctx) },
@@ -179,7 +179,7 @@ pub trait Rewriter<'a, Ctx>: Sized {
         }
     }
 
-    fn walk_param(&mut self, s: &'a Param, ctx: &Ctx, loc: &Loc) -> Param {
+    fn walk_param(&mut self, s: &'a Param, ctx: &Ctx, loc: Loc) -> Param {
         match *s {
             Param { ref attr, ref pat } => {
                 let pat1 = walk_located!(self, visit_exp, pat, ctx);
