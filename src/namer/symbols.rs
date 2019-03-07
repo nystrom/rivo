@@ -7,6 +7,8 @@ use syntax::trees::CallingMode;
 use syntax::trees::ParamAttr;
 use syntax::trees::Lit;
 use syntax::trees::Attr;
+use driver::BundleIndex;
+use namer::graph::{LookupIndex, MixfixIndex, EnvIndex, ScopeGraph};
 
 use std::collections::BTreeMap;
 
@@ -15,7 +17,6 @@ use std::collections::BTreeMap;
 // vector indices. This simplifies the memory management considerably.
 // We wrap the indexes some structs to improve type safety.
 
-use namer::graph::{LookupIndex, MixfixIndex, EnvIndex};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Prio(pub usize);
@@ -110,20 +111,6 @@ pub enum Ref {
     Mixfix(MixfixIndex),
 }
 
-trait Resolver {
-    fn resolve(&self) -> Vec<LocalRef>;
-}
-
-impl Resolver for Ref {
-    fn resolve(&self) -> Vec<LocalRef> {
-        match self {
-            Ref::Resolved(r) => vec![*r],
-            Ref::Lookup(idx) => unimplemented!(),
-            Ref::Mixfix(idx) => unimplemented!(),
-        }
-    }
-}
-
 // A lookup of a name traverses from the current scope up and out (and possibly in for imports).
 // We return the set of decls in scope with that name.
 // To get the path of a decl, we just follow parent links.
@@ -134,24 +121,29 @@ pub trait DeclEnv {
     fn imports(&self) -> Vec<Located<Import>>;
     fn supers(&self) -> Vec<Ref>;
     fn lookup_member(&self, name: Name) -> Vec<LocalRef>;
-    fn path(&self, graph: &crate::namer::graph::ScopeGraph) -> StablePath;
+    fn path(&self, graph: &ScopeGraph) -> StablePath;
 }
 
 impl DeclEnv for Decl {
     fn parent(&self) -> Option<LocalRef> {
         match self {
-            Decl::Root => None,
-            Decl::Bundle { .. } => None, // should be the index of Root, but Root has no index.
             Decl::Block { parent, .. } => Some(*parent), // should be the index of Root, but Root has no index.
             Decl::Trait { parent, .. } => Some(*parent),
             Decl::Fun { parent, .. } => Some(*parent),
             Decl::Val { parent, .. } => Some(*parent),
             Decl::Var { parent, .. } => Some(*parent),
-            _ => unimplemented!(),
+            _ => None,
         }
     }
 
-    fn imports(&self) -> Vec<Located<Import>> { unimplemented!() }
+    fn imports(&self) -> Vec<Located<Import>> { 
+        match self {
+            Decl::Bundle { imports, .. } => imports.clone(),
+            Decl::Block { imports, .. } => imports.clone(),
+            Decl::Trait { imports, .. } => imports.clone(),
+            _ => vec![],
+        }
+    }
 
     fn supers(&self) -> Vec<Ref> {
         match self {
@@ -162,7 +154,7 @@ impl DeclEnv for Decl {
 
 // FIXME: some Decls can be used as Scope and others no.
 // Root should not be a Decl. Indeed we should distinguish them again. Che shit.
-    fn path(&self, graph: &crate::namer::graph::ScopeGraph) -> StablePath {
+    fn path(&self, graph: &ScopeGraph) -> StablePath {
         match self {
             Decl::Root => StablePath::Root,
             Decl::Bundle { .. } => StablePath::Root,
@@ -228,7 +220,7 @@ impl DeclEnv for Decl {
 }
 
 impl Decl {
-    pub fn new_bundle(index: crate::driver::BundleIndex) -> Decl {
+    pub fn new_bundle(index: BundleIndex) -> Decl {
         Decl::Bundle {
             index,
             imports: vec![],
@@ -283,7 +275,7 @@ pub enum Decl {
     // Members are anything but Bundle or Root.
     // Because of overloading, a name can map to multiple definitions (even of different kinds).
     Bundle {
-        index: crate::driver::BundleIndex,
+        index: BundleIndex,
         imports: Vec<Located<Import>>,
         members: BTreeMap<Name, Vec<LocalRef>>,
     },
