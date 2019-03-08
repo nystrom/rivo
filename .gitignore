@@ -10,3 +10,10 @@ Cargo.lock
 **/*.rs.bk
 
 .DS_Store
+*.ivo
+rls*
+rustfmt.toml
+*.md
+TODO*
+*.bak
+*.json
