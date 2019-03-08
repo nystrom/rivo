@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ "$1" = "-O" ]; then
+  shift
+  cargo run --release -- "$@"
+else
+  cargo run -- "$@"
+fi
