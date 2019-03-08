@@ -255,6 +255,7 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                         println!("decl {:?}", d);
                                         println!("path {:?}", path);
                                         println!("exp {:?}", exp);
+                                        println!("uid {:?}", d.uid());
                                         match exp {
                                             Exp::Lit { lit: Lit::Nothing } => {},
                                             exp => {

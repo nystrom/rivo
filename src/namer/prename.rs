@@ -4,6 +4,7 @@
 use syntax::trees::*;
 use syntax::loc::*;
 use syntax::names::*;
+use syntax::attr::GlobalNodeId;
 
 use namer::symbols::*;
 use namer::graph::*;
@@ -57,6 +58,7 @@ pub struct Prenamer<'a> {
 }
 
 struct AddUnknowns<'a> {
+    bundle: driver::BundleIndex,
     flag: FormulaFlag,
     defined_names: &'a Vec<Name>,
     new_names: &'a mut Vec<Name>,
@@ -72,7 +74,7 @@ impl<'a> AddUnknowns<'a> {
     }
 
     #[cfg_attr(debug_assertions, trace)]
-    fn declare_unknown_for_name(&mut self, name: Name, loc: Loc) {
+    fn declare_unknown_for_name(&mut self, name: Name, loc: Loc, id: GlobalNodeId) {
         if self.defined_names.contains(&name) {
             // already declared in outer scope
             return;
@@ -85,8 +87,8 @@ impl<'a> AddUnknowns<'a> {
         self.new_names.push(name);
 
         let decl = match self.flag {
-            FormulaFlag::Val => Decl::Val { parent: self.scope, name },
-            FormulaFlag::Var => Decl::Var { parent: self.scope, name },
+            FormulaFlag::Val => Decl::Val { id, parent: self.scope, name },
+            FormulaFlag::Var => Decl::Var { id, parent: self.scope, name },
         };
 
         let r = self.graph.add_env(Located::new(loc, decl));
@@ -129,11 +131,11 @@ impl<'a> AddUnknowns<'a> {
                 self.declare_unknowns_in_exp(&rhs);
                 // Names on the left of a binding are also unknowns, regardless of their case.
                 match lhs {
-                    Located { ref loc, value: Exp::Name { ref name, .. } } => {
-                        self.declare_unknown_for_name(*name, e.loc);
+                    Located { ref loc, value: Exp::Name { ref name, ref id, .. } } => {
+                        self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
                     },
-                    Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
-                        self.declare_unknown_for_name(*name, e.loc);
+                    Located { ref loc, value: Exp::Unknown { ref name, ref id, .. } } => {
+                        self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
                     },
                     _ => {},
                 }
@@ -143,11 +145,11 @@ impl<'a> AddUnknowns<'a> {
                 self.declare_unknowns_in_exp(&rhs);
                 // Names on the left of a binding are also unknowns, regardless of their case.
                 match lhs {
-                    Located { ref loc, value: Exp::Name { ref name, .. } } => {
-                        self.declare_unknown_for_name(*name, e.loc);
+                    Located { ref loc, value: Exp::Name { ref name, ref id, .. } } => {
+                        self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
                     },
-                    Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
-                        self.declare_unknown_for_name(*name, e.loc);
+                    Located { ref loc, value: Exp::Unknown { ref name, ref id, .. } } => {
+                        self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
                     },
                     _ => {},
                 }
@@ -157,11 +159,11 @@ impl<'a> AddUnknowns<'a> {
                 self.declare_unknowns_in_exp(&rhs);
                 // Names on the left of a binding are also unknowns, regardless of their case.
                 match lhs {
-                    Located { ref loc, value: Exp::Name { ref name, .. } } => {
-                        self.declare_unknown_for_name(*name, e.loc);
+                    Located { ref loc, value: Exp::Name { ref name, ref id, .. } } => {
+                        self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
                     },
-                    Located { ref loc, value: Exp::Unknown { ref name, .. } } => {
-                        self.declare_unknown_for_name(*name, e.loc);
+                    Located { ref loc, value: Exp::Unknown { ref name, ref id, .. } } => {
+                        self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
                     },
                     _ => {},
                 }
@@ -189,10 +191,10 @@ impl<'a> AddUnknowns<'a> {
                 self.declare_unknowns_in_exp(&arg);
             },
             Exp::Name { id, name } => {
-                self.declare_unknown_for_name(*name, e.loc);
+                self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
             },
             Exp::Unknown { id, name } => {
-                self.declare_unknown_for_name(*name, e.loc);
+                self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
             },
             Exp::Var { id, name } => {},
             Exp::MixfixPart { id, name } => {},
@@ -590,6 +592,7 @@ impl<'a> Prenamer<'a> {
                 Located { loc, value: Cmd::Def(Def::FormulaDef { attrs, flag, box formula }) } => {
                     let names = &ctx1.names;
                     let mut add_unknowns = AddUnknowns { 
+                        bundle: self.bundle,
                         flag: *flag, 
                         defined_names: names, 
                         new_names: &mut new_names, 
@@ -628,6 +631,7 @@ impl<'a> Prenamer<'a> {
                 Located { loc, value: Def::FormulaDef { attrs, flag, box formula } } => {
                     let names = &ctx1.names;
                     let mut add_unknowns = AddUnknowns { 
+                        bundle: self.bundle,
                         flag: *flag, 
                         defined_names: names, 
                         new_names: &mut new_names, 
@@ -657,7 +661,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
         match s {
             Root::Bundle { id, cmds } => {
                 // Create the new scope.
-                let scope = Decl::new_bundle(self.bundle);
+                let scope = Decl::new_bundle(GlobalNodeId { bundle: self.bundle, node: *id }, self.bundle);
                 let scope_ref = self.driver.graph.add_env(Located::new(loc, scope));
                 self.scopes.insert(*id, scope_ref);
 
@@ -709,7 +713,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let header_ref = self.driver.graph.add_env(Located::new(loc, header));
 
                 // Create a scope for the trait itself.
-                let scope = Decl::new_trait(header_ref, *name, ctx.prio, param_attrs);
+                let scope = Decl::new_trait(GlobalNodeId { bundle: self.bundle, node: *id }, header_ref, *name, ctx.prio, param_attrs);
                 let scope_ref = self.driver.graph.add_env(Located::new(loc, scope));
                 self.scopes.insert(*id, scope_ref);
 
@@ -749,6 +753,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut input_unknowns = Vec::new();
 
                 let mut add_input_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Val,
                     defined_names: &ctx.names,
                     scope: header_ref,
@@ -855,7 +860,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let header = Decl::new_block(parent);
                 let header_ref = self.driver.graph.add_env(Located::new(loc, header));
 
-                let scope = Decl::new_fun(header_ref, *name, ctx.prio, param_attrs, ret.attr);
+                let scope = Decl::new_fun(GlobalNodeId { bundle: self.bundle, node: *id }, header_ref, *name, ctx.prio, param_attrs, ret.attr);
                 let scope_ref = self.driver.graph.add_env(Located::new(loc, scope));
                 self.scopes.insert(*id, scope_ref);
 
@@ -898,6 +903,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut input_unknowns = Vec::new();
 
                 let mut add_input_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Val,
                     defined_names: &ctx.names,
                     scope: header_ref,
@@ -928,6 +934,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let new_names = ctx.names.iter().cloned().chain(input_unknowns.iter().cloned()).collect();
 
                 let mut add_body_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Val,
                     defined_names: &new_names,
                     scope: block_ref,
@@ -1008,6 +1015,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut unknowns = vec![];
 
                 let mut add_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: *flag,
                     defined_names: &ctx.names,
                     scope: ctx.scope.unwrap(),
@@ -1077,6 +1085,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut unknowns = Vec::new();
 
                 let mut add_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Val,
                     defined_names: &ctx.names,
                     scope: scope_ref,
@@ -1123,6 +1132,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut unknowns = Vec::new();
 
                 let mut add_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Val,
                     defined_names: &ctx.names,
                     scope: scope_ref,
@@ -1163,6 +1173,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut unknowns = Vec::new();
 
                 let mut add_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Val,
                     defined_names: &ctx.names,
                     scope: scope_ref,
@@ -1203,6 +1214,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut unknowns = Vec::new();
 
                 let mut add_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Var,
                     defined_names: &ctx.names,
                     scope: scope_ref,
@@ -1243,6 +1255,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 let mut unknowns = Vec::new();
 
                 let mut add_unknowns = AddUnknowns {
+                    bundle: self.bundle,
                     flag: FormulaFlag::Val,
                     defined_names: &ctx.names,
                     scope: scope_ref,

@@ -24,7 +24,7 @@ pub struct LookupIndex(pub(super) usize);
 pub struct MixfixIndex(pub(super) usize);
 
 #[derive(Copy, Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct EnvIndex(pub usize);
+pub struct EnvIndex(pub(super) usize);
 
 #[derive(Clone, Debug)]
 pub struct ScopeGraph {

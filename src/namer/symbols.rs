@@ -7,6 +7,8 @@ use syntax::trees::CallingMode;
 use syntax::trees::ParamAttr;
 use syntax::trees::Lit;
 use syntax::trees::Attr;
+use syntax::attr::GlobalNodeId;
+use syntax::trees::NodeId;
 use driver::BundleIndex;
 use namer::graph::{LookupIndex, MixfixIndex, EnvIndex, ScopeGraph};
 
@@ -123,9 +125,21 @@ pub trait DeclEnv {
     fn supers(&self) -> Vec<Ref>;
     fn lookup_member(&self, name: Name) -> Vec<LocalRef>;
     fn path(&self, graph: &ScopeGraph) -> StablePath;
+    fn uid(&self) -> Option<GlobalNodeId>;
 }
 
 impl DeclEnv for Decl {
+    fn uid(&self) -> Option<GlobalNodeId> {
+        match self {
+            Decl::Fun { id, .. } => Some(*id),
+            Decl::Trait { id, .. } => Some(*id),
+            Decl::Val { id, .. } => Some(*id),
+            Decl::Var { id, .. } => Some(*id),
+            Decl::Bundle { id, .. } => Some(*id),
+            _ => None,
+        }
+    }
+
     fn parent(&self) -> Option<LocalRef> {
         match self {
             Decl::Block { parent, .. } => Some(*parent), // should be the index of Root, but Root has no index.
@@ -177,14 +191,14 @@ impl DeclEnv for Decl {
                     name: *name
                 }
             }
-            Decl::Val { parent: parent_index, name } => {
+            Decl::Val { parent: parent_index, name, .. } => {
                 let parent = graph.get_env(*parent_index);
                 StablePath::Select {
                     outer: box parent.path(graph),
                     name: *name
                 }
             },
-            Decl::Var { parent: parent_index, name } => {
+            Decl::Var { parent: parent_index, name, .. } => {
                 let parent = graph.get_env(*parent_index);
                 StablePath::Select {
                     outer: box parent.path(graph),
@@ -221,15 +235,17 @@ impl DeclEnv for Decl {
 }
 
 impl Decl {
-    pub fn new_bundle(index: BundleIndex) -> Decl {
+    pub fn new_bundle(id: GlobalNodeId, index: BundleIndex) -> Decl {
         Decl::Bundle {
+            id,
             index,
             imports: vec![],
             members: BTreeMap::new(),
         }
     }
-    pub fn new_trait(parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>) -> Decl {
+    pub fn new_trait(id: GlobalNodeId, parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>) -> Decl {
         Decl::Trait {
+            id,
             parent,
             name,
             prio,
@@ -239,8 +255,9 @@ impl Decl {
             members: BTreeMap::new(),
         }
     }
-    pub fn new_fun(parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>, ret: ParamAttr) -> Decl {
+    pub fn new_fun(id: GlobalNodeId, parent: LocalRef, name: Name, prio: Prio, params: Vec<ParamAttr>, ret: ParamAttr) -> Decl {
         Decl::Fun {
+            id,
             parent,
             name,
             prio,
@@ -255,14 +272,16 @@ impl Decl {
             members: BTreeMap::new(),
         }
     }
-    pub fn new_val(parent: LocalRef, name: Name) -> Decl {
+    pub fn new_val(id: GlobalNodeId, parent: LocalRef, name: Name) -> Decl {
         Decl::Val {
+            id,
             parent,
             name
         }
     }
-    fn new_var(parent: LocalRef, name: Name) -> Decl {
+    fn new_var(id: GlobalNodeId, parent: LocalRef, name: Name) -> Decl {
         Decl::Var {
+            id,
             parent,
             name
         }
@@ -276,12 +295,14 @@ pub enum Decl {
     // Members are anything but Bundle or Root.
     // Because of overloading, a name can map to multiple definitions (even of different kinds).
     Bundle {
+        id: GlobalNodeId,
         index: BundleIndex,
         imports: Vec<Located<Import>>,
         members: BTreeMap<Name, Vec<LocalRef>>,
     },
 
     Trait {
+        id: GlobalNodeId,
         parent: LocalRef,
         name: Name,
         prio: Prio,
@@ -299,6 +320,7 @@ pub enum Decl {
     },
 
     Fun {
+        id: GlobalNodeId,
         parent: LocalRef,
         name: Name,
         prio: Prio,
@@ -307,11 +329,13 @@ pub enum Decl {
     },
 
     Val {
+        id: GlobalNodeId,
         parent: LocalRef,
         name: Name,
     },
 
     Var {
+        id: GlobalNodeId,
         parent: LocalRef,
         name: Name,
     },

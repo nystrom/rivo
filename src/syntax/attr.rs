@@ -11,13 +11,19 @@ use std::collections::HashMap;
 // Attribute references are either local or global.
 
 pub struct LocalRef<T> {
-    id: NodeId,
+    pub id: NodeId,
     _phantom: std::marker::PhantomData<T>
 }
 
 pub struct GlobalRef<T> {
-    local_ref: LocalRef<T>,
-    bundle: BundleIndex,
+    pub local_ref: LocalRef<T>,
+    pub bundle: BundleIndex,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct GlobalNodeId {
+    pub bundle: BundleIndex,
+    pub node: NodeId,
 }
 
 /// An example Bundle might look like this.
