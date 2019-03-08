@@ -303,53 +303,15 @@ impl<'a> Prenamer<'a> {
         names
     }
 
-    fn add_imports(&mut self, import_into_scope: LocalRef, parent_scope: LocalRef, cmds: &[Located<Cmd>]) {
-        // FIXME cloning!
-        let defs = cmds.iter().filter_map(|cmd|
-            match cmd {
-                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: *loc, value: d.clone() }),
-                _ => None,
-            }
-        );
-        self.add_imports_from_defs(import_into_scope, parent_scope, defs);
-    }
-
     fn add_root_imports(&mut self, import_into_scope: LocalRef, parent_scope: Ref, cmds: &[Located<Cmd>]) {
-        // FIXME cloning!
-        let defs = cmds.iter().filter_map(|cmd|
-            match cmd {
-                Located { loc, value: Cmd::Def(d) } => Some(Located { loc: *loc, value: d.clone() }),
-                _ => None,
-            }
-        );
-        self.add_root_imports_from_defs(import_into_scope, parent_scope, defs);
-    }
-
-    fn add_imports_from_defs<T>(&mut self, import_into_scope: LocalRef, parent_scope: LocalRef, defs: T)
-        where T : Iterator<Item = Located<Def>>
-    {
-        for def in defs {
-            match def {
-                Located { loc, value: Def::ImportDef { opt_path, selector } } => {
-// FIXME: when importing into a trait body, the parent should include the unknowns of the trait.
-// This means we need a block scope as a child of the trait. and we should search the block for members.
-                    self.add_import(import_into_scope, parent_scope.to_ref(), &opt_path.map(|bx| *bx), &selector, loc);
-                },
-                _ => {},
-            }
-        }
-    }
-
-    fn add_root_imports_from_defs<T>(&mut self, import_into_scope: LocalRef, parent_scope: Ref, defs: T)
-        where T : Iterator<Item = Located<Def>>
-    {
         let mut imports_none = false;
 
-        for def in defs {
+        for def in cmds {
             match def {
-                Located { loc, value: Def::ImportDef { opt_path, selector } } => {
-                    imports_none |= selector == Selector::Nothing;
-                    self.add_import(import_into_scope, parent_scope, &opt_path.map(|bx| *bx), &selector, loc);
+                Located { loc, value: Cmd::Def(Def::ImportDef { opt_path, selector }) } => {
+                    imports_none |= selector == &Selector::Nothing;
+                    let p: Option<Located<Exp>> = opt_path.clone().map(|box e| e);
+                    self.add_import(import_into_scope, parent_scope, &p, selector, *loc);
                 },
                 _ => {},
             }
@@ -363,6 +325,21 @@ impl<'a> Prenamer<'a> {
             let lookup = self.driver.graph.lookup_inside(root_ref, Name::Id(Interned::new("Prelude")));
             let scope = self.driver.graph.get_scope_of_lookup(lookup);
             self.driver.graph.import(import_into_scope, Located { loc: Loc::no_loc(), value: Import::All { path: scope } });
+        }
+    }
+
+    fn add_imports_from_defs(&mut self, import_into_scope: LocalRef, parent_scope: LocalRef, defs: &[Located<Def>])
+    {
+        for def in defs {
+            match def {
+                Located { loc, value: Def::ImportDef { opt_path, selector } } => {
+// FIXME: when importing into a trait body, the parent should include the unknowns of the trait.
+// This means we need a block scope as a child of the trait. and we should search the block for members.
+                    let p: Option<Located<Exp>> = opt_path.clone().map(|box e| e);
+                    self.add_import(import_into_scope, parent_scope.to_ref(), &p, &selector, *loc);
+                },
+                _ => {},
+            }
         }
     }
 
@@ -844,7 +821,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 // Add imports.
                 println!("IMPORT scope = {:?}", scope_ref);
                 println!("IMPORT parent = {:?}", header_ref);
-                self.add_imports_from_defs(scope_ref, header_ref, defs.iter().cloned());
+                self.add_imports_from_defs(scope_ref, header_ref, defs);
 
                 let defs1 = defs.iter().map(|def|
                     Located { loc: def.loc, value: self.visit_def(&def.value, &child_ctx, def.loc) }
@@ -1071,7 +1048,13 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
 
                 // Add imports.
                 if let Exp::Layout { ref cmds, .. } = new_node {
-                    self.add_imports(scope_ref, parent, cmds);
+                    let defs: Vec<Located<Def>> = cmds.iter().filter_map(|cmd|
+                        match cmd {
+                            Located { loc, value: Cmd::Def(d) } => Some(Located { loc: *loc, value: d.clone() }),
+                            _ => None,
+                        }
+                    ).collect();
+                    self.add_imports_from_defs(scope_ref, parent, &defs);
                 }
 
                 new_node

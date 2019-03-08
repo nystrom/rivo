@@ -132,18 +132,9 @@ impl<'a> Renamer<'a> {
         println!("id = {:?}", id);
         let lookup = self.lookups.get(&id).unwrap();
         println!("lookup = {:?}", lookup);
-
-        match self.namer.driver.graph.get_pre_resolved(lookup) {
-            Some(decls) => {
-                println!("pre_resolved = {:?}", decls);
-                Ok(decls.clone())
-            },
-            None => {
-                let lookup_ref = self.namer.driver.graph.get_lookup(lookup);
-                println!("lookup_ref = {:?}", lookup_ref);
-                self.namer.lookup(&lookup_ref)
-            },
-        }
+        let lookup_ref = self.namer.driver.graph.get_lookup(lookup);
+        println!("lookup_ref = {:?}", lookup_ref);
+        self.namer.lookup(&lookup_ref)
     }
 }
 

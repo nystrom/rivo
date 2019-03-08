@@ -36,7 +36,6 @@ macro_rules! trace {
 
 type Trees = Vec<MixfixTree>;
 type LocalRefs = Vec<LocalRef>;
-
 type NamerResult<T> = Result<T, Located<String>>;
 
 // TODO: make driver a trait for loading files.
@@ -698,9 +697,6 @@ impl<'a> Namer<'a> {
 
                     let r = LookupRef::as_member(self.driver.graph.get_root_ref(), name);
 
-// FIXME: should add a bundle index to all Env and Lookup refs.
-// Or make the graph global.
-// The returned decls have inner scopes referring to the graph in the bundle, not the current bundle.
                     match self.driver.get_bundle(index) {
                         Some(Bundle::Prenamed { tree: Located { loc, value: trees::Root::Bundle { id, .. } }, scopes, .. }) => {
                             let graph = &self.driver.graph;

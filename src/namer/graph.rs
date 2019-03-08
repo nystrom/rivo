@@ -28,13 +28,12 @@ pub struct EnvIndex(pub(super) usize);
 
 #[derive(Clone, Debug)]
 pub struct ScopeGraph {
+    // TODO: get rid of these. We can just use LookupRef and MixfixRef.
+
     // Since lookups refer to scopes, which may in turn contain other lookups, we
     // store the refs in the graph and refer to the them by index.
     pub(super) lookups: Vec<LookupRef>,
     pub(super) mixfixes: Vec<MixfixRef>,
-
-    // Map from lookup index to results of that lookup.
-    pub(super) pre_resolved: Vec<Option<Vec<LocalRef>>>,
 
     // This is the vector of environments (mutable scopes).
     // Indexed by LocalRef.
@@ -50,7 +49,6 @@ impl ScopeGraph {
         ScopeGraph {
             lookups: Vec::new(),
             mixfixes: Vec::new(),
-            pre_resolved: Vec::new(),
             envs: vec![Located::new(Loc::no_loc(), Decl::Root)],
         }
     }
@@ -83,38 +81,6 @@ impl ScopeGraph {
         &self.envs[index.0]
     }
 
-    // pub fn get_env_mut(&mut self, index: EnvIndex) -> &mut Located<Decl> {
-    //     self.envs.get_mut(index.0).unwrap()
-    // }
-
-    pub fn get_pre_resolved(&self, index: &LookupIndex) -> Option<Vec<LocalRef>> {
-        match index {
-            LookupIndex(i) => {
-                match self.pre_resolved.get(*i) {
-                    Some(Some(vs)) => Some(vs.clone()),
-                    Some(None) => None,
-                    None => None,
-                }
-            }
-        }
-    }
-
-    pub fn resolve(&mut self, index: LookupIndex, gref: LocalRef) {
-        let i = index.0;
-        match self.pre_resolved.get_mut(i) {
-            Some(Some(vs)) => {
-                vs.push(gref);
-            },
-            Some(None) | None => {
-                if i >= self.pre_resolved.len() {
-                    self.pre_resolved.resize_with(i+1, || None);
-                }
-                let vs = vec![gref];
-                self.pre_resolved[i] = Some(vs);
-            },
-        }
-    }
-
     pub fn get_root_ref(&self) -> Ref {
         self.get_root_env().to_ref()
     }
@@ -125,18 +91,6 @@ impl ScopeGraph {
 
     pub fn get_scope_of_mixfix(&self, r: MixfixIndex) -> Ref {
         Ref::Mixfix(r)
-    }
-
-    // HACK needed for blocks, which are created with the wrong parent.
-    pub fn set_parent(&mut self, scope: LocalRef, parent_ref: LocalRef) {
-        if let Some(ref mut env) = self.envs.get_mut(scope.0) {
-            match &mut env.value {
-                Decl::Block { ref mut parent, .. } => {
-                    *parent = parent_ref;
-                },
-                _ => unimplemented!(),
-            }
-        }
     }
 
     pub fn declare(&mut self, scope: LocalRef, name: Name, decl: LocalRef) {
