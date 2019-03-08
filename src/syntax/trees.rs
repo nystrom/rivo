@@ -19,7 +19,7 @@ use namer::graph::MixfixIndex;
 // These are used by the (Pre)namer.
 // The AST is not modified by the prenamer, but is rewritten
 // by the namer, replacing MixfixApply with Apply.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct NodeId(pub usize);
 
 impl fmt::Display for NodeId {
