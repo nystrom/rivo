@@ -266,6 +266,21 @@ impl Name {
         }
     }
 
+    pub fn is_unknown_name(self) -> bool {
+        match self {
+            Name::Id(x) => {
+                if let Some(c) = x.to_string().chars().next() {
+                    c.is_lowercase() || c == '_'
+                }
+                else {
+                    false
+                }
+            },
+            _ => false,
+        }
+
+    }
+
     pub fn is_id(self) -> bool {
         match self {
             Name::Id(_) => true,

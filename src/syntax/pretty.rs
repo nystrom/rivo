@@ -320,16 +320,19 @@ impl ToDoc for Exp {
             Exp::Name { ref name, .. } =>
                 name.to_doc(),
             Exp::Unknown { ref name, .. } =>
-                name.to_doc(),
+                Doc::text("?").append(name.to_doc()),
             Exp::MixfixPart { ref name, .. } =>
                 name.to_doc(),
             Exp::Var { ref name, .. } =>
-                name.to_doc(),
+                Doc::text("!").append(name.to_doc()),
 
             Exp::MixfixApply { ref es, .. } =>
                 Doc::text("(")
                     .append(show_located_exp_vec!(es, Doc::space()))
                     .append(Doc::text(")")),
+
+            Exp::Root =>
+                Doc::text("ROOT"),
 
             ref e => Doc::text(format!("{:?}", e)),
         }

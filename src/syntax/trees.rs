@@ -186,7 +186,9 @@ pub enum Exp {
     TrySelect { exp: Box<Located<Exp>>, name: Name },
     AnyOf { es: Vec<Located<Exp>> },
     Fail { message: String },
-    Global,
+
+    // The root path.
+    Root,
 
     // These should really be syntactic sugar, but we bake them in
     // mainly to make AST building easier in the parser.

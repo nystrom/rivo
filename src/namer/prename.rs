@@ -79,6 +79,7 @@ impl<'a> AddUnknowns<'a> {
             // already declared in outer scope
             return;
         }
+
         if self.new_names.contains(&name) {
             // already declared here
             return;
@@ -191,7 +192,9 @@ impl<'a> AddUnknowns<'a> {
                 self.declare_unknowns_in_exp(&arg);
             },
             Exp::Name { id, name } => {
-                self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
+                if name.is_unknown_name() {
+                    self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
+                }
             },
             Exp::Unknown { id, name } => {
                 self.declare_unknown_for_name(*name, e.loc, GlobalNodeId { bundle: self.bundle, node: *id });
@@ -303,23 +306,20 @@ impl<'a> Prenamer<'a> {
         names
     }
 
-    fn add_root_imports(&mut self, import_into_scope: LocalRef, parent_scope: Ref, cmds: &[Located<Cmd>]) {
+    fn add_bundle_imports(&mut self, import_into_scope: LocalRef, parent_scope: Ref, cmds: &[Located<Cmd>]) {
         let mut imports_none = false;
 
         for def in cmds {
             match def {
                 Located { loc, value: Cmd::Def(Def::ImportDef { opt_path, selector }) } => {
                     imports_none |= selector == &Selector::Nothing;
-                    let p: Option<Located<Exp>> = opt_path.clone().map(|box e| e);
-                    self.add_import(import_into_scope, parent_scope, &p, selector, *loc);
+                    self.add_import(import_into_scope, parent_scope, &opt_path.clone().map(|box e| e), selector, *loc);
                 },
                 _ => {},
             }
         }
 
-        // If this is in the root scope and there is no import (), add import Prelude._.
-        // FIXME: should we just make the parent of the top-level scope include an import of Prelude?
-        // import () will prevent following the parent link.
+        // In a bundle scope, if there is no `import ()`, add `import Prelude._`.
         if ! imports_none {
             let root_ref = self.driver.graph.get_root_ref();
             let lookup = self.driver.graph.lookup_inside(root_ref, Name::Id(Interned::new("Prelude")));
@@ -328,15 +328,11 @@ impl<'a> Prenamer<'a> {
         }
     }
 
-    fn add_imports_from_defs(&mut self, import_into_scope: LocalRef, parent_scope: LocalRef, defs: &[Located<Def>])
-    {
+    fn add_imports_from_defs(&mut self, import_into_scope: LocalRef, parent_scope: LocalRef, defs: &[Located<Def>]) {
         for def in defs {
             match def {
                 Located { loc, value: Def::ImportDef { opt_path, selector } } => {
-// FIXME: when importing into a trait body, the parent should include the unknowns of the trait.
-// This means we need a block scope as a child of the trait. and we should search the block for members.
-                    let p: Option<Located<Exp>> = opt_path.clone().map(|box e| e);
-                    self.add_import(import_into_scope, parent_scope.to_ref(), &p, &selector, *loc);
+                    self.add_import(import_into_scope, parent_scope.to_ref(), &opt_path.clone().map(|box e| e), &selector, *loc);
                 },
                 _ => {},
             }
@@ -414,6 +410,9 @@ impl<'a> Prenamer<'a> {
 
     pub fn lookup_frame_from(&mut self, scope: LocalRef, e: &Located<Exp>, follow_imports: bool) -> Vec<Ref> {
         match &e.value {
+            Exp::Root => {
+                vec![self.driver.graph.get_root_ref()]
+            },
             Exp::Name { name, id } => {
                 let lookup = self.lookup_from(*id, scope, *name, follow_imports);
                 vec![Ref::Lookup(lookup)]
@@ -460,6 +459,9 @@ impl<'a> Prenamer<'a> {
 
     pub fn lookup_frame_inside(&mut self, scope: Ref, e: &Located<Exp>) -> Vec<Ref> {
         match &e.value {
+            Exp::Root => {
+                vec![self.driver.graph.get_root_ref()]
+            },
             Exp::Name { name, id } => {
                 let lookup = self.lookup_inside(*id, scope, *name);
                 vec![Ref::Lookup(lookup)]
@@ -578,7 +580,12 @@ impl<'a> Prenamer<'a> {
                     };
                     add_unknowns.declare_unknowns_in_exp(&formula);
 
-                    let cmd1 = self.visit_cmd(&cmd.value, &ctx1, cmd.loc);
+                    let ctx2 = PrenameCtx {
+                        unknowns: add_unknowns.new_names.clone(),
+                        ..ctx1.clone()
+                    };
+
+                    let cmd1 = self.visit_cmd(&cmd.value, &ctx2, cmd.loc);
                     result.push(Located { loc: cmd.loc, value: cmd1 });
                 },
                 _ => {
@@ -666,7 +673,7 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 match new_node {
                     Root::Bundle { ref cmds, .. } => {
                         let root_ref = self.driver.graph.get_root_ref();
-                        self.add_root_imports(scope_ref, root_ref, cmds);
+                        self.add_bundle_imports(scope_ref, root_ref, cmds);
                     },
                 }
 

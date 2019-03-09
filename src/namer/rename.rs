@@ -150,23 +150,37 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                 // Rewrite e1.((f x) y) as ((e1.f) x) y
                 match new_node {
                     Exp::Within { id, box e1, box e2 } => {
-                        // fn insert_select(e1: Located<Exp>, e2: Located<Exp>) -> Option<Located<Exp>> {
-                        //     match e2.value {
-                        //         Exp::Name { id, name } => Some(e2.map(|_| Exp::Select { exp: box e1, name })),
-                        //         Exp::Apply { box fun, box arg } => {
-                        //             insert_select(e1, fun).map(|new_fun| new_fun.map(|_| Exp::Apply { fun: box new_fun, arg: box arg }))
-                        //         },
-                        //         _ => None,
-                        //     }
-                        // }
-            
-                        // match insert_select(e1, e2) {
-                        //     Some(e) => e.value,
-                        //     None => {
-                        //         self.namer.driver.error(Located::new(*loc, format!("Could not resolve selected expression to a name or function application. ({})", id)));
-                        //         new_node
-                        //     },
-                        // }
+/*
+                        fn get_e2_name(e2: Located<Exp>) -> Option<NodeId> {
+                            match e2.value {
+                                Exp::Name { id, name } => Some(id),
+                                Exp::Apply { box fun, box arg } => get_e2_name(fun),
+                                _ => None,
+                            }
+                        }
+
+                        // We need to check that e2 actually resolves to a member of e1.
+                        // This makes, say, Int.(1 + 2) legal, but List(1 + 2) illegal.
+                        if let Some(name_id) = get_e2_name(e2) {
+                            match self.lookup_by_id(name_id) {
+                                Ok(grefs) => {
+                                    // scope_ref is the block scope of the Within.
+                                    let scope_ref = self.scopes.get(&id).unwrap();
+                                    let e1_lookup = LookupRef::as_member(scope_ref.to_ref(), name);
+                                    if self.driver.namer.lookup_
+                                },
+                                Err(_) => {
+                                    self.namer.driver.error(Located::new(loc, format!("Could not resolve selected expression to a name or function application. ({})", id)));
+                                    return new_node
+                                }
+                            }
+                        }
+                        else {
+                            self.namer.driver.error(Located::new(loc, format!("Could not resolve selected expression to a name or function application. ({})", id)))
+                            return new_node;
+                        }
+*/
+                        println!("rename {:?} -> {:?}", e, e2.value);
                         
                         // Discard the scope. e2 should be fully renamed.
                         e2.value
@@ -207,15 +221,15 @@ impl<'tables, 'a> Rewriter<'a, RenamerCtx> for Renamer<'tables> {
                                             StablePath::Select { outer: box StablePath::Fresh, name } => {
                                                 Exp::Var { name: *name, id: node_id_generator.new_id() }
                                             },
-                                            StablePath::Select { outer: box StablePath::Root, name } => {
-                                                Exp::Var { name: *name, id: node_id_generator.new_id() }
-                                            },
                                             StablePath::Select { outer: box outer, name } => {
                                                 let o = path_to_exp(outer, node_id_generator);
                                                 match o {
                                                     Exp::Lit { lit: Lit::Nothing } => o,
                                                     o => Exp::Select { exp: box Located::new(Loc::no_loc(), o), name: *name }
                                                 }
+                                            },
+                                            StablePath::Root => {
+                                                Exp::Root
                                             },
                                             StablePath::Lit { lit } => {
                                                 Exp::Lit { lit: lit.clone() }

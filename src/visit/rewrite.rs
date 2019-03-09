@@ -121,8 +121,8 @@ pub trait Rewriter<'a, Ctx>: Sized {
                 Exp::OrElse { e1: walk_located_box!(self, visit_exp, e1, ctx), e2: walk_located_box!(self, visit_exp, e2, ctx) },
             Exp::Fail { ref message } =>
                 Exp::Fail { message: message.clone() },
-            Exp::Global =>
-                Exp::Global,
+            Exp::Root =>
+                Exp::Root,
 
             Exp::Tuple { ref es } =>
                 Exp::Tuple { es: walk_located_vec!(self, visit_exp, es, ctx) },

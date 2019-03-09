@@ -1096,7 +1096,7 @@ impl<'a> Parser<'a> {
                         return Err(Located::new(e.loc, "Invalid renaming import. Missing old name.".to_owned()));
                     }
                 }
-            }
+            },
             Exp::Select { exp, name } => {
                 match opt_path {
                     None => {
@@ -1728,6 +1728,10 @@ impl<'a> Parser<'a> {
     fn parse_primary(&mut self) -> PResult<Located<Exp>> {
         located_ok!(self, {
             match *self.lookahead()? {
+                Token::Dot => {
+                    let loc = self.last_token.loc;
+                    Ok(self.parse_selectors(Located::new(loc, Exp::Root))?.value)
+                },
                 Token::Underscore => {
                     self.eat();
                     Ok(Exp::Lit { lit: Lit::Wildcard })
