@@ -86,11 +86,11 @@ impl Stats {
                 let sum_time = (*sum as f64) * 1e-9;
                 let max_time = (*max as f64) * 1e-9;
                 let min_time = (*min as f64) * 1e-9;
-                let mean_time = if *cnt != 0 { sum_time / (*cnt as f64) } else { f64::from(0) };
+                let mean_time = if *cnt != 0 { sum_time / (*cnt as f64) } else { 0_f64 };
                 println!("{:<40} | {:>11} | {:>11.6} | {:>11.6} | {:>11.6} | {:>11.6} ", stat, cnt, sum_time, min_time, max_time, mean_time);
             }
             else {
-                let mean = if *cnt != 0 { (*sum as f64) / (*cnt as f64) } else { f64::from(0) };
+                let mean = if *cnt != 0 { (*sum as f64) / (*cnt as f64) } else { 0_f64 };
                 println!("{:<40} | {:>11} | {:>11} | {:>11} | {:>11} | {:>11.2}", stat, cnt, sum, min, max, mean);
             }
         }
