@@ -16,4 +16,3 @@ rustfmt.toml
 *.md
 TODO*
 *.bak
-*.json
