@@ -185,7 +185,6 @@ impl<'a> AddUnknowns<'a> {
                     _ => { self.declare_unknowns_in_exp(&e1); }
                 }
                 self.declare_unknowns_in_exp(&e2);
-
             },
             Exp::Apply { box fun, box arg } => {
                 self.declare_unknowns_in_exp(&fun);
@@ -349,6 +348,25 @@ impl<'a> Prenamer<'a> {
                 self.driver.graph.import(import_into_scope, Located { loc, value: Import::None { path } });
             },
             Selector::Including { name } => {
+                // Declare mixfix names too.
+                // FIXME: what to do with renaming and excluding.
+                if let Name::Mixfix(s) = name {
+                    let parts = Name::decode_parts(*s);
+
+                    for (i, part) in parts.iter().enumerate() {
+                        match part {
+                            Part::Id(x) => {
+                                let short_name = Name::Id(*x);
+                                self.driver.graph.import(import_into_scope, Located { loc, value: Import::Including { path, name: short_name } });
+                            },
+                            Part::Op(x) => {
+                                let short_name = Name::Op(*x);
+                                self.driver.graph.import(import_into_scope, Located { loc, value: Import::Including { path, name: short_name } });
+                            },
+                            _ => {},
+                        }
+                    }
+                }
                 self.driver.graph.import(import_into_scope, Located { loc, value: Import::Including { path, name: *name } });
             },
             Selector::Excluding { name } => {
@@ -425,18 +443,19 @@ impl<'a> Prenamer<'a> {
                 let lookup = self.parse_mixfix(*id, scope, es, follow_imports);
                 vec![Ref::Mixfix(lookup)]
             },
-            Exp::Apply { fun, arg } => {
+            Exp::Apply { box fun, box arg } => {
                 // When looking up (`List _` Int) it's sufficient to just lookup
                 // `List _`. The `Int` will be substituted in at runtime.
-                self.lookup_frame_from(scope, &*fun, follow_imports)
+                self.lookup_frame_from(scope, &fun, follow_imports)
             },
-            Exp::Within { id, e1, e2 } => {
-                let scope = self.scopes.get(&id);
-                assert!(scope.is_some());
-                scope.iter().map(|local| local.to_ref()).collect()
+            Exp::Within { id, box e1, box e2 } => {
+                // let scope = self.scopes.get(&id);
+                // assert!(scope.is_some());
+                // scope.iter().map(|local| local.to_ref()).collect()
+                self.lookup_frame_from(scope, &e2, follow_imports)
             }
-            Exp::Select { exp, name } => {
-                let inner_scopes = self.lookup_frame_from(scope, &*exp, follow_imports);
+            Exp::Select { box exp, name } => {
+                let inner_scopes = self.lookup_frame_from(scope, exp, follow_imports);
                 inner_scopes.iter().map(|inner_scope| {
                     let lookup = self.driver.graph.lookup_inside(*inner_scope, *name);
                     Ref::Lookup(lookup)
@@ -479,8 +498,8 @@ impl<'a> Prenamer<'a> {
                 // `List _`. The `Int` will be substituted in at runtime.
                 self.lookup_frame_inside(scope, &fun)
             },
-            Exp::Select { exp, name } => {
-                let inner_scopes = self.lookup_frame_inside(scope, &*exp);
+            Exp::Select { box exp, name } => {
+                let inner_scopes = self.lookup_frame_inside(scope, &exp);
                 inner_scopes.iter().map(|inner_scope| {
                     let lookup = self.driver.graph.lookup_inside(*inner_scope, *name);
                     Ref::Lookup(lookup)
@@ -825,14 +844,14 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                     ..ctx.clone()
                 };
 
+                let defs1: Vec<_> = defs.iter().map(|def|
+                    Located { loc: def.loc, value: self.visit_def(&def.value, &child_ctx, def.loc) }
+                ).collect();
+
                 // Add imports.
                 println!("IMPORT scope = {:?}", scope_ref);
                 println!("IMPORT parent = {:?}", header_ref);
-                self.add_imports_from_defs(scope_ref, header_ref, defs);
-
-                let defs1 = defs.iter().map(|def|
-                    Located { loc: def.loc, value: self.visit_def(&def.value, &child_ctx, def.loc) }
-                ).collect();
+                self.add_imports_from_defs(scope_ref, header_ref, &defs1);
 
                 Def::TraitDef { id: *id, attrs: attrs.clone(), name: *name, opt_guard: opt_guard1, params: params1, supers: supers1, defs: defs1 }
             },
