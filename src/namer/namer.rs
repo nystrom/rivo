@@ -888,12 +888,11 @@ impl<'a> Namer<'a> {
         let mut include = Vec::new();
         let mut include_all = Vec::new();
         let mut exclude = Vec::new();
-        let mut exclude_all = Vec::new();
 
         for import in imports {
             match import {
                 Located { loc, value: Import::None { path: scope } } => {
-                    exclude_all.push(LookupRef::as_member(*scope, x));
+                    exclude.push(LookupRef::as_member(*scope, x));
                 }
                 Located { loc, value: Import::All { path: scope } } => {
                     include_all.push(LookupRef::as_member(*scope, x));
@@ -911,23 +910,14 @@ impl<'a> Namer<'a> {
             }
         }
 
-        // sort and dedup because remove_item just removes the first occurrence.
-        // (sorting is needed just because dedup only removes consequetive dups).
-        include_all.sort();
-        include_all.dedup();
-
-        for r in exclude_all {
-            include_all.remove_item(&r);
-        }
-        for r in exclude {
-            include_all.remove_item(&r);
-        }
+        // x is imported if it is imported explicitly or imported via _ and not excluded
+        include_all.drain_filter(|r| exclude.contains(&r));
 
         let mut paths = Vec::new();
         paths.append(&mut include_all);
         paths.append(&mut include);
 
-        // Dedup the paths 
+        // Dedup the paths (sort first since dedup only removes sequential elements)
         paths.sort();
         paths.dedup();
 
