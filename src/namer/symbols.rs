@@ -181,8 +181,9 @@ impl DeclEnv for Decl {
                 }
             },
             Decl::Block { parent: parent_index, .. } => {
-                let parent = graph.get_env(*parent_index);
-                parent.path(graph)
+                // let parent = graph.get_env(*parent_index);
+                // parent.path(graph)
+                StablePath::Fresh
             },
             Decl::Fun { parent: parent_index, name, .. } => {
                 let parent = graph.get_env(*parent_index);
@@ -205,7 +206,7 @@ impl DeclEnv for Decl {
                     name: *name
                 }
             },
-            Decl::MixfixPart { .. } => StablePath::Unstable, // unreachable!(),
+            Decl::MixfixPart { .. } => StablePath::Unstable,
         }
     }
 
