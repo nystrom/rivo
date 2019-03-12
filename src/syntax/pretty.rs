@@ -62,7 +62,9 @@ pub trait ToDoc {
     fn to_doc(&self) -> Doc<BoxDoc<()>>;
 
     fn pretty(&self, width: usize) -> String {
-        format!("{}", self.to_doc().pretty(width))
+        let mut w = Vec::new();
+        self.to_doc().render(width, &mut w).unwrap();
+        String::from_utf8(w).unwrap()
     }
 }
 
@@ -135,6 +137,7 @@ impl ToDoc for Def {
                 };
                 doc.append(Doc::space())
                    .append(show_located_box!(formula))
+                   .append(Doc::newline())
             },
             Def::TraitDef { id, ref attrs, ref name, ref opt_guard, ref params, ref supers, ref defs } => {
                 Doc::text("trait")
@@ -155,6 +158,7 @@ impl ToDoc for Def {
                    .append(show_located_vec!(defs, Doc::text(";").append(Doc::newline())).nest(1))
                    .append(Doc::newline())
                    .append(Doc::text("}"))
+                   .append(Doc::newline())
             },
             Def::FunDef { id, ref attrs, ref name, ref opt_guard, ref opt_body, ref params, ref ret } => {
                 Doc::text("fun")
@@ -167,6 +171,7 @@ impl ToDoc for Def {
                    .append(Doc::text("="))
                    .append(Doc::space())
                    .append(show_located!(ret))
+                   .append(Doc::newline())
                    .append(show_located_opt!(opt_body))
             },
             Def::ImportDef { opt_path: None, ref selector } => {
