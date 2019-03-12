@@ -81,7 +81,7 @@ fn main() {
                             match t {
                                 Some(Bundle::Named { tree: t, .. }) => {
                                     driver.stats.accum("named", 1);
-                                    println!("{}", t.pretty(80));
+                                    println!("{}", t.pretty(160));
                                 },
                                 _ => {
                                     driver.stats.accum("not named", 1);
