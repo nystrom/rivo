@@ -12,6 +12,18 @@
 import ()
 
 trait Prim = {
+  // Matches any function that can be used as a type test.
+  // That is, any backward function that takes a value and either succeeds or fails with no output.
+  // This includes `type` itself.
+  // For example:
+  //     fun Boolean = (? False)
+  //     fun Boolean = (? True) 
+  // For example:
+  //     fun Option (? a @ type) = (? None)
+  //     fun Option (? a @ type) = (? Some x) where { a x }
+  #[native]
+  fun type = (? _)
+
   // returns non-zero i32 iff the two arguments are identical values
   // This should never be called directly. Use `Eq` for equality.
   #[native]
