@@ -675,17 +675,17 @@ impl<'a> Namer<'a> {
     fn lookup_in_root(&mut self, name: Name) -> NamerResult<LocalRefs> {
         self.driver.stats.accum("lookup_in_root", 1);
 
-        // we only search other bundles for legal bundle names
-        if ! name.is_bundle_name() {
-            self.driver.stats.accum("lookup_in_root not bundle name", 1);
-            return Ok(vec![]);
-        }
-
         let results = self.lookup_in_trees(name)?;
 
         // If all tree results were mixfix parts, try to load a bundle with the same name.
         // If successful, add those results to the results.
         if self.all_mixfix(&results) {
+            // we only search other bundles for legal bundle names
+            if ! name.is_bundle_name() {
+                self.driver.stats.accum("lookup_in_root not bundle name", 1);
+                return Ok(vec![]);
+            }
+
             match self.driver.load_bundle_by_name(name) {
                 Ok(index) => {
                     match self.driver.prename_bundle(index) {
