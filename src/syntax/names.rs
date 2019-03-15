@@ -229,10 +229,29 @@ impl Part {
 impl Name {
     pub fn is_bundle_name(self) -> bool {
         match self {
-            Name::Id(x) => match x.to_string().chars().next() {
-                None => false,
-                Some(c) => c.is_uppercase(),
-            }
+            Name::Id(x) => {
+                let s = x.to_string();
+                let mut chs = s.chars();
+                match chs.next() {
+                    None => false,
+                    Some(c) => {
+                        if c.is_uppercase() {
+                            true
+                        }
+                        else {
+                            if c == '_' {
+                                match chs.next() {
+                                    None => false,
+                                    Some(c) => c.is_uppercase(),
+                                }
+                            }
+                            else {
+                                false
+                            }
+                        }
+                    },
+                }
+            },
             Name::Op(_) => false,
             Name::Mixfix(_) => false,
             // Name::Mixfix(parts) => {
