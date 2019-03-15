@@ -67,9 +67,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn newline(&mut self) {
-    }
-
     fn read_char(&mut self) -> Option<char> {
         self.offset += 1;
         self.input.next()
@@ -118,8 +115,6 @@ impl<'a> Lexer<'a> {
 
     pub fn virtual_semi(&mut self) -> LexResult<Located<Token>> {
         let pos = self.offset;
-
-        self.newline();
 
         let prev_can_end = self.prev_token_can_end_statement;
         let next_token = self.next_token()?;
