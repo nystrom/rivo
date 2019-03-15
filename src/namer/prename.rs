@@ -849,8 +849,6 @@ impl<'tables, 'a> Rewriter<'a, PrenameCtx> for Prenamer<'tables> {
                 ).collect();
 
                 // Add imports.
-                println!("IMPORT scope = {:?}", scope_ref);
-                println!("IMPORT parent = {:?}", header_ref);
                 self.add_imports_from_defs(scope_ref, header_ref, &defs1);
 
                 Def::TraitDef { id: *id, attrs: attrs.clone(), name: *name, opt_guard: opt_guard1, params: params1, supers: supers1, defs: defs1 }
