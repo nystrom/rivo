@@ -466,7 +466,7 @@ impl<'a> Lexer<'a> {
             "with"   => self.locate(Token::With, text.len() as u32),
             "where"  => self.locate(Token::Where, text.len() as u32),
             "import" => self.locate(Token::Import, text.len() as u32),
-            text     => self.locate(Token::Id(String::from(text)), text.len() as u32)
+            text     => self.locate(Token::Id(text.to_string()), text.len() as u32)
         }
     }
 
