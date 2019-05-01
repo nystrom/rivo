@@ -115,7 +115,9 @@ The set literal `Set [e1, e2, e3]` is equivalent to `Prelude::Set::fromList [e1,
 
 The map literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
 
-### 
+### Lambdas
+
+The lambda `fun p -> e` is a function that 
 
 ### Blocks
 
@@ -1720,6 +1722,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExMjU2MzA0ODksMTExMjMxMjk1MSwtOD
-QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTUwNDYyNzU4NCwxMTEyMzEyOTUxLC04ND
+I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
