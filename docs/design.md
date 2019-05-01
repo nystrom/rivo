@@ -6,7 +6,7 @@ Ivo is a gradually-typed programming language that combines features of function
 
 Ivo programs are gradually typed, providing the flexibility of dynamic typing while allowing a large class of errors cannot to be checked at compile time. Ivo’s type system is powerful, allowing you to easily model data. Ivo allows programmers to define their own data types, with control over how these are represented in memory. Ivo allows programmers to define their own operations using familiar syntax. Ivo allows programmers to easily write queries on their data.
 
-**Credits**
+#### Credits
 
 Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system, the syntax is based on Haskell, Ruby, and Python with a bit of Rust, Scala, and X10 thrown in. Traits were influenced by Haskell's type classes and Rust’s traits. The treatment of backward-mode functions and pattern matching were inspired by the language JMatch.
 
@@ -23,13 +23,13 @@ Declarations may include expressions, formulas, patterns, and types.
 
 ## Lexical structure
 
-**Comments**
+#### Comments
 Comments begin with `#`  and continue to the end of the line.
 
-**Unicode**
+#### Unicode
 Ivo supports Unicode-21 identifiers and operators.
 
-**Identifiers and reserved words**
+#### Identifiers and reserved words
 All strings of non-whitespace, printable characters are identifiers unless they are
 reserved. Identifiers that begin with a letter may contain only letters and digits.
 Identifiers that begin with a symbol must consist only of symbols.
@@ -1708,5 +1708,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg4MTM1NTk2Ml19
+eyJoaXN0b3J5IjpbNDY3NDQ4OTE0XX0=
 -->
