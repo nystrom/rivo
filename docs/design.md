@@ -314,6 +314,12 @@ The definition may take parameter patterns. Unknowns in the parameter patterns a
 
     type List (a) = Nil | Cons (a) (List a)
 
+Or define a trait.
+
+    trait List (a)
+    trait List (Nil)
+    trait List (Cons _ _)
+
 ## Trait definitions
 
 A `trait` definition defines a trait or trait instance.
@@ -334,75 +340,6 @@ If the parameters of the trait are not unknowns, they must be types. This define
     }
 
        
-
-It is required that fields of the same name have the same type. This ensures the selector functions are well-typed and can be
-implemented as one function with many alternatives.
-
-    fun (Point) . x -> Float
-    fun (Point1 x) . x = x
-    fun (Point2 x y) . x = x
-    fun (Point3 x y z) . x = x
-
-Fields defined in different data definitions may have the same name.
-
-    data Circle:
-      let radius: Float
-    
-    data Cylinder:
-      let radius: Float
-      let height: Float
-
-This results in overloading of the selector functions:
-
-    fun (Circle) . radius -> Float
-    fun (Cylinder) . radius -> Float
-
-Constructors (like other functions) can be overloaded. Constructor invocation is identical to function invocation.
-Constructor patterns may be empty. For instance the `Boolean` type is defined as:
-
-    data Boolean:
-      case False
-      case True
-
-Values of a data type are represented as a tagged union of the structs defined by the constructors.
-This means a `Boolean` can be represented by its tag. Data types with only one case have no tag.
-Thus, the unit type `()` has no runtime representation at all since it has no cases and no fields.
-
-    data ()
-
-Data definitions cannot be recursive. They may not contain fields of the same type as being defined, nor types defined by data definitions that include the defined type. Nor can their type parameters be instantiated on the same type?
-Data definitions may include fields of class type which contain fields of the data type. This is because class instances are implemented using references.
-**TODO is the distinction between classes and data useful at all?**
-
-## Class definitions
-
-A class definition introduces a reference type. The body of a class definition is similar to the body of a data definition, however they can be recursive.
-
-    class IntList:
-      case Nil
-      case Cons:
-        let head: Int
-        let tail: IntList
-
-The compiler checks that the recursion is well-founded (that is, at least one of the choices must be non-recursive). This prevents classes that cannot be
-instantiated. [TODO maybe this should be a warning? They can be instantiated if `let` behaves likes `letrec`.]
-
-    # an infinite list of 0
-    let xs = Cons 0 xs
-## Type parameters
-
-Data and class definitions may be declared with type parameters. For example:
-
-    data Option[A]:
-      case None
-      case Some:
-        let value: A
-    
-    class List[A]:
-      case Nil:
-      case Cons:
-        let head: A
-        let tail: List[A]
 ## Inheritance
 
 Data and class definitions can extend others. There is no subtyping however.
@@ -1630,7 +1567,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQ4MDg1NTg2NiwxODQ1NjYwOTcsLTY5Nz
-EyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUx
-LC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbNDA1MzM3MTE2LDE4NDU2NjA5NywtNjk3MT
+I4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEs
+LTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
