@@ -356,7 +356,7 @@ The unit type is defined by the built-in data type `()`.
 
 Functions are declared with the `fun` keyword. A function declaration starts with a signature, which specifies the name, parameter types, and return type of the function, and is followed by the implementation. The signature is optional if it can be inferred.
 Function declarations can be used to declare mix-fix operators. Symbols used in the function declaration are part of the function name.
-**Signatures**
+### Signatures
 A function signature consists of a sequence of identifiers and parenthesized types, then an `->` and a return type.
 The signature must include at least one identifier and at least one parameter type.
 The following function signature is for a function named `inc`, which takes an integer and returns an integer.
@@ -386,7 +386,7 @@ With the following signature `::` is right associative:
     fun (a) :: ((List[a])) -> List[a]
 
 At most one argument type can be double-parenthesized.
-**Alternatives**
+### Alternatives
 After the signature, zero or more alternatives can be provided. The alternatives are evaluated in order. The body of the first matching alternative is invoked.
 Each alternative is given by the function name and patterns for each argument, and then the function body.
 
@@ -401,18 +401,11 @@ Each alternative is given by the function name and patterns for each argument, a
     fun 0 + (x) = x
     fun (x) + 0 = x
     fun (x) + (y) = iadd x y
-## Expressions
 
-**Primary expressions**
-Literals
-Variable names
-Selectors
-Simple function calls
-Parenthesized and bracketed expressions, lists, tuples, etc.
 
 ## Mix-fix functions
 
-Mix-fix operators may be declared with `fun` definitions. A function is *mix-fix* if its signature
+Mixfix operators may be declared with `fun` definitions. A function is *mixfix* if its signature
 includes a symbol identifier or any identifier after the first position.
 Each module generates a set of parser rules for the mix-fix functions it defines.
 If `E` is the parser nonterminal for expressions
@@ -1566,7 +1559,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OT
-cxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1
-MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTEyNTUwMzM4NSwtMTI2NjY0NjgxNywxOD
+Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
+OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOT
+k0Njk0MjcwXX0=
 -->
