@@ -117,7 +117,9 @@ The map literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Dict::fro
 
 ### Lambdas
 
-The lambda `fun p -> e` is a function that 
+The lambda `fun p1 p2 ... pn -> e` is an anonymous function that takes `n` arguments, binds them to the respective patterns, then evaluates `e` in the resulting environment.
+
+### Bind
 
 ### Blocks
 
@@ -1722,6 +1724,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTUwNDYyNzU4NCwxMTEyMzEyOTUxLC04ND
+eyJoaXN0b3J5IjpbLTYwOTEyMzY4NSwxMTEyMzEyOTUxLC04ND
 I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
