@@ -97,18 +97,19 @@ Formulas may be used as declarations.
 
 A few language features introduce a block scope. Names defined inside the block are in scope
 only within the block and within enclosing blocks, if not shadowed.
-Variabls, function, data, and traits defined within the block are in scope throughout the block.
+Variables, functions, data types, and traits defined within the block are in scope throughout the block.
 These definitions can capture variables from the enclosing scopes.
-Forward references to variables are illegal. It is not possible to use a variable in an expression
+Definitions in a block may be mutually recursive.
+Forward references to non-lazy variables are illegal, however. It is not possible to use a variable in an expression
 or a formula before the variable is defined.
 If a variable is captured by a function (including within a trait or instance declaration), that function cannot be invoked before the variable is defined.
 If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
 The value of the block is the value of the last expression in the block.
 
-**Let expressions**
+## Let expressions
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
 `let 2 + x == 5` 
-causes `x` to be bound to 3. The value of a `let` expression is the `()`. Variables bound in the `let` are in scope for the remainder of the enclosing block.
+causes `x` to be bound to 3. The value of a `let` expression is `. Variables bound in the `let` are in scope for the remainder of the enclosing block.
 The formula:
 
     let x :: xs == [1,2,3]
@@ -1693,5 +1694,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk0NjE5MTkxMF19
+eyJoaXN0b3J5IjpbLTQzNjI3NzAyNV19
 -->
