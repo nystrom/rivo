@@ -155,7 +155,11 @@ If `e` is a stream, `e.x` is the stream of all members named `x` in any element 
 
 ### Union expressions
 
-The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`. All members of the stream must have the same tag. Duplicates are elided.
+The expression `e1 | e2` evaluates to the stream containing the values of `e1` and `e2`. All members of the stream must have the same tag. Duplicates are elided.
+
+### Intersection expressions
+
+The expression `e1 & e2` evaluates to the stream containing just `e1` if it is equal to `e2` and to the empty stream otherwise.
 
 ### Variables
 
@@ -1671,7 +1675,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY2NjQxNTYzOCwxODQ1NjYwOTcsLTY5Nz
-EyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUx
-LC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbLTM2OTQ3NDYzLDE4NDU2NjA5NywtNjk3MT
+I4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEs
+LTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
