@@ -99,6 +99,10 @@ Formulas may be used as declarations.
 
 Any value literal is an expression that evaluates to the value of the literal.
 
+`_` is the any literal.
+
+`()` is the nil literal.
+
 ### Tuple literals
 
 A tuple `(e1, e2, e3)` is equivalent to `Prelude::Tuple e1 e2 e3`.
@@ -131,7 +135,9 @@ The expression `p <- e` matches the stream `e` against pattern `p`. If any eleme
 
 The expression `e.x` evaluates to the member `x` of the struct `e`.
 
-### Union ex
+### Union expressions
+
+The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`.
 
 ### Blocks
 
@@ -1736,6 +1742,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MDQ0NjIyNzksMTExMjMxMjk1MSwtOD
-QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTY0MTI1MTk0MCwxMTEyMzEyOTUxLC04ND
+I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
