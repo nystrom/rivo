@@ -163,28 +163,6 @@ The expression `x` or `!x` evaluates to the value in variable `x`.
 
 The pattern `x` or `?x` binds variable `x`
 
-### Definitions
-
-A definition expression `d` evaluates to `()`.
-
-### Blocks
-
-The expression `{ e1; e2; ...; en }` evaluates each of the expressions in turn.
-
-### 
-
-
-A few language features introduce a block scope. Names defined inside the block are in scope
-only within the block and within enclosing blocks, if not shadowed.
-Variables, functions, data types, and traits defined within the block are in scope throughout the block.
-These definitions can capture variables from the enclosing scopes.
-Definitions in a block may be mutually recursive.
-Forward references to non-lazy variables are illegal, however. It is not possible to use a variable in an expression
-or a formula before the variable is defined.
-If a variable is captured by a function (including within a trait or instance declaration), that function cannot be invoked before the variable is defined.
-If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
-The value of the block is the value of the last expression in the block.
-
 ## let expressions
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
 
@@ -265,6 +243,15 @@ A lexical block is enclosed in curly brackets `{}`.
 
 A block expression may contain both expressions and definitions.
 The block with nested definitions is equivalent to a telescoping `let`  expression for consecutive definitions declared in the same `let`.
+
+Variables, functions, data types, and traits defined within the block are in scope throughout the block.
+These definitions can capture variables from the enclosing scopes.
+Definitions in a block may be mutually recursive.
+Forward references to non-lazy variables are illegal, however. It is not possible to use a variable in an expression
+or a formula before the variable is defined.
+If a variable is captured by a function (including within a trait or instance declaration), that function cannot be invoked before the variable is defined.
+If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
+The value of the block is the value of the last expression in the block.
 
 ## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
@@ -1802,7 +1789,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODQ0NTY4OTksMTAwMjY0NTU1OSwtOTgzMz
-Q0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzks
-LTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMjM0NjUyMSwxMDAyNjQ1NTU5LC05ODMzND
+Q2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwt
+OTk0Njk0MjcwXX0=
 -->
