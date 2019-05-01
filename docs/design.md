@@ -254,14 +254,18 @@ A `let` expression can also declare a function or trait, or a group of mutually 
 		odd 7
 	}
 
-    let N
-
+    let trait Nil
+        trait Cons (a) (List a) {
+        ...
+    }
+    
 ## Blocks
 
 A lexical block is enclosed in curly brackets `{}`.
 
 A block expression may contain both expressions and definitions.
-The block with nested definitions is equivalent to a `let` 
+The block with nested definitions is equivalent to a telescoping `let`  expression for consecutive definitions declared in the same `let`.
+
 ## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
@@ -1798,7 +1802,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTc0NzgyMDg0LDEwMDI2NDU1NTksLTk4Mz
-M0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5
-LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTE2NDExMjYwNzEsMTAwMjY0NTU1OSwtOT
+gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
+NzksLTk5NDY5NDI3MF19
 -->
