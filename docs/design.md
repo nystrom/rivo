@@ -298,7 +298,7 @@ another name for the forward mode `+` operator.
 A qualified name consists of a module name (which is just a qualified name)
 a `.` and a simple name (as above).
 
-## Function application
+## Pattern matching application
 
 The expression `let` introduces variables into scope. `let` can be followed by a binding formula.
 
@@ -317,15 +317,15 @@ This binds `x` to `3`, because `3` is the unique value for which the `x + 2` is 
 What's really happening is that the pattern `x + 2` is evaluated against `5`.
 Indeed, the `let` is equivalent to the following binding:
 
-    let x = (? + _ = _ ) 2 5
+    let x = (! + ? = ?) 2 5
 
-Here `? + _ = _` is a reference to a *backward mode* of the `+` operator that
+Here `! + ? = ?` is a reference to a *backward mode* of the `+` operator that
 takes one operand and the return value and returns the other operand.
 Indeed `+` actually defines three modes:
 
-    _ + _ = ?     # forward mode
-    ? + _ = _     # backward mode: solve for the first operand
-    _ + ? = _     # backward mode: solve for the second operand
+    ? + ? = !     # forward mode
+    ! + ? = ?     # backward mode: solve for the first operand
+    ? + ! = ?     # backward mode: solve for the second operand
 
 A `let` can also be followed by an arbitrary boolean formula. The formula is evaluated in
 a backward mode to find the solution to any unknowns. It is a compile-time error if there is more than one solution.
@@ -1743,7 +1743,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzAyOTA5ODYwLDEwMDI2NDU1NTksLTk4Mz
-M0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5
-LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTM1OTIyMzUzNywxMDAyNjQ1NTU5LC05OD
+MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
+OSwtOTk0Njk0MjcwXX0=
 -->
