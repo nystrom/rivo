@@ -121,11 +121,17 @@ The lambda `fun p1 p2 ... pn -> e` is an anonymous function that takes `n` argum
 
 ### Bind expressions
 
-The expression `p = e` matches the expression `e` against pattern `p`. If successful, `True` is returned. Otherwise `False`.
+The expression `p = e` matches the expression `e` against pattern `p`. If successful, `True` is returned; otherwise `False`.
 
 ### Generator expressions
 
-The expression `p <- e` matches the strea
+The expression `p <- e` matches the stream `e` against pattern `p`. If any element of the stream matches, `True` is returned; otherwise `False`.
+
+### Select expressions
+
+The expression `e.x` evaluates to the member `x` of the struct `e`.
+
+### Union ex
 
 ### Blocks
 
@@ -1730,6 +1736,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDE5ODc2OTUxLDExMTIzMTI5NTEsLTg0Mj
-UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTE5MDQ0NjIyNzksMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
