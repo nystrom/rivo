@@ -126,12 +126,21 @@ The `let` binds any variables in the formula not already bound. If all variables
 
 An `if` expression is like a `let`, but does not generate an error if the formula does not have a solution.
 
-    for (2 + x == 5) {
+    if (2 + x == 5) {
         print x
     }
 
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
+    # prints 1,2,3
+    for (x in [1,2,3]) {
+        print x
+    }
+
+    # prints 2,4,6
+    for (x in (for y in [1,2,3]) y*2)) {
+        print x
+    }
 
 ## Var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
@@ -1712,5 +1721,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0NzEyMjExOTRdfQ==
+eyJoaXN0b3J5IjpbMjU5OTM2MzQwXX0=
 -->
