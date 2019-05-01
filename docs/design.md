@@ -113,15 +113,15 @@ The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Con
 
 ### Set literals
 
-The set literal `Set [e1, e2, e3]` is equivalent to `Prelude::Set::fromList [e1, e2, e3]`.
+The set literal `Set {e1, e2, e3}` is equivalent to `Prelude::Set::fromList [e1, e2, e3]`.
 
 ### Dictionary literals
 
-The dictionary literal `Dict {e1: e2, e3: e4]` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
+The dictionary literal `Dict {e1: e2, e3: e4}` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
 
 ### Struct literals
 
-The struct literal `T { x1: e1; ...; xn: en }` is a struct with tag `T` and members `xi` initialized to `ei`.
+The struct literal `T { x1: e1; ...; xn: en }` is a struct with tag `T` and members `xi` initialized to `ei`. 
 
 ### Lambdas
 
@@ -1761,6 +1761,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1OTYwOTA0OTUsMTExMjMxMjk1MSwtOD
-QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTA2OTg1ODAyNSwxMTEyMzEyOTUxLC04ND
+I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
