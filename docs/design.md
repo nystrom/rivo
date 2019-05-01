@@ -311,7 +311,17 @@ The definition may take parameter patterns. Unknowns in the parameter patterns a
 ## Trait definitions
 
 A `trait` definition defines a trait or trait instance.
-If the parameters of the trait are unknowns, the definition is a trait defini
+If the parameters of the trait are unknowns, the definition is a trait definition.
+
+    trait Monoid (m) {
+        fun mempty -> m
+        fun mappend (m) (m) -> m
+    }
+
+The members of a trait may be abstract.
+
+If the parameters of the trait are not unknowns, they are types.
+        
 	
 
 The body of a `data` definition is either a pattern specifying the
@@ -1653,7 +1663,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExODcyOTU0NTMsMTg0NTY2MDk3LC02OT
-cxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1
-MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTg4ODQ2ODY1LDE4NDU2NjA5NywtNjk3MT
+I4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEs
+LTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
