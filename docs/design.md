@@ -240,9 +240,11 @@ These are just like `let` expressions, but define mutable variables. For instanc
 
 ## def expressions
 
-A `def` expression declares a function, variable, data type, or trait in a new scope.
+A `let` expression can also declare a function.
 
-    def fun 
+    let f (x) = 1 {
+        f 2
+    }
 
 ## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
@@ -1780,7 +1782,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDM4MzY1NDc3LDEwMDI2NDU1NTksLTk4Mz
-M0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5
-LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTExMTIxNDk4MTYsMTAwMjY0NTU1OSwtOT
+gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
+NzksLTk5NDY5NDI3MF19
 -->
