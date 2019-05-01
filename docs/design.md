@@ -268,7 +268,9 @@ Any unknowns in the formula are bound in the body of the `for` .
 ### Core expressions
 
 An expression `#(e)` or `#{e}` is a core expression.
-A core expression is s
+A core expression is statically typed. Captured variables are always of type `box`.
+
+
 
 ## Lists
 
@@ -1564,8 +1566,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTIzNDA3ODMzNywtMTI2NjY0NjgxNywxOD
-Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
-OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOT
-k0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbNDkwOTc3ODcyLC0xMjY2NjQ2ODE3LDE4ND
+U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
+LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
+Q2OTQyNzBdfQ==
 -->
