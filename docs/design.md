@@ -129,6 +129,8 @@ An `if` expression is like a `let`, but does not generate an error if the formul
     if (2 + x == 5) {
         print x
     }
+An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
+The result of the `if` is 
 
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
@@ -141,6 +143,8 @@ A `for` expression is like a `let`, but evaluates the body for each solution, re
     for (x in (for (y in [1,2,3]) y*2)) {
         print x
     }
+    
+A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions of to the formula.
 
 ## Var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
@@ -1721,5 +1725,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDg1MjA0NTc0XX0=
+eyJoaXN0b3J5IjpbLTE5MDkyMTA1NTJdfQ==
 -->
