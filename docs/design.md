@@ -131,6 +131,8 @@ The expression `p = e` matches the expression `e` against pattern `p`. If succes
 
 The expression `p <- e` matches the stream `e` against pattern `p`. If any element of the stream matches, `True` is returned; otherwise `False`.
 
+### Assignment expressions.
+
 ### Select expressions
 
 The expression `e.x` evaluates to the member `x` of the struct `e`.
@@ -138,6 +140,12 @@ The expression `e.x` evaluates to the member `x` of the struct `e`.
 ### Union expressions
 
 The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`.
+
+### Variables
+
+The expression `x` or `!x` evaluates to the value in variable `x`.
+
+The pattern `x` or `?x` binds variable `x`
 
 ### Blocks
 
@@ -1742,6 +1750,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY0MTI1MTk0MCwxMTEyMzEyOTUxLC04ND
+eyJoaXN0b3J5IjpbLTc0NjkwMjE1NywxMTEyMzEyOTUxLC04ND
 I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
