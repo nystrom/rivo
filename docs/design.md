@@ -121,7 +121,7 @@ The dictionary literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Di
 
 ### Struct literals
 
-The struct literal `
+The struct literal `{ x1: e1; ...; xn: en }` 
 
 ### Lambdas
 
@@ -1761,6 +1761,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODI5NzEyNzk1LDExMTIzMTI5NTEsLTg0Mj
-UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMTMxMDI1NDU0MywxMTEyMzEyOTUxLC04ND
+I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
