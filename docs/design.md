@@ -107,7 +107,13 @@ A tuple `(e1, e2, e3)` is equivalent to `Prelude::Tuple e1 e2 e3`.
 
 The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Cons e2 (Prelude::Cons e3 Prelude::Nil))`.
 
-### 
+### Sets
+
+The set literal `{[e1, e2, e3]}` is equivalent to `Prelude::Set::fromList [e1, e2, e3]`
+
+### Maps
+
+The map literal `{[e1 -> e2, e3 -> e4]}` is equivalent to `Prelude::Map::fromList [(
 
 ## Blocks
 
@@ -1712,6 +1718,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTgzMzc1OTkzMCwxMTEyMzEyOTUxLC04ND
-I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbMzY2Njg5ODMyLDExMTIzMTI5NTEsLTg0Mj
+UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
