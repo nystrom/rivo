@@ -145,8 +145,7 @@ A `for` expression is like a `let`, but evaluates the body for each solution, re
     }
     
 A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
-The result of a `for` expression is a stream of the `for` body results, or the empty stream.
-The result of a `for` with an `else` is either the stream of the body results or the singleton stream of the `else` body.
+The result of a `for` expression is a stream of the `for` body results, or the empty stream if there is no `else` or the singleton stream of the `else` body.
 
 ## Var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
@@ -1727,5 +1726,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNjQ2ODE1NzUsLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
