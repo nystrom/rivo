@@ -82,20 +82,21 @@ All terms have types.
 
 An expression is a term that evaluates to a value.
 
-Patterns are terms with unknown variables. A pattern may be matched against an expression of the same type, binding the unknowns variables in the pattern to values. A pattern does not itself evaluate to a value. 
+Patterns are terms with *unknown variables*. A pattern may be matched against an expression of the same type, binding the unknowns variables in the pattern to values. A pattern does not itself evaluate to a value. Patterns are used in function declarations and in binding formulas.
+Pattern matching is performed on calls (to match arguments against parameters),
+on binding and assignment (to match the right-hand-side against the left-hand-side pattern), and in other situations.
+Patterns include unknown variables (written `let x` or sometimes just `x`),
+the special wildcard pattern `_`, and invocations of functions that provide a backward mode.
+
  
 A formula is a boolean pattern. A formula is matched against the boolean value 
-`True`, binding any  unknown variables to values that satisfy the formula. Formulas are used in declarations and in `for` and `let` expressions.
+`True`, binding any  unknown variables to values that satisfy the formula. Formulas are used in variable declarations and in `for` and `let` expressions.
 Formulas may be used as declarations.
 
 ## Patterns
 
 Any expression may be used as a pattern. An expression matches a pattern if it has the same value.
 Unlike a normal expression, a pattern may also contain *unknowns*, variables that are bound when the pattern is matched against another expression.
-Pattern matching is performed on calls (to match arguments against parameters),
-on binding and assignment (to match the right-hand-side against the left-hand-side pattern), and in other situations.
-Patterns include unknown variables (written `let x` or sometimes just `x`),
-the special wildcard pattern `_`, and invocations of functions that provide a backward mode.
 
 ## Formulas
 
@@ -1709,5 +1710,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA2ODE3ODQ4Nl19
+eyJoaXN0b3J5IjpbNjk3Njk1MjY4XX0=
 -->
