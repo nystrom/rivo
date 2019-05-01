@@ -131,7 +131,10 @@ The expression `p = e` matches the expression `e` against pattern `p`. If succes
 
 The expression `p <- e` matches the stream `e` against pattern `p`. If any element of the stream matches, `True` is returned; otherwise `False`.
 
-### Assignment expressions.
+### Assignment expressions
+
+The expression `p = e` matches the expression `e` against pattern `p`.
+If successful, the va
 
 ### Select expressions
 
@@ -1750,6 +1753,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTc0NjkwMjE1NywxMTEyMzEyOTUxLC04ND
+eyJoaXN0b3J5IjpbMTkyOTkwNjQ3MSwxMTEyMzEyOTUxLC04ND
 I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
