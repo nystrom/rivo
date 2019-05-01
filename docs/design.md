@@ -117,7 +117,11 @@ The set literal `Set [e1, e2, e3]` is equivalent to `Prelude::Set::fromList [e1,
 
 ### Dictionary literals
 
-The map literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
+The dictionary literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
+
+### Struct literals
+
+The struct literal `
 
 ### Lambdas
 
@@ -1757,6 +1761,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk0MzgwODk4LDExMTIzMTI5NTEsLTg0Mj
+eyJoaXN0b3J5IjpbODI5NzEyNzk1LDExMTIzMTI5NTEsLTg0Mj
 UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
