@@ -163,9 +163,16 @@ The expression `x` or `!x` evaluates to the value in variable `x`.
 
 The pattern `x` or `?x` binds variable `x`
 
+### Definitions
+
+A definition expression `d` evaluates to `()`.
+
 ### Blocks
 
 The expression `{ e1; e2; ...; en }` evaluates each of the expressions in turn.
+
+If 
+
 
 A few language features introduce a block scope. Names defined inside the block are in scope
 only within the block and within enclosing blocks, if not shadowed.
@@ -1768,6 +1775,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0Mj
-UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMTA3MjQ0NjI4NCwtOTgzMzQ0NjgsMTExMj
+MxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3
+MF19
 -->
