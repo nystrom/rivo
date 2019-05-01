@@ -241,7 +241,10 @@ These are just like `let` expressions, but define mutable variables. For instanc
 
 ## def expressions
 
-A `def` expression defines a variable, 
+A `def` expression declares a function, variable, data type, or trait in a new scope.
+
+    def fun 
+
 ## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
@@ -1778,7 +1781,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwMjgyMDcxMDEsLTk4MzM0NDY4LDExMT
-IzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQy
-NzBdfQ==
+eyJoaXN0b3J5IjpbMzc5MjI4NDA1LC05ODMzNDQ2OCwxMTEyMz
+EyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0Mjcw
+XX0=
 -->
