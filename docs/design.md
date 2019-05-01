@@ -99,9 +99,11 @@ Formulas may be used as declarations.
 
 Any value literal is an expression that evaluates to the value of the literal.
 
-`_` is the any literal.
+Each value literal has a unique tag.
 
-`()` is the nil literal.
+`_` is the any literal. It is equivalent to the union of all values.
+
+`()` is the nil literal. It is equivalent to the empty union.
 
 ### Tuple literals
 
@@ -153,7 +155,7 @@ If `e` is a stream, `e.x` is the stream of all members named `x` in any element 
 
 ### Union expressions
 
-The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`. All members of the stream must have the same tag.
+The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`. All members of the stream must have the same tag. Duplicates are elided.
 
 ### Variables
 
@@ -1766,6 +1768,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzAxNjgxNTAzLDExMTIzMTI5NTEsLTg0Mj
+eyJoaXN0b3J5IjpbLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0Mj
 UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
