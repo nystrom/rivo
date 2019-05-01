@@ -138,7 +138,7 @@ A `for` expression is like a `let`, but evaluates the body for each solution, re
     }
 
     # prints 2,4,6
-    for (x in (for y in [1,2,3]) y*2)) {
+    for (x in (for (y in [1,2,3]) y*2)) {
         print x
     }
 
@@ -147,10 +147,10 @@ These are just like `let` expressions, but define mutable variables. For instanc
 
 	var (2 + x == 5) {
 	    x = x * 2
-	    print x   // prints 4
+	    print x   // prints 6
 	}
 
-**Streams**
+## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
 A stream may be empty, finite, or infinite.
@@ -1721,5 +1721,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjU5OTM2MzQwXX0=
+eyJoaXN0b3J5IjpbNDg1MjA0NTc0XX0=
 -->
