@@ -106,17 +106,20 @@ If a variable is captured by a function (including within a trait or instance de
 If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
 The value of the block is the value of the last expression in the block.
 
-## Let expressions
+## let expressions
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
 
-     let (2 + x == 5) {
+     let 2 + x == 5 {
          print x
      }
   
 causes `x` to be bound to 3 in the body, which prints `x`. The value of a `let` expression is the value of the body. Variables bound in the `let` are in scope for the remainder of the enclosing block.
 The formula:
 
-    let x :: xs == [1,2,3]
+    let x :: xs == [1,2,3] {
+        print x
+        print xs
+    }
 
 binds `x` to 1 and `xs` to the list `[2,3]`.
 It is a dynamic error for a formula used in a `let` to generate zero satisfying assignments or more than one satisfying assignment.
@@ -131,8 +134,6 @@ An `if` expression is like a `let`, but does not generate an error if the formul
     }
 An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of an `if` without an `else` is the unit value. The result of an `if` with an `else` is the result of whichever clause is evaluated.
-
-## while expressions
 
 ## for expressions
 
@@ -1695,6 +1696,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNj
-k1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTg1MTIwMzE4OSwxMTEyMzEyOTUxLC04ND
+I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
