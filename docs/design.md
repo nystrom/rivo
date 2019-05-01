@@ -140,7 +140,7 @@ If successful, the `var` unknowns in `p` are overwritten.
 
 The expression `e.x` evaluates to the member `x` of the struct `e`.
 
-If `e` is a stream, `e.x` is the stream of all members named `x` 
+If `e` is a stream, `e.x` is the stream of all members named `x` in any element of the stream.
 
 ### Union expressions
 
@@ -1757,6 +1757,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExMTA1OTAxNDMsMTExMjMxMjk1MSwtOD
-QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTk0MzgwODk4LDExMTIzMTI5NTEsLTg0Mj
+UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
