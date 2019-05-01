@@ -227,7 +227,6 @@ A `for` expression is like a `let`, but evaluates the body for each solution, re
 	# evaluates to the stream 2,3,4
 	for x in [1,2,3] { x + 1 }
 
-  
 A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of a `for` expression is a stream of the `for` body results, or the empty stream if there is no `else` or the singleton stream of the `else` body.
 
@@ -1781,7 +1780,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMj
-MxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3
-MF19
+eyJoaXN0b3J5IjpbNDM4MzY1NDc3LDEwMDI2NDU1NTksLTk4Mz
+M0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5
+LC05OTQ2OTQyNzBdfQ==
 -->
