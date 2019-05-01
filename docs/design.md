@@ -242,19 +242,23 @@ These are just like `let` expressions, but define mutable variables. For instanc
 
 A `let` expression can also declare a function, or a group of mutually recursive functions.
 
-    let f (x) = 1 {
+    let fun f (x) = 1 {
         f 2
     }
 
-    let odd (0) = False
-        even (0) = True
-        odd (n) = even (n-1)
-        even (n) = odd (n-1) {
+    let fun odd (0) = False
+        fun even (0) = True
+        fun odd (n) = even (n-1)
+        fun even (n) = odd (n-1) {
 
 		odd 7
 	}
 
-  
+## Blocks
+
+A lexical block is enclosed in curly brackets `{}`.
+
+A block expression may contain both express
 
 ## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
@@ -1792,7 +1796,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MzczNTY3MTEsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTg3ODg4NTUxMiwxMDAyNjQ1NTU5LC05OD
+MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
+OSwtOTk0Njk0MjcwXX0=
 -->
