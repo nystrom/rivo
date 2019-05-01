@@ -261,52 +261,6 @@ Streams can also be created directly by implementing the `Stream` trait.
 A `for` expression can iterate through a stream.
 Any unknowns in the formula are bound in the body of the `for` .
 
-The annotations are not needed since they can be inferred from the definition.
-
-    fun while {@formula Boolean} do {@scope a} -> ()
-    fun while {c} do {e} =
-      if c then
-        let _ = e
-        while c do e
-      else
-        ()
-
-nb. need tail recursion elimination to compile this efficiently.
-
-    fun foreach {@formula Boolean} do {@scope a} -> ()
-    fun foreach {f} do {e} = f.foreach { fun x: e[x] }
-## Blocks
-
-A few language features introduce a block scope. Names defined inside the block are in scope
-only within the block and within enclosing blocks, if not shadowed.
-Functions, data definitions, and traits, defined within the block are in scope throughout the block.
-These definitions can capture variables.
-Forward references to variables are illegal. It is not possible to use a variable in an expression
-or a formula before the variable is defined.
-If a variable is captured by a function (including within a trait or instance declaration), that function cannot be invoked before the variable is defined.
-If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
-NOT TRUE: for patterns, the value is a tuple. For formulas, there is an implicit `&&`.
-The value of the block is the value of the last expression in the block.
-If the last expression is a formula, the value is `True` or `False`.
-If the last expression is a declaration, the value is `True`.
-
-    do:
-        fun f x = x + 1
-        val x = f 2 + 3    # Bind
-        (val y, val z) = (x, f x)
-        [val w] = [1]
-        val p = Point(1, 2)
-        Point(val a, val b) = p
-        print x
-    
-    
-    fun f (Int) -> Int
-    then later in the same file:
-    fun (Int) + (Int) -> Int
-    
-    f 2 + 3
-    should be
-    (f 2) + 3
 ## Lists
 
 The syntax `[1,2,3]` is syntactic sugar for `1:2:3:[]`.
@@ -344,7 +298,7 @@ another name for the forward mode `+` operator.
 A qualified name consists of a module name (which is just a qualified name)
 a `.` and a simple name (as above).
 
-## Let expressions
+## Function application
 
 The expression `let` introduces variables into scope. `let` can be followed by a binding formula.
 
@@ -1789,7 +1743,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjM0NjUyMSwxMDAyNjQ1NTU5LC05ODMzND
-Q2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwt
-OTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbNzAyOTA5ODYwLDEwMDI2NDU1NTksLTk4Mz
+M0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5
+LC05OTQ2OTQyNzBdfQ==
 -->
