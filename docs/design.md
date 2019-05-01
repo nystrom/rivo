@@ -305,7 +305,9 @@ A `data` definition introduces a data type.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
 
-	data Nil   // 
+	data Nil   // defines Nil { }
+	data Cons (hd: a) (tl: List a)  // defines Cons { hd, tl }
+	
 	
 
 The body of a `data` definition is either a pattern specifying the
@@ -1647,7 +1649,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI4ODQyOTg2MCwtNjk3MTI4Mzg0LDEwMD
-I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
-LC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMj
+Y0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAs
+LTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
