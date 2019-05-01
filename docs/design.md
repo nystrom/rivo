@@ -122,12 +122,16 @@ binds `x` to 1 and `xs` to the list `[2,3]`.
 It is a dynamic error for a formula used in a `let` to generate zero satisfying assignments or more than one satisfying assignment.
 The `let` binds any variables in the formula not already bound. If all variables are bound already, the expression must evaluate to `True`.
 
-## If let and while let expressions
+## if expressions
 
-An `if` expression is like a `let`, but does not generate an error if the formula 
-    if  (2 + x == 5) {
+An `if` expression is like a `let`, but does not generate an error if the formula does not have a solution.
+
+    for (2 + x == 5) {
         print x
     }
+
+A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
+
 
 ## Var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
@@ -1708,5 +1712,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkzMzg5OTk5XX0=
+eyJoaXN0b3J5IjpbLTE0NzEyMjExOTRdfQ==
 -->
