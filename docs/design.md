@@ -108,16 +108,16 @@ The value of the block is the value of the last expression in the block.
 
 ## Let expressions
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
-`let 2 + x == 5` 
-causes `x` to be bound to 3. The value of a `let` expression is the boolean `True`. Variables bound in the `let` are in scope for the remainder of the enclosing block.
+`let (2 + x == 5) {
+print x` 
+causes `x` to be bound to 3 in the body, which prints it. The value of a `let` expression is the value of the body. Variables bound in the `let` are in scope for the remainder of the enclosing block.
 The formula:
 
     let x :: xs == [1,2,3]
 
 binds `x` to 1 and `xs` to the list `[2,3]`.
-It is a dynamic error for a formula used in a `let` to generate zero satisfying assignments or
-more than one satisfying assignment.
-The `let` binds any variables in the formula not already bound. If all variables are bound already, the expression must evaluate to True, statically.
+It is a dynamic error for a formula used in a `let` to generate zero satisfying assignments or more than one satisfying assignment.
+The `let` binds any variables in the formula not already bound. If all variables are bound already, the expression must evaluate to `True`.
 
 ## Var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
@@ -1696,5 +1696,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM2OTA2MzYxMF19
+eyJoaXN0b3J5IjpbLTExODIwNjY3NDRdfQ==
 -->
