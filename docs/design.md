@@ -95,9 +95,9 @@ Formulas may be used as declarations.
 
 ## Expressions
 
-### Literals
+### Value literals
 
-Any literal is an expression that evaluates to the value of the literal.
+Any value literal is an expression that evaluates to the value of the literal.
 
 ### Tuple literals
 
@@ -115,7 +115,7 @@ The set literal `Set [e1, e2, e3]` is equivalent to `Prelude::Set::fromList [e1,
 
 The map literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Map::fromList [(e1, e2), (e3, e4)]`.
 
-
+### 
 
 ## Blocks
 
@@ -1720,6 +1720,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjEzNjcyNzkxNywxMTEyMzEyOTUxLC04ND
-I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbLTEzNTU1ODQ5MTAsMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
