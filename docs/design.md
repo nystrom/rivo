@@ -132,7 +132,7 @@ An `if` expression is like a `let`, but does not generate an error if the formul
 An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of an `if` without an `else` is the unit value. The result of an `if` with an `else` is the result of whichever clause is evaluated.
 
-## while expression
+## while expressions
 
 ## for expressions
 
@@ -1695,6 +1695,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTY3ODQwMzgxMiwtODQyNTEwOTAsLTEzNj
+eyJoaXN0b3J5IjpbMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNj
 k1ODMyNzksLTk5NDY5NDI3MF19
 -->
