@@ -309,8 +309,8 @@ A `type` definition introduces a data type. Members of the type are records.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
 
-	type Nil   // defines Nil { }
-	type Cons (hd: a) (tl: List a)  // defines Cons { hd, tl }
+	data Nil   // defines Nil { }
+	data Cons (hd) (tl)  // defines Cons { hd, tl }
 
     type List (a) = Nil | Cons (a) (List a)
 
@@ -348,7 +348,6 @@ TODO: Not sure this is useful here.
 ## Types
 
 Each data definition defines a type constructor.
-Each class definition defines a type constructor.
 Function types are defined by the built-in class constructor `->`.
 Tuple types are defined by the built-in data constructors '(,)', `(,,)`, etc.
 The unit type is defined by the built-in data type `()`.
@@ -1567,7 +1566,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDA1MzM3MTE2LDE4NDU2NjA5NywtNjk3MT
-I4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEs
-LTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OT
+cxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1
+MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
