@@ -254,8 +254,8 @@ A `let` expression can also declare a function or trait, or a group of mutually 
 		odd 7
 	}
 
-    let trait Nil
-        trait Cons (a) (List a) {
+    let data Nil
+        data Cons (a) (List a) {
         ...
     }
     
@@ -1802,7 +1802,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE2NDExMjYwNzEsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbODQ0NTY4OTksMTAwMjY0NTU1OSwtOTgzMz
+Q0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzks
+LTk5NDY5NDI3MF19
 -->
