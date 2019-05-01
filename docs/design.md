@@ -171,7 +171,7 @@ A definition expression `d` evaluates to `()`.
 
 The expression `{ e1; e2; ...; en }` evaluates each of the expressions in turn.
 
-If 
+### 
 
 
 A few language features introduce a block scope. Names defined inside the block are in scope
@@ -192,7 +192,7 @@ A `let` expression tries to satisfy a formula, binding new variables as necessar
          print x
      }
   
-causes `x` to be bound to 3 in the body, which prints `x`. The value of a `let` expression is the value of the body. Variables bound in the `let` are in scope for the remainder of the enclosing block. `let`-bound variables are immutable.
+causes `x` to be bound to `3` in the body, which prints `x`. The value of a `let` expression is the value of the body. Variables bound in the `let` are in scope for the remainder of the enclosing block. `let`-bound variables are immutable.
 The formula:
 
     let x :: xs == [1,2,3] {
@@ -200,7 +200,7 @@ The formula:
         print xs
     }
 
-binds `x` to 1 and `xs` to the list `[2,3]`.
+binds `x` to `1` and `xs` to the list `[2,3]`.
 It is a dynamic error for a formula used in a `let` to generate zero satisfying assignments or more than one satisfying assignment.
 The `let` binds any variables in the formula not already bound. If all variables are bound already, the expression must evaluate to `True`.
 
@@ -231,7 +231,7 @@ A `for` expression is like a `let`, but evaluates the body for each solution, re
 A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of a `for` expression is a stream of the `for` body results, or the empty stream if there is no `else` or the singleton stream of the `else` body.
 
-## Var expressions
+## var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
 
 	var (2 + x == 5) {
@@ -239,6 +239,9 @@ These are just like `let` expressions, but define mutable variables. For instanc
 	    print x   // prints 6
 	}
 
+## def expressions
+
+A `def` expression defines a variable, 
 ## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
@@ -1775,7 +1778,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTA3MjQ0NjI4NCwtOTgzMzQ0NjgsMTExMj
-MxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3
-MF19
+eyJoaXN0b3J5IjpbLTIwMjgyMDcxMDEsLTk4MzM0NDY4LDExMT
+IzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQy
+NzBdfQ==
 -->
