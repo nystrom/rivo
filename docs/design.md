@@ -234,9 +234,9 @@ The result of a `for` expression is a stream of the `for` body results, or the e
 ## var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
 
-	var (2 + x == 5) {
-	    x = x * 2
-	    print x   // prints 6
+	var 2 + x == 5 {
+	    x = x * 2  // assigns 6 to x
+	    print x    // prints 6
 	}
 
 ## def expressions
@@ -1781,7 +1781,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzc5MjI4NDA1LC05ODMzNDQ2OCwxMTEyMz
-EyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0Mjcw
-XX0=
+eyJoaXN0b3J5IjpbMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMj
+MxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3
+MF19
 -->
