@@ -163,23 +163,7 @@ Streams can also be created directly by implementing the `Stream` trait.
 A `for` expression can iterate through a stream.
 Any unknowns in the formula are bound in the body of the `for` .
 `for (xs contains x && x > 0) do print x end` 
-Variables bound in a formula in an `if` condition are in scope in the true branch, but not the false branch.
 
-    if a(i) == v do   # assuming i is an unknown
-      print i         # print the index where the array element is v
-    else
-      # i is not in scope
-    end
-
-Variables bound in a formula in a loop condition are in scope in the body of the loop.
-
-    foreach xs contains (let x):
-      print x
-
-Formulas may be used as normal expressions also. In this case, if there is a satisfying assignment, the formula evaluates to `True`.
-If not, the formula evaluates to `False`. If true, the unknown variables will be bound and can be used in subsequent expressions.
-If false, the unknown variables are not bound.
-Variables bound in the formula are in scope for the remainder of the enclosing expression (out to where? the block? how to specify scope for something like `if`?)
 
     if (exists? [x where xs contains (let x)])
       then print x
@@ -1726,5 +1710,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
+Q2OTQyNzBdfQ==
 -->
