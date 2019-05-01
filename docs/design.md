@@ -105,7 +105,7 @@ Any value literal is an expression that evaluates to the value of the literal.
 
 ### Tuple literals
 
-A tuple `(e1, e2, e3)` is equivalent to `Prelude::Tuple e1 e2 e3`.
+A tuple `(e1, e2, ..., en)` is equivalent to `Prelude::Tuple e1 e2 ... en`.
 
 ### List literals
 
@@ -140,6 +140,8 @@ If successful, the `var` unknowns in `p` are overwritten.
 
 The expression `e.x` evaluates to the member `x` of the struct `e`.
 
+If `e` is a stream, `e.x` is the stream of all members named `x` 
+
 ### Union expressions
 
 The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`.
@@ -152,7 +154,8 @@ The pattern `x` or `?x` binds variable `x`
 
 ### Blocks
 
-The expression `{ e1; e2; ...
+The expression `{ e1; e2; ...; en }` evaluates each of the expressions in turn.
+
 A few language features introduce a block scope. Names defined inside the block are in scope
 only within the block and within enclosing blocks, if not shadowed.
 Variables, functions, data types, and traits defined within the block are in scope throughout the block.
@@ -1754,6 +1757,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTU0OTY1OTA1LDExMTIzMTI5NTEsLTg0Mj
-UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTExMTA1OTAxNDMsMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
