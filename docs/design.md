@@ -271,13 +271,17 @@ An expression `#(e)` or `#{e}` is a core expression.
 A core expression is statically typed. Captured variables are always of type `box`.
 
 	if let i32 x = unbox e { .. }
-	match unbox e {
+	
+	unbox e {
 	    x: i32 => ...
 	    x: i64 => ...
 	    x: f32 => ...
 	    x: f64 => ...
 	    _ => ...
 	}
+
+The result of a core expression must be a box.
+
 
 
 ## Lists
@@ -1574,8 +1578,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTg5NTgzNDYwOCwtMTI2NjY0NjgxNywxOD
-Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
-OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOT
-k0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbLTE3ODcyODA5MjAsLTEyNjY2NDY4MTcsMT
+g0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0
+NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLT
+k5NDY5NDI3MF19
 -->
