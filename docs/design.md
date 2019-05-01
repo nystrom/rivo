@@ -298,113 +298,10 @@ another name for the forward mode `+` operator.
 A qualified name consists of a module name (which is just a qualified name)
 a `.` and a simple name (as above).
 
-## Pattern matching application
-
-The expression `let` introduces variables into scope. `let` can be followed by a binding formula.
-
-    let x = 3
-    let [x,y,z] = [1,2,3]
-
-The left-hand-side of the binding is a *pattern* and the right-hand-side is an *expression*.
-Any variable name in the pattern is an *unknown*. The expression is evaluated and the pattern
-is evaluated against the expression to bind the unknowns.
-Patterns are first-class in Fretta. They're just functions which return the bound values.
-Consider the following binding:
-
-    let x + 2 = 5
-
-This binds `x` to `3`, because `3` is the unique value for which the `x + 2` is `5`.
-What's really happening is that the pattern `x + 2` is evaluated against `5`.
-Indeed, the `let` is equivalent to the following binding:
-
-    let x = (! + ? = ?) 2 5
-
-Here `! + ? = ?` is a reference to a *backward mode* of the `+` operator that
-takes one operand and the return value and returns the other operand.
-Indeed `+` actually defines three modes:
-
-    ? + ? = !     # forward mode
-    ! + ? = ?     # backward mode: solve for the first operand
-    ? + ! = ?     # backward mode: solve for the second operand
-
-A `let` can also be followed by an arbitrary boolean formula. The formula is evaluated in
-a backward mode to find the solution to any unknowns. It is a compile-time error if there is more than one solution.
-For instance, the following is equivalent to the last binding above:
-
-    let x + 2 == 5   # binds x to 3, since 3 is the unique solution to x + 2 == 5
-
-This is equivalent to:
-
-    let x = (? + _ = _ ) 2 ((? == _ = _ ) 5 True)
-
-In principle, `+` could have another mode:
-
-    ? + ? = _
-
-In this mode, there is not a unique solution and calling the function will return
-a stream of all possible solutions.
-The backward modes of `+` are defined as:
-
-    fun (-> x) + y = z
-      where
-        x = z - y
-    
-    fun x + (-> y) = z
-      where
-        y = z - x
-
-The backward modes of `==` are:
-
-    fun (-> x) == y = True
-      where
-        x = y
-    
-    fun x == (-> y) = True
-      where
-        y = x
-    
-    fun (-> x) == y = False
-      where
-        x = [x where x: a, x != y]    # iterate through all values of type a, except x
-        x = undefined                 # or just fail
-
-A `where` expression lets us get a stream of all the satisfying assignments of a formula.
-
-    [x where 0 < x && x <= 10]
-
-Streams are lazy and can be infinite.
-
-    fretta> let xs = [x: Int where x > 0]
-    xs :: Stream[Int] = _
-    fretta> head xs
-    1
-
-Only the first element of `xs` is computed when the `head` is taken. The other elements are not computed until forced.
-Since `xs` is an infinite stream, the following will go into an infinite loop testing if each value is less than 10. Haskell has the same behavior with list comprehensions. We could in principle decide for some streams whether they are infinite or not, but this is in general undecidable.
-
-    fretta> let zs = [x where ys contains x && x odd && x < 10]
-    zs :: Stream[Int] = _
-    fretta> list zs
-    [1,3,5,7,9   (loop)
-## Streams
-
-An invertible function generates a stream if it has an iterator mode.
-A type ascription `p: T` generates a stream if `T` implements trait `Bounded` and `Inc`.
-These traits can be implemented by default for some data types (cf. `deriving`).
-
-
-## Exceptions
-
-`throw e`  evaluates expression `e` and throws it as an exception.
-`e1 catch e2` evaluates `e1`. If an exception is thrown by `e1`, the exception value is
-passed to the function `e2`. If `e2`'s parameter pattern does not match the exception value, the exception is rethrown.
-The `undefined` expression throws the `Error("undefined")` exception value.
-`error e` evaluates the string `e` to string value `v` and throws a `Error(v)` exception value.
-`e1 finally e2` evaluates `e1`. Regardless of how `e1` terminates, `e2` is evaluated. The result of the computation is the value of `e1` . `e2` is evaluated for any side effects.
 
 ## Data definitions
 
-A data definition introduces a fixed-size type. The body of a data definition is either a pattern specifying the
+A `data` definition introduces a data type. The body of a `data` definition is either a pattern specifying the
 constructor argument(s) for values of the type, or a sequence of constructor definitions.
 A constructor definition consists of a constructor name and a sequence of patterns.
 For example, the following is data definition for a two-dimensional point struct.
@@ -1743,7 +1640,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTM1OTIyMzUzNywxMDAyNjQ1NTU5LC05OD
+eyJoaXN0b3J5IjpbLTYwMTIxMzk4MCwxMDAyNjQ1NTU5LC05OD
 MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
 OSwtOTk0Njk0MjcwXX0=
 -->
