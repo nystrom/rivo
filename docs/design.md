@@ -163,7 +163,7 @@ The expression `x` or `!x` evaluates to the value in variable `x`.
 
 The pattern `x` or `?x` binds variable `x`
 
-## let expressions
+### let expressions
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
 
      let 2 + x == 5 {
@@ -182,7 +182,7 @@ binds `x` to `1` and `xs` to the list `[2,3]`.
 It is a dynamic error for a formula used in a `let` to generate zero satisfying assignments or more than one satisfying assignment.
 The `let` binds any variables in the formula not already bound. If all variables are bound already, the expression must evaluate to `True`.
 
-## if expressions
+### if expressions
 
 An `if` expression is like a `let`, but does not generate an error if the formula does not have a solution.
 
@@ -192,7 +192,7 @@ An `if` expression is like a `let`, but does not generate an error if the formul
 An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of an `if` without an `else` is the unit value. The result of an `if` with an `else` is the result of whichever clause is evaluated.
 
-## for expressions
+### for expressions
 
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
@@ -208,7 +208,7 @@ A `for` expression is like a `let`, but evaluates the body for each solution, re
 A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of a `for` expression is a stream of the `for` body results, or the empty stream if there is no `else` or the singleton stream of the `else` body.
 
-## var expressions
+### var expressions
 These are just like `let` expressions, but define mutable variables. For instance:
 
 	var 2 + x == 5 {
@@ -216,7 +216,7 @@ These are just like `let` expressions, but define mutable variables. For instanc
 	    print x    // prints 6
 	}
 
-## local definitions expressions
+### local definitions expressions
 
 A `let` expression can also declare a function or trait, or a group of mutually recursive functions.
 
@@ -237,7 +237,7 @@ A `let` expression can also declare a function or trait, or a group of mutually 
         ...
     }
     
-## Blocks
+### Blocks
 
 A lexical block is enclosed in curly brackets `{}`.
 
@@ -253,7 +253,7 @@ If a variable is captured by a function (including within a trait or instance de
 If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
 The value of the block is the value of the last expression in the block.
 
-## Streams
+### Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
 A stream may be empty, finite, or infinite.
@@ -299,16 +299,16 @@ A qualified name consists of a module name (which is just a qualified name)
 a `.` and a simple name (as above).
 
 
-## Data definitions
+## Type definitions
 
-A `data` definition introduces a data type. 
+A `type` definition introduces a data type. Members of the type are records.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
 
-	data Nil   // defines Nil { }
-	data Cons (hd: a) (tl: List a)  // defines Cons { hd, tl }
+	type Nil   // defines Nil { }
+	type Cons (hd: a) (tl: List a)  // defines Cons { hd, tl }
 
-     type List a
+    type List (a) = Nil | Cons (a) (List a)
 
 ## Trait definitions
 
@@ -1671,7 +1671,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MzcxNzYyNzYsMTg0NTY2MDk3LC02OT
-cxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1
-MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTY2NjQxNTYzOCwxODQ1NjYwOTcsLTY5Nz
+EyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUx
+LC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
