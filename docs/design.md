@@ -99,7 +99,15 @@ Formulas may be used as declarations.
 
 Any literal is an expression that evaluates to the value of the literal.
 
-###
+### Tuples
+
+A tuple `(e1, e2, e3)` is equivalent to `Prelude::Tuple e1 e2 e3`.
+
+### Lists
+
+The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Cons e2 (Prelude::Cons e3 Prelude::Nil))`.
+
+### 
 
 ## Blocks
 
@@ -1704,6 +1712,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTAyOTMzNjE1LDExMTIzMTI5NTEsLTg0Mj
-UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMTgzMzc1OTkzMCwxMTEyMzEyOTUxLC04ND
+I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
