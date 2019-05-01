@@ -113,7 +113,7 @@ A `let` expression tries to satisfy a formula, binding new variables as necessar
          print x
      }
   
-causes `x` to be bound to 3 in the body, which prints `x`. The value of a `let` expression is the value of the body. Variables bound in the `let` are in scope for the remainder of the enclosing block.
+causes `x` to be bound to 3 in the body, which prints `x`. The value of a `let` expression is the value of the body. Variables bound in the `let` are in scope for the remainder of the enclosing block. `let`-bound variables are immutable.
 The formula:
 
     let x :: xs == [1,2,3] {
@@ -129,7 +129,7 @@ The `let` binds any variables in the formula not already bound. If all variables
 
 An `if` expression is like a `let`, but does not generate an error if the formula does not have a solution.
 
-    if (2 + x == 5) {
+    if 2 + x == 5 {
         print x
     }
 An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
@@ -140,15 +140,13 @@ The result of an `if` without an `else` is the unit value. The result of an `if`
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
     # prints 1,2,3
-    for (x in [1,2,3]) {
+    for x in [1,2,3] {
         print x
     }
 
-    # prints 2,4,6
-    for (x in (for (y in [1,2,3]) y*2)) {
-        print x
-    }
-    
+	for x in [1,2,3]
+
+  
 A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of a `for` expression is a stream of the `for` body results, or the empty stream if there is no `else` or the singleton stream of the `else` body.
 
@@ -1696,6 +1694,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg1MTIwMzE4OSwxMTEyMzEyOTUxLC04ND
-I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbLTE3NzEyMjEzODcsMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
