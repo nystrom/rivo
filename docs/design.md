@@ -403,7 +403,7 @@ Each alternative is given by the function name and patterns for each argument, a
     fun (x) + (y) = iadd x y
 
 
-## Mix-fix functions
+## Mixfix functions
 
 Mixfix operators may be declared with `fun` definitions. A function is *mixfix* if its signature
 includes a symbol identifier or any identifier after the first position.
@@ -1559,8 +1559,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNTUwMzM4NSwtMTI2NjY0NjgxNywxOD
-Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
-OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOT
-k0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbNjM2NDcxMTkyLC0xMjY2NjQ2ODE3LDE4ND
+U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
+LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
+Q2OTQyNzBdfQ==
 -->
