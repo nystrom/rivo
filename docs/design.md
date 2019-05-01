@@ -93,6 +93,14 @@ A formula is a boolean pattern. A formula is matched against the boolean value
 `True`, binding any  unknown variables to values that satisfy the formula. Formulas are used in variable declarations and in `for` and `let` expressions.
 Formulas may be used as declarations.
 
+## Expressions
+
+### Literals
+
+Any literal is an expression that evaluates to the value of the literal.
+
+###
+
 ## Blocks
 
 A few language features introduce a block scope. Names defined inside the block are in scope
@@ -140,11 +148,13 @@ The result of an `if` without an `else` is the unit value. The result of an `if`
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
     # prints 1,2,3
+    # evalutaes to the stream (),(),()
     for x in [1,2,3] {
         print x
     }
 
-	for x in [1,2,3]
+	# evaluates to the stream 2,3,4
+	for x in [1,2,3] { x + 1 }
 
   
 A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
@@ -1694,6 +1704,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3NzEyMjEzODcsMTExMjMxMjk1MSwtOD
-QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbNTAyOTMzNjE1LDExMTIzMTI5NTEsLTg0Mj
+UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
