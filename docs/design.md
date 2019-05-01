@@ -280,7 +280,9 @@ A core expression is statically typed. Captured variables are always of type `bo
 	    _ => ...
 	}
 
-The result of a core expression must be a `box` or a `Result`.
+The result of a core expression must be a `box`.
+
+The only core types are `i32`, `i64`, `f32`, `f64`, `i8`, `i16`, and `box`, and function types.
 
 ## Lists
 
@@ -1576,8 +1578,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTc3ODIyNDA1LC0xMjY2NjQ2ODE3LDE4ND
-U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
-LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
-Q2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxOD
+Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
+OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOT
+k0Njk0MjcwXX0=
 -->
