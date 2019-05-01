@@ -238,9 +238,9 @@ These are just like `let` expressions, but define mutable variables. For instanc
 	    print x    // prints 6
 	}
 
-## local function definitions expressions
+## local definitions expressions
 
-A `let` expression can also declare a function, or a group of mutually recursive functions.
+A `let` expression can also declare a function or trait, or a group of mutually recursive functions.
 
     let fun f (x) = 1 {
         f 2
@@ -254,12 +254,14 @@ A `let` expression can also declare a function, or a group of mutually recursive
 		odd 7
 	}
 
+    let N
+
 ## Blocks
 
 A lexical block is enclosed in curly brackets `{}`.
 
-A block expression may contain both express
-
+A block expression may contain both expressions and definitions.
+The block with nested definitions is equivalent to a `let` 
 ## Streams
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
@@ -1796,7 +1798,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg3ODg4NTUxMiwxMDAyNjQ1NTU5LC05OD
-MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
-OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbNTc0NzgyMDg0LDEwMDI2NDU1NTksLTk4Mz
+M0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5
+LC05OTQ2OTQyNzBdfQ==
 -->
