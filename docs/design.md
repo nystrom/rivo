@@ -132,6 +132,10 @@ An `if` expression is like a `let`, but does not generate an error if the formul
 An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of an `if` without an `else` is the unit value. The result of an `if` with an `else` is the result of whichever clause is evaluated.
 
+## while expression
+
+## for expressions
+
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
     # prints 1,2,3
@@ -162,25 +166,6 @@ A stream may be empty, finite, or infinite.
 Streams can also be created directly by implementing the `Stream` trait.
 A `for` expression can iterate through a stream.
 Any unknowns in the formula are bound in the body of the `for` .
-`for (xs contains x && x > 0) do print x end` 
-
-
-    if (exists? [x where xs contains (let x)])
-      then print x
-      else () # x not in scope
-
-The rule that makes `if` work: variables bound in a formula used as an argument to a function call are in scope when
-evaluating subsequent arguments of the call. It is a runtime error to access one of these variables if the formula was `False`.
-In a function declaration, can annotate arguments with whether the variables bound in an earlier boolean argument are in scope or not.
-The compiler checks that these arguments are only evaluated if the formula is `True`.
-
-    fun if (@formula Boolean) then {@scope a} else {a} -> a
-    fun if (True) then e else _ = e
-    fun if (False) then _ else e = e
-    
-    fun if (@formula Boolean) then {@scope a} else {a} -> a
-    fun if {f} then {e1} else {e2} =
-      f.foreach { fun x: (e1[x]; break) } else e2
 
 The annotations are not needed since they can be inferred from the definition.
 
@@ -1710,6 +1695,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
-Q2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTY3ODQwMzgxMiwtODQyNTEwOTAsLTEzNj
+k1ODMyNzksLTk5NDY5NDI3MF19
 -->
