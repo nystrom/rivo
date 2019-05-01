@@ -99,21 +99,23 @@ Formulas may be used as declarations.
 
 Any literal is an expression that evaluates to the value of the literal.
 
-### Tuples
+### Tuple literals
 
 A tuple `(e1, e2, e3)` is equivalent to `Prelude::Tuple e1 e2 e3`.
 
-### Lists
+### List literals
 
 The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Cons e2 (Prelude::Cons e3 Prelude::Nil))`.
 
-### Sets
+### Set literals
 
-The set literal `{[e1, e2, e3]}` is equivalent to `Prelude::Set::fromList [e1, e2, e3]`
+The set literal `Set [e1, e2, e3]` is equivalent to `Prelude::Set::fromList [e1, e2, e3]`.
 
-### Maps
+### Dictionary literals
 
-The map literal `{[e1 -> e2, e3 -> e4]}` is equivalent to `Prelude::Map::fromList [(
+The map literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Map::fromList [(e1, e2), (e3, e4)]`.
+
+
 
 ## Blocks
 
@@ -1718,6 +1720,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzY2Njg5ODMyLDExMTIzMTI5NTEsLTg0Mj
-UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMjEzNjcyNzkxNywxMTEyMzEyOTUxLC04ND
+I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
