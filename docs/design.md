@@ -54,22 +54,23 @@ Because Ivo has few built-in constructs, the language has very few reserved symb
     ->
     _
 
-**Literals**
-**Integers**
+#### Literals
+
+##### Integers
 Ivo provides several kinds of numbers.
 Integer literals can be of any length.
-A decimal integer matches the regular expression  `0 | \[1-9\] [_0-9]*`.
+A decimal integer matches the regular expression  `0 | [1-9] [_0-9]*`.
 A binary integer matches the regular expression  `0b[_0-1]+`.
 A hexadecimal integer matches the regular expression  `0x[_0-9a-fA-F]+`.
-**Rationals**
+##### Rationals
 Rational numbers can be written as `decimal . decimal e[+-]? decimal`, or as `hexadecimal . hexadecimal p[+-?] hexadecimal`.
 Integer and rational literals are overloaded to support different number
 representations.
-**Characters**
+##### Characters
 A character literal is enclosed in single quotes. There are the usual escapes.
 Ivo supports Unicode-21 characters.
 Character literals are overloaded to support characters in different encodings.
-**Strings**
+##### Strings
 A string literal is enclosed in double quotes. There are the usual escapes.
 String literals are overloaded to support different string representations.
 Strings can be implemented as lists, arrays, ropes, etc.
@@ -84,7 +85,7 @@ An expression is a term that evaluates to a value.
 Patterns are terms with unknown variables. A pattern may be matched against an expression of the same type, binding the unknowns variables in the pattern to values. A pattern does not itself evaluate to a value. 
  
 A formula is a boolean pattern. A formula is matched against the boolean value 
-`True`, binding any  unknown variables to values that satisfy the formula.
+`True`, binding any  unknown variables to values that satisfy the formula. Formulas are used in declarations and in `for` and `let` expressions.
 Formulas may be used as declarations.
 
 ## Patterns
@@ -1708,5 +1709,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDY3NDQ4OTE0XX0=
+eyJoaXN0b3J5IjpbMjA2ODE3ODQ4Nl19
 -->
