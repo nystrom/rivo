@@ -303,6 +303,11 @@ a `.` and a simple name (as above).
 
 A `data` definition introduces a data type. 
 
+The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
+
+	data Nil   // 
+	
+
 The body of a `data` definition is either a pattern specifying the
 constructor argument(s) for values of the type, or a sequence of constructor definitions.
 A constructor definition consists of a constructor name and a sequence of patterns.
@@ -1642,7 +1647,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
-MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
-OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbMTI4ODQyOTg2MCwtNjk3MTI4Mzg0LDEwMD
+I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
+LC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
