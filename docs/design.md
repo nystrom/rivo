@@ -117,11 +117,11 @@ The set literal `Set [e1, e2, e3]` is equivalent to `Prelude::Set::fromList [e1,
 
 ### Dictionary literals
 
-The dictionary literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
+The dictionary literal `Dict {e1: e2, e3: e4]` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
 
 ### Struct literals
 
-The struct literal `{ x1: e1; ...; xn: en }` 
+The struct literal `T { x1: e1; ...; xn: en }` is a struct with tag `T` and members `xi` initialized to `ei`.
 
 ### Lambdas
 
@@ -148,7 +148,7 @@ If `e` is a stream, `e.x` is the stream of all members named `x` in any element 
 
 ### Union expressions
 
-The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`.
+The expression `e1 with e2` evaluates to the stream containing the values of `e1` and `e2`. All members of the stream must have the same tag.
 
 ### Variables
 
@@ -1761,6 +1761,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTMxMDI1NDU0MywxMTEyMzEyOTUxLC04ND
-I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbLTE1OTYwOTA0OTUsMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
