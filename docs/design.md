@@ -307,7 +307,11 @@ The definition may take parameter patterns. Unknowns in the parameter patterns a
 
 	data Nil   // defines Nil { }
 	data Cons (hd: a) (tl: List a)  // defines Cons { hd, tl }
-	
+
+## Trait definitions
+
+A `trait` definition defines a trait or trait instance.
+If the parameters of the trait are unknowns, the definition is a trait defini
 	
 
 The body of a `data` definition is either a pattern specifying the
@@ -1649,7 +1653,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMj
-Y0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAs
-LTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTExODcyOTU0NTMsMTg0NTY2MDk3LC02OT
+cxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1
+MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
