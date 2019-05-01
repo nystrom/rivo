@@ -301,7 +301,9 @@ a `.` and a simple name (as above).
 
 ## Data definitions
 
-A `data` definition introduces a data type. The body of a `data` definition is either a pattern specifying the
+A `data` definition introduces a data type. 
+
+The body of a `data` definition is either a pattern specifying the
 constructor argument(s) for values of the type, or a sequence of constructor definitions.
 A constructor definition consists of a constructor name and a sequence of patterns.
 For example, the following is data definition for a two-dimensional point struct.
@@ -1640,7 +1642,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTYwMTIxMzk4MCwxMDAyNjQ1NTU5LC05OD
+eyJoaXN0b3J5IjpbLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
 MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
 OSwtOTk0Njk0MjcwXX0=
 -->
