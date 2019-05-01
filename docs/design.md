@@ -133,8 +133,8 @@ The expression `p <- e` matches the stream `e` against pattern `p`. If any eleme
 
 ### Assignment expressions
 
-The expression `p = e` matches the expression `e` against pattern `p`.
-If successful, the va
+The expression `p := e` matches the expression `e` against pattern `p`.
+If successful, the `var` unknowns in `p` are overwritten.
 
 ### Select expressions
 
@@ -152,6 +152,7 @@ The pattern `x` or `?x` binds variable `x`
 
 ### Blocks
 
+The expression `{ e1; e2; ...
 A few language features introduce a block scope. Names defined inside the block are in scope
 only within the block and within enclosing blocks, if not shadowed.
 Variables, functions, data types, and traits defined within the block are in scope throughout the block.
@@ -1753,6 +1754,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkyOTkwNjQ3MSwxMTEyMzEyOTUxLC04ND
-I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbMTU0OTY1OTA1LDExMTIzMTI5NTEsLTg0Mj
+UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
