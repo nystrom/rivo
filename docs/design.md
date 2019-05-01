@@ -106,22 +106,27 @@ Any value literal is an expression that evaluates to the value of the literal.
 ### Tuple literals
 
 A tuple `(e1, e2, ..., en)` is equivalent to `Prelude::Tuple e1 e2 ... en`.
+`n` must be at least 2.
+
+The expression `(e)` is equivalent to `e`.
+
+The expression `()` is the nil literal.
 
 ### List literals
 
-The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Cons e2 (Prelude::Cons e3 Prelude::Nil))`.
+The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Cons e2 (Prelude::Cons e3 Prelude::Nil))`. `n` may be 0.
 
 ### Set literals
 
-The set literal `Set {e1, e2, e3}` is equivalent to `Prelude::Set::fromList [e1, e2, e3]`.
+The set literal `Set {e1, e2, e3}` is equivalent to `Prelude::Set::fromList [e1, e2, e3]`. `n` may be 0.
 
 ### Dictionary literals
 
-The dictionary literal `Dict {e1: e2, e3: e4}` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
+The dictionary literal `Dict {e1: e2, e3: e4}` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`. `n` may be 0.
 
 ### Struct literals
 
-The struct literal `T { x1: e1; ...; xn: en }` is a struct with tag `T` and members `xi` initialized to `ei`. 
+The struct literal `T { x1: e1; ...; xn: en }` is a struct with tag `T` and members `xi` initialized to `ei`. `n` may be 0.
 
 ### Lambdas
 
@@ -1761,6 +1766,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTA2OTg1ODAyNSwxMTEyMzEyOTUxLC04ND
-I1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbMzAxNjgxNTAzLDExMTIzMTI5NTEsLTg0Mj
+UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
