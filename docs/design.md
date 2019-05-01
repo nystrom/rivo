@@ -109,20 +109,22 @@ The value of the block is the value of the last expression in the block.
 ## Let expressions
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
 `let 2 + x == 5` 
-causes `x` to be bound to 3. The value of a `let` expression is `. Variables bound in the `let` are in scope for the remainder of the enclosing block.
+causes `x` to be bound to 3. The value of a `let` expression is the boolean `True`. Variables bound in the `let` are in scope for the remainder of the enclosing block.
 The formula:
 
     let x :: xs == [1,2,3]
 
 binds `x` to 1 and `xs` to the list `[2,3]`.
-It is a static error for a formula used in a `let` to generate zero satisfying assignments or
+It is a dynamic error for a formula used in a `let` to generate zero satisfying assignments or
 more than one satisfying assignment.
-The let binds any variables in the formula not already bound. If all variables are bound already, the expression must evaluate to True, statically.
-FIXME Unknowns must be declared.
-**Var expressions**
-These are just like `let` expressions, but define
-mutable variables.
-`var 2 + x == 5` 
+The `let` binds any variables in the formula not already bound. If all variables are bound already, the expression must evaluate to True, statically.
+
+## Var expressions
+These are just like `let` expressions, but define mutable variables. For instance:
+
+	var 2 + x == 5
+	x = x + 1
+
 **Streams**
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
@@ -1694,5 +1696,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTQzNjI3NzAyNV19
+eyJoaXN0b3J5IjpbMTM2OTA2MzYxMF19
 -->
