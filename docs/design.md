@@ -270,7 +270,7 @@ Any unknowns in the formula are bound in the body of the `for` .
 An expression `#(e)` or `#{e}` is a core expression.
 A core expression is statically typed. Captured variables are always of type `box`.
 
-	if let i32 x = unbox e { .. }
+	if let x: i32 = unbox e { .. }
 	
 	unbox e {
 	    x: i32 => ...
@@ -280,9 +280,7 @@ A core expression is statically typed. Captured variables are always of type `bo
 	    _ => ...
 	}
 
-The result of a core expression must be a box.
-
-
+The result of a core expression must be a `box` or a `Result`.
 
 ## Lists
 
@@ -1578,8 +1576,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3ODcyODA5MjAsLTEyNjY2NDY4MTcsMT
-g0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0
-NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLT
-k5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbNTc3ODIyNDA1LC0xMjY2NjQ2ODE3LDE4ND
+U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
+LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
+Q2OTQyNzBdfQ==
 -->
