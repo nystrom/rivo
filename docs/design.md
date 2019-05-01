@@ -113,11 +113,11 @@ The set literal `Set [e1, e2, e3]` is equivalent to `Prelude::Set::fromList [e1,
 
 ### Dictionary literals
 
-The map literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Map::fromList [(e1, e2), (e3, e4)]`.
+The map literal `Dict [e1 -> e2, e3 -> e4]` is equivalent to `Prelude::Dict::fromList [(e1, e2), (e3, e4)]`.
 
 ### 
 
-## Blocks
+### Blocks
 
 A few language features introduce a block scope. Names defined inside the block are in scope
 only within the block and within enclosing blocks, if not shadowed.
@@ -1720,6 +1720,6 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNTU1ODQ5MTAsMTExMjMxMjk1MSwtOD
+eyJoaXN0b3J5IjpbLTExMjU2MzA0ODksMTExMjMxMjk1MSwtOD
 QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
