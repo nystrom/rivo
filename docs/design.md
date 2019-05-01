@@ -130,7 +130,7 @@ An `if` expression is like a `let`, but does not generate an error if the formul
         print x
     }
 An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
-The result of the `if` is 
+The result of an `if` without an `else` is the unit value. The result of an `if` with an `else` is the result of whichever clause is evaluated.
 
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
@@ -1725,5 +1725,5 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MDkyMTA1NTJdfQ==
+eyJoaXN0b3J5IjpbMjIxNjE5ODU5XX0=
 -->
