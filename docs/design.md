@@ -159,7 +159,7 @@ The expression `e1 | e2` evaluates to the stream containing the values of `e1` a
 
 ### Intersection expressions
 
-The expression `e1 & e2` evaluates to the stream containing just `e1` if it is equal to `e2` and to the empty stream otherwise.
+The expression `e1 & e2` evaluates to the stream containing just `e1` if it is equal to `e2` and to the empty stream `()` otherwise.
 
 ### Variables
 
@@ -334,51 +334,6 @@ If the parameters of the trait are not unknowns, they must be types. This define
     }
 
        
-	
-
-The body of a `data` definition is either a pattern specifying the
-constructor argument(s) for values of the type, or a sequence of constructor definitions.
-A constructor definition consists of a constructor name and a sequence of patterns.
-For example, the following is data definition for a two-dimensional point struct.
-
-    data Point:
-      let x: Float
-      let y: Float
-
-A data definition defines a constructor to create values of the data type. The constructor has the same name as the type and takes an argument that must match the patterns in the definition.
-In the case above, the definition induces a constructor function names `Point`:
-
-    fun Point (Float) (Float) -> Point
-    fun Point (let x: Float) (let y: Float) = (inject :: (Float,Float) -> Point) (x, y)
-
-[N.B. The `inject` function is a compiler intrinsic of type `a -> b` that can be used only in constructor implementation. It cannot be called directly by client code. It's really only there to make the type-checker happy. Operationally it adds (or replaces) a tag on an injected value.]
-To create a `Point`, we invoke the `Point` constructor passing in two `Float` values.
-
-    Point 1.2 3.4
-
-The representation of a value of the data type is a tuple (struct) consisting of all the unknowns in the constructor pattern.
-Fields of the struct can be accessed using the field selector functions.
-The data definition induces the accessor definitions:
-
-    fun (Point) . x -> Float
-    fun (Point x y) . x = x
-    
-    fun (Point) . y -> Float
-    fun (Point x y) . y = y
-
-A data definition may optionally provide different constructors, which will result in different representations of the data type.
-For example:
-
-    data Point:
-      case Point1:
-        let x: Float
-      case Point2:
-        let x: Float
-        let y: Float
-      case Point3:
-        let x: Float
-        let y: Float
-        let z: Float
 
 It is required that fields of the same name have the same type. This ensures the selector functions are well-typed and can be
 implemented as one function with many alternatives.
@@ -1675,7 +1630,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTM2OTQ3NDYzLDE4NDU2NjA5NywtNjk3MT
-I4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEs
-LTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMTQ4MDg1NTg2NiwxODQ1NjYwOTcsLTY5Nz
+EyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUx
+LC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
