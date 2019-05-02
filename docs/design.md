@@ -341,7 +341,12 @@ The following are equivalent:
 
 A `data` definition may contain a field definitions.
 
-A field definition is either a `let` definition, 
+A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
+(Nested `trait` and `data` definitions are also allowed?).
+
+A `let` definition consists of the keyword `let` and a formula. The unknowns in the formula become fields of the recor
+A fun definition 
+
 	data Nil   // defines Nil { }
 	data Cons (hd) (tl)  // defines Cons { hd, tl }
 
@@ -1592,7 +1597,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTAyMTk0Njc3MiwxMDIxODY1MjY4LC0xMj
+eyJoaXN0b3J5IjpbLTM4NzM4MTc1NywxMDIxODY1MjY4LC0xMj
 Y2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1
 NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMz
 Y5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
