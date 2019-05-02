@@ -332,14 +332,18 @@ The following are equivalent:
 
     data Nil
     data Nil { }
+    data Nil { _ }
 
     data Cons (hd) (tl)
+    data Cons (hd) (tl) { _ }
     data Cons (hd') (tl') { let hd = hd'; let tl = tl' }
     
     data P (a) (b::bs) (c)
     data P (a') (bs') (c') { let a = a'; let b::bs = bs' }
 
-A `data` definition may contain a field definitions.
+A `data` definition may contain a record with field definitions.
+If the record is missing, the fields are captured from the definition parameters.
+The field definition `_` captures 
 
 A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
 (Nested `trait` and `data` definitions are also allowed?).
@@ -1597,8 +1601,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0NjExMjU2OSwxMDIxODY1MjY4LC0xMj
-Y2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1
-NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMz
-Y5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTE5MDMzNzIyNTUsMTAyMTg2NTI2OCwtMT
+I2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1
+NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMT
+M2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
