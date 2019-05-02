@@ -466,7 +466,11 @@ We can simulate polymorphic variants with traits.
     instance RGB (Green)
     instance RGB (Blue)
     
-        type RGBW = RGB | White
+    type RGBW = RGB | White
+
+    trait RGBW (a)
+    instance RGB a => RGBW a
+    instance RGBW (White)
 
 
     fun f (x: RGB) = x
@@ -1733,10 +1737,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5NDIwMTAyOTEsNTI2MDI2ODE0LDUzNj
-M2OTYzNiw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIs
-NzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNj
-Y2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1
-OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNj
-k1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2Mz
+Y5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3
+MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2Nj
+Y0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5
+LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OT
+U4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
