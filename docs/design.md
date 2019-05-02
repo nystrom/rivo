@@ -334,8 +334,10 @@ The following are equivalent:
     data Nil
 
     data Cons (hd) (tl)
-    data Cons (hd) (tl) { hd = hd, tl = tl }
-    data Cons (hd) (tl) 
+    data Cons (hd') (tl') { let hd = hd'; let tl = tl' }
+    
+    data P (a) (b::bs)
+    data P (a') (bs') { let a = a'; let b::bs = bs' }
 
 	data Nil   // defines Nil { }
 	data Cons (hd) (tl)  // defines Cons { hd, tl }
@@ -1587,8 +1589,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTU1OTc0ODg3LDEwMjE4NjUyNjgsLTEyNj
-Y2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1
-OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNj
-k1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTE0NjE5OTMwOTIsMTAyMTg2NTI2OCwtMT
+I2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1
+NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMT
+M2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
