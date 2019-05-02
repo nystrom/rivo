@@ -473,38 +473,19 @@ The following are equivalent (given the `Cons` type constructor above).
 	type List (a) = Nil | Cons a (List a)
 	type List (a) = Nil | Cons { hd: a, tl: List a }
 
-Type definitions can be parameterized:
-
-	type List (a) = Nil | Cons (a) (List a)
-
-## Types
-
-We can simulate polymorphic variants with traits.
-
-    type RGB = Red | Green | Blue
-    
-    trait RGB (a)
-    instance RGB (Red)
-    instance RGB (Green)
-    instance RGB (Blue)
-    
-    type RGBW = RGB | White
-
-    trait RGBW (a)
-    instance RGB a => RGBW a
-    instance RGBW (White)
-
 ### Core types
 
-We have the core types `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
+We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
 
 ### Any type
 
-`_` is the type of any value. Maybe should be called `?`.
+`_` is the type of any value. 
+All types are a subtype of `_`.
 
-### Nil type
+### Nothing type
 
-`()` is the type of no value. Maybe should be called `!`.
+`!` is the type of no value.
+All types are a supertype of `!`.
 
 ### Dynamic type
 
@@ -1768,11 +1749,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTExMzg2ODg2NiwtMTU1MTEzNDc3OSwtMT
-M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
-Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
-I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
-MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzldfQ==
+eyJoaXN0b3J5IjpbLTIwMTEwMzY5NDgsLTE1NTExMzQ3NzksLT
+EzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2
+MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMD
+kyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2
+ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLT
+k4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgz
+Mjc5XX0=
 -->
