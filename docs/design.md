@@ -450,6 +450,10 @@ induces
 
 A `data` definition induces a `type` definition.
 
+	type Nil
+	type Cons (a) = Cons (a) (List a)
+	type List 
+
 ## Type definitions
 
 A type definition specifies a type.
@@ -1701,9 +1705,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
-I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
-MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTE3MjIxMzM5MjIsMTU2OTA2ODkzMCw4ND
+Q5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUy
+NjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMT
+AwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEw
+OTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
