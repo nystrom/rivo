@@ -351,6 +351,7 @@ The following are equivalent:
     }
 
 A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
+
 (Nested `trait` and `data` definitions are also allowed?).
 
 A `let` definition consists of the keyword `let` and a formula. The unknowns in the formula become immutable fields of the record.
@@ -366,6 +367,12 @@ Or define a trait.
     trait List (a)
     trait List (Nil)
     trait List (Cons _ _)
+
+## Patterns
+
+Any expression is a pattern matching the value of the expression.
+
+
 
 ## Trait definitions
 
@@ -1606,8 +1613,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNjQ1MDEzMTIsLTE1Mzc0MjU3MTEsMT
-AyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEy
-ODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC
-04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbODEzODI3ODA3LC0xNTM3NDI1NzExLDEwMj
+E4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgz
+ODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
