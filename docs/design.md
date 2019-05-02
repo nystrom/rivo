@@ -424,6 +424,14 @@ The following are equivalent:
         let c = c' 
     }
 
+A `data` definition induces a pattern function. For instance,
+
+	data Cons (hd) (tl)
+
+induces
+
+	fun Cons (! hd) (! tl) = Cons { hd, tl }
+
 A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
 
 (Nested `trait` and `data` definitions are also allowed?).
@@ -1684,7 +1692,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc5MzcyMzQwMCw4NDQ5Mzk1MTIsNzIwOT
+eyJoaXN0b3J5IjpbMTczMzEzNDYyNCw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
 MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
 gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
