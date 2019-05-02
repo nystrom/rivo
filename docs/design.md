@@ -495,7 +495,8 @@ Any record `Foo { ... }` has type `Foo`.
 ### Parameterized types
 
 `C t` is a type of `C` is a type constructor (of kind `* -> *`) and `t` is a type. 
-As a specific instance, `s -> t` is a type if `s` and `t` are types. 
+As a specific instance, the function type `s -> t` is a type if `s` and `t` are types. 
+Also tuple types, list types, etc.
 
 ### Type parameters
 
@@ -1758,11 +1759,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODk2MTI1MTg3LC0xMzQ3MTEwNDQsMTg0OT
-E2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwx
-NTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0Mj
-U3MTEsMTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcs
-LTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMz
-EyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0Mjcw
-XX0=
+eyJoaXN0b3J5IjpbLTIxMjg3MTY4MjMsLTEzNDcxMTA0NCwxOD
+Q5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2
+LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNz
+QyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5
+NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMT
+IzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQy
+NzBdfQ==
 -->
