@@ -336,16 +336,16 @@ The following are equivalent:
     data Cons (hd) (tl)
     data Cons (hd') (tl') { let hd = hd'; let tl = tl' }
     
-    data P (a) (b::bs)
-    data P (a') (bs') { let a = a'; let b::bs = bs' }
+    data P (a) (b::bs) (c)
+    data P (a') (bs') (c') { let a = a'; let b::bs = bs' }
 
 A `data` definition may contain a field definitions.
 
 A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
 (Nested `trait` and `data` definitions are also allowed?).
 
-A `let` definition consists of the keyword `let` and a formula. The unknowns in the formula become fields of the recor
-A fun definition 
+A `let` definition consists of the keyword `let` and a formula. The unknowns in the formula become immutable fields of the record.
+A `var` definition consists of the keyword `var` and a formula. The unknowns in the formula become mutable fields of the record.
 
 	data Nil   // defines Nil { }
 	data Cons (hd) (tl)  // defines Cons { hd, tl }
@@ -1597,7 +1597,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTM4NzM4MTc1NywxMDIxODY1MjY4LC0xMj
+eyJoaXN0b3J5IjpbLTE0NjExMjU2OSwxMDIxODY1MjY4LC0xMj
 Y2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1
 NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMz
 Y5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
