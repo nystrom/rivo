@@ -450,28 +450,23 @@ induces the following definitions:
 
 Each `data` definition induces a record type (constructor), for example:
 
-	data Nil  // type Nil { }
+	data Nil  // type Nil { }, or just Nil
 	type Nil
 
 	data Cons (hd) (tl) // type Cons { hd: a, tl: b }
 
 	data False // type False	
 	data True  // type True
-	type True
-
-Note that the type constructor might have a different arity than the data definition.
-
-	data Foo (x) { curr = x, next = x+1 }
-	type Foo (a) (b) = Foo { curr: a, next: b }
-
-In these cases the type constructor is not defined automatically.
-Instead, it must be declared explicitly or the record type used.
 
 ## Type definitions
 
 A `type` definition specifies an alias for a type.
 
 	type Boolean = False | True
+
+`type` definitions can be parameterized:
+
+	type Cons (a) (b) = Cons { hd: a, tl: b }
 
 The following are equivalent (given the `Cons` type constructor above).
 
@@ -1773,7 +1768,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA2ODc3NjczOSwtMTU1MTEzNDc3OSwtMT
+eyJoaXN0b3J5IjpbMTExMzg2ODg2NiwtMTU1MTEzNDc3OSwtMT
 M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
 Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
