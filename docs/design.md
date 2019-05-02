@@ -458,7 +458,10 @@ Each `data` definition induces a type constructor, for example:
 
 ## Type declarations
 
-	
+The following are equivalent (given the `Cons` type constructor above).
+
+	type List (a) = Nil | Cons a (List a)
+	type List (a) = Nil | Cons { hd: a, tl: List a }
 
 ## Types
 
@@ -1758,7 +1761,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAzOTg0MjE4OCwtMTU1MTEzNDc3OSwtMT
+eyJoaXN0b3J5IjpbMjAwNDQwODI5NCwtMTU1MTEzNDc3OSwtMT
 M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
 Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
