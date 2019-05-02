@@ -328,6 +328,10 @@ A `data` definition introduces a data type. Members of the type are records.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
 
+A `data` definition may contain a record with field definitions.
+The field definition `_` captures the parameters.
+If the record is missing, the fields are captured from the definition parameters; that is, the default record is `{ _ }`.
+
 The following are equivalent:
 
     data Nil
@@ -339,11 +343,12 @@ The following are equivalent:
     data Cons (hd') (tl') { let hd = hd'; let tl = tl' }
     
     data P (a) (b::bs) (c) { fun f (x) = x + c; _ }
-    data P (a') (bs') (c') { fun f (x) = x + c; let a = a'; let b::bs = bs'; let c = c' }
-
-A `data` definition may contain a record with field definitions.
-If the record is missing, the fields are captured from the definition parameters.
-The field definition `_` captures the parameters.
+    data P (a') (bs') (c') { 
+        fun f (x) = x + c; 
+        let a = a'; 
+        let b::bs = bs';
+        let c = c' 
+    }
 
 A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
 (Nested `trait` and `data` definitions are also allowed?).
@@ -1601,8 +1606,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMT
-I2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1
-NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMT
-M2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbLTIwNjU4MTQwMDMsLTE1Mzc0MjU3MTEsMT
+AyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEy
+ODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC
+04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
