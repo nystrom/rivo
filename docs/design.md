@@ -372,7 +372,17 @@ Or define a trait.
 
 Any expression is a pattern matching the value of the expression.
 
+### Wildcard
 
+`_` matches all values.
+
+### Nil
+
+`()` matches no values.
+
+### Record patterns
+
+`T { x1: p1; ...; xn: pn; _ }` matches records with tag `T` and fields `x
 
 ## Trait definitions
 
@@ -1613,7 +1623,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODEzODI3ODA3LC0xNTM3NDI1NzExLDEwMj
+eyJoaXN0b3J5IjpbNzU4MzczNTY0LC0xNTM3NDI1NzExLDEwMj
 E4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgz
 ODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtOD
 QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
