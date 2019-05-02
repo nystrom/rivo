@@ -486,7 +486,17 @@ We have the core types `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
 
 ### Dynamic type
 
-`?` is the dynamic type.
+`?` is the dynamic type. Any value has this type.
+
+### Record types
+
+Any record `Foo { ... }` has type `Foo`.
+
+### Function types
+
+Functions from `s` to `t` are `s -> t`.
+
+### Parameterized types
 
 ## Type definitions
 
@@ -1745,10 +1755,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODI3OTg0NzUsMTg0OTE2MDU0OSw1MjYwMj
-Y4MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0
-NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NT
-I2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwx
-MDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MT
-A5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbOTU2NjU4NzQwLDE4NDkxNjA1NDksNTI2MD
+I2ODE0LDUzNjM2OTYzNiw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4
+NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4Nj
+UyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQs
+MTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNT
+EwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
