@@ -461,7 +461,10 @@ Polymorphic variants.
 
     type RGB = Red | Green | Blue
     trait RGB (a)
-    instance 
+    instance RGB (Red)
+    instance RGB (Green)
+    instance RGB (Blue)
+    
     type RGBW = RGB | White
 
     fun f (x: RGB) = x
@@ -1728,7 +1731,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzAwNTc5NzIwLDUzNjM2OTYzNiw1MzYzNj
+eyJoaXN0b3J5IjpbNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNj
 k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0x
 NTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NT
 Y2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0Njgs
