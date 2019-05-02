@@ -431,16 +431,8 @@ A field definition is either a `let` definition, a `var` definition, or a `fun` 
 A `let` definition consists of the keyword `let` and a formula. The unknowns in the formula become immutable fields of the record.
 A `var` definition consists of the keyword `var` and a formula. The unknowns in the formula become mutable fields of the record.
 
-	data Nil   // defines Nil { }
+	data Nil             // defines Nil { }
 	data Cons (hd) (tl)  // defines Cons { hd, tl }
-
-    type List (a) = Nil | Cons (a) (List a)
-
-Or define a trait.
-
-    trait List (a)
-    trait List (Nil)
-    trait List (Cons _ _)
 
 A `data` definition induces a pattern function. For instance,
 
@@ -452,6 +444,11 @@ induces
 	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
 	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
 
+A `data` definition induces a `type` definition.
+
+## Type definitions
+
+A type definition specifies a type to be used 
 ## Trait definitions
 
 A `trait` definition defines a trait or trait instance.
@@ -1691,9 +1688,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0Njc4NzU0NzgsODQ0OTM5NTEyLDcyMD
-kyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2
-ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLT
-k4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgz
-Mjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMTAwMTA3MDIyNiw4NDQ5Mzk1MTIsNzIwOT
+I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
+MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
+gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
+NzksLTk5NDY5NDI3MF19
 -->
