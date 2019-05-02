@@ -96,9 +96,12 @@ a `::` and a simple name (as above).
 
 ## Imports
 
-	import M::_
-	import M::x
-	import M::(x -> y)
+An import takes a module name and a selector.
+
+	import M::()              // import no definitions from M
+	import M::_               // import all definitions from M
+	import M::x               // import only x from M
+	import M::(x -> y)        // import only x from M, renaming to y
 	import M::(x -> ())
 
 ## Terms
@@ -1661,9 +1664,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNz
-QyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5
-NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMT
-IzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQy
-NzBdfQ==
+eyJoaXN0b3J5IjpbLTczMTgyMTMwMSw4NDQ5Mzk1MTIsNzIwOT
+I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
+MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
+gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
+NzksLTk5NDY5NDI3MF19
 -->
