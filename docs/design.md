@@ -402,7 +402,15 @@ The pattern `x` or `?x` binds the variable `x`.
 
 ### Bind patterns
 
-`p = e` matches 
+`p = e` matches `True` and matches the result of `e` against `p`.
+
+### Generator patterns
+
+`p <- e` matches `True` and matches elements of `e` against `p`.
+
+### Apply patterns
+
+
 
 ## Trait definitions
 
@@ -1643,8 +1651,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDk0MTYyNTg4LC0xNTM3NDI1NzExLDEwMj
-E4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgz
-ODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtOD
-QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTE5ODU1MDQyNSwtMTUzNzQyNTcxMSwxMD
+IxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4
+Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLT
+g0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
