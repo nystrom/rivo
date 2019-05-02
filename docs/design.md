@@ -455,6 +455,11 @@ A `data` definition induces a `type` definition.
 
 Any value with tag `Cons` has type `Cons`.
 
+## Types
+
+Polymorphic variants.
+
+  
 ## Type definitions
 
 A `type` definition specifies a nominal type.
@@ -1712,9 +1717,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MD
-Y4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEs
-MTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5Nz
-EyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUx
-LC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbLTY4OTY0NDU1Nyw1MzYzNjk2MzYsNTM2Mz
+Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0Nywt
+MTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4ND
+U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
+LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
+Q2OTQyNzBdfQ==
 -->
