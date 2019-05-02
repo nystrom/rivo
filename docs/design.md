@@ -75,6 +75,26 @@ A string literal is enclosed in double quotes. There are the usual escapes.
 String literals are overloaded to support different string representations.
 Strings can be implemented as lists, arrays, ropes, etc.
 
+
+## Names
+
+A name is either an identifier or a parenthesized function name.
+A function name is a sequence of identifiers and placeholders followed by `=` and another placeholder.
+A placeholder is either `_`, indicating an input parameter, or `?`, indicating an output parameter.
+For instance, `_ + _ = ?` is the name of the forward mode `+` operator, and
+
+    _ + ? = _ is the name of one of the backward mode + operators.
+
+In any function name, at least one of the placeholders must be `?`.
+The forward mode binding placeholder (i.e., `= ?`) can be omitted. So `_ + _` is
+another name for the forward mode `+` operator.
+
+## Qualified names
+
+A qualified name consists of a module name (which is just a qualified name)
+a .` and a simple name (as above).
+
+
 ## Terms
 
 There are two types of terms in Ivo: expressions and patterns.
@@ -303,23 +323,48 @@ The default implementation:
       fun iterate from x then y to z = if x > y then [] else x : iterate from y to z using (fun z: z + y - x)
     
       ...
-## Names
 
-A name is either an identifier or a parenthesized function name.
-A function name is a sequence of identifiers and placeholders followed by `=` and another placeholder.
-A placeholder is either `_`, indicating an input parameter, or `?`, indicating an output parameter.
-For instance, `_ + _ = ?` is the name of the forward mode `+` operator, and
+## Patterns
 
-    _ + ? = _ is the name of one of the backward mode + operators.
+Any expression is a pattern matching the value of the expression.
 
-In any function name, at least one of the placeholders must be `?`.
-The forward mode binding placeholder (i.e., `= ?`) can be omitted. So `_ + _` is
-another name for the forward mode `+` operator.
+### Wildcard
 
-## Qualified names
+`_` matches all values.
 
-A qualified name consists of a module name (which is just a qualified name)
-a `.` and a simple name (as above).
+### Nil
+
+`()` matches no values.
+
+### Record patterns
+
+`T { x1 = p1; ...; xn = pn; xm; _ }` matches records with tag `T` and fields `xi` with patterns `pi` plus the field `xm` with pattern `?xm`, plus any other fields with the wildcard pattern `_`. If the wildcard is omitted, the scrutinee must have exactly those fields.
+
+### Unknowns
+
+The pattern `x` or `?x` binds the variable `x`.
+
+### Where patterns
+
+`p where f` matches `p` against the scrutinee then matches `f` against `True`. It is equivalent to `p & (f = True)`.
+
+### Union patterns
+
+`p1 | p2` matches both patterns against the scrutinee, matching if either pattern matches. It is a dynamic error if the patterns match different unknowns.
+
+### Intersection patterns
+
+`p1 & p2` matches both patterns against the scrutinee, matching if both patterns match.
+
+### Bind patterns
+
+`p = e` matches `True` and matches the result of `e` against `p`.
+
+### Generator patterns
+
+`p <- e` matches `True` and matches elements of `e` against `p`.
+
+### Apply patterns
 
 
 ## Type definitions
@@ -368,47 +413,6 @@ Or define a trait.
     trait List (Nil)
     trait List (Cons _ _)
 
-## Patterns
-
-Any expression is a pattern matching the value of the expression.
-
-### Wildcard
-
-`_` matches all values.
-
-### Nil
-
-`()` matches no values.
-
-### Record patterns
-
-`T { x1 = p1; ...; xn = pn; xm; _ }` matches records with tag `T` and fields `xi` with patterns `pi` plus the field `xm` with pattern `?xm`, plus any other fields with the wildcard pattern `_`. If the wildcard is omitted, the scrutinee must have exactly those fields.
-
-### Unknowns
-
-The pattern `x` or `?x` binds the variable `x`.
-
-### Where patterns
-
-`p where f` matches `p` against the scrutinee then matches `f` against `True`. It is equivalent to `p & (f = True)`.
-
-### Union patterns
-
-`p1 | p2` matches both patterns against the scrutinee, matching if either pattern matches. It is a dynamic error if the patterns match different unknowns.
-
-### Intersection patterns
-
-`p1 & p2` matches both patterns against the scrutinee, matching if both patterns match.
-
-### Bind patterns
-
-`p = e` matches `True` and matches the result of `e` against `p`.
-
-### Generator patterns
-
-`p <- e` matches `True` and matches elements of `e` against `p`.
-
-### Apply patterns
 
 
 
@@ -1651,7 +1655,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5ODU1MDQyNSwtMTUzNzQyNTcxMSwxMD
+eyJoaXN0b3J5IjpbLTg3ODEzNDA2NywtMTUzNzQyNTcxMSwxMD
 IxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4
 Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLT
 g0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
