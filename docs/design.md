@@ -448,7 +448,13 @@ induces the following definitions:
 	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
 	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
 
-Each `data` definition induces a `type` definition.
+Each `data` definition induces a type constructor
+
+	data Nil
+	// type Nil
+
+	data Cons (hd) (tl)
+	// type Cons { hd: a, tl: b }
 
 	type Nil
 	type Cons
@@ -1753,11 +1759,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxOD
-Q5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2
-LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNz
-QyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5
-NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMT
-IzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQy
-NzBdfQ==
+eyJoaXN0b3J5IjpbMzY4ODc4NzU5LC0xNTUxMTM0Nzc5LC0xMz
+Q3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2
+LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5Mj
+YwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0Njgx
+NywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
+MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
+OV19
 -->
