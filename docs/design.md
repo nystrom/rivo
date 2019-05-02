@@ -370,7 +370,7 @@ Any expression is a pattern matching the value of the expression.
 
 The pattern `x` or `?x` binds the variable `x`.
 
-`x` is an unknown if it there is no explict definition or exp
+`x` is an unknown if it there is no explicit definition or explicit import (`import M::x` or `import M::(y -> x)` but not `import M::_`) in the enclosing scope.
 
 ### Where patterns
 
@@ -394,6 +394,7 @@ The pattern `x` or `?x` binds the variable `x`.
 
 ### Apply patterns
 
+The semantics are given by the Redex model.
 
 ## Type definitions
 
@@ -1683,7 +1684,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTIyOTM4MDM2MSw4NDQ5Mzk1MTIsNzIwOT
+eyJoaXN0b3J5IjpbMTc5MzcyMzQwMCw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
 MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
 gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
