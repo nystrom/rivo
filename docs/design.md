@@ -448,18 +448,17 @@ induces the following definitions:
 	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
 	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
 
-Each `data` definition induces a type constructor
+Each `data` definition induces a type constructor, for example:
 
 	data Nil
-	// type Nil
+	type Nil
 
 	data Cons (hd) (tl)
-	// type Cons { hd: a, tl: b }
+	type Cons (a) (b) = Cons { hd: a, tl: b }
 
-	type Nil
-	type Cons
+## Type declarations
 
-Any value with tag `Cons` has type `Cons`.
+	
 
 ## Types
 
@@ -496,7 +495,7 @@ We have the core types `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
 
 ### Record types
 
-Any record `Foo { ... }` has type `Foo`.
+Any record `Foo { .. xi: ei .. }` has type `Foo { .. xi: ti .. }`.
 
 ### Parameterized types
 
@@ -1759,11 +1758,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzY4ODc4NzU5LC0xNTUxMTM0Nzc5LC0xMz
-Q3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2
-LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5Mj
-YwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0Njgx
-NywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
-MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
-OV19
+eyJoaXN0b3J5IjpbMjAzOTg0MjE4OCwtMTU1MTEzNDc3OSwtMT
+M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
+Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
+I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
+MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
+gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
+NzldfQ==
 -->
