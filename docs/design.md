@@ -106,7 +106,14 @@ An import takes a module name and a selector.
 
 The set of names imported from a given path is computed as: 
 
-	all
+	all names from M if M::_
+	minus
+	all names from M if M::()
+	minus
+    x if M::(x -> ())
+    plus
+    x if M::x
+    plus
 
 ## Terms
 
@@ -1668,9 +1675,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY2MTU4MDc5NCw4NDQ5Mzk1MTIsNzIwOT
-I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
-MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMzQyNDM1NTQyLDg0NDkzOTUxMiw3MjA5Mj
+YwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0Njgx
+NywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
+MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
+OSwtOTk0Njk0MjcwXX0=
 -->
