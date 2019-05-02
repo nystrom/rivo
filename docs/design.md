@@ -462,6 +462,11 @@ Each `data` definition induces a type constructor, for example:
 	data True
 	type True
 
+Note that the type constructor might have a different arity than the data definition.
+
+	data Foo (x) { curr = x, next = x+1 }
+	type Foo (a) (b) = Foo { curr: a, 
+
 ## Type definitions
 
 A `type` definition specifies an alias for a type.
@@ -1768,11 +1773,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4MTUwMjcyNTUsLTE1NTExMzQ3NzksLT
-EzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2
-MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMD
-kyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2
-ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLT
-k4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgz
-Mjc5XX0=
+eyJoaXN0b3J5IjpbMTc4MzQxNjM5NCwtMTU1MTEzNDc3OSwtMT
+M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
+Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
+I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
+MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
+gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
+NzldfQ==
 -->
