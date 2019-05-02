@@ -451,12 +451,13 @@ induces
 A `data` definition induces a `type` definition.
 
 	type Nil
-	type Cons (a) = Cons (a) (List a)
-	type List (a) = Nil | Cons (a)
+	type Cons
+
+Any value with tags of `Nil` or `Cons` 
 
 ## Type definitions
 
-A type definition specifies a type.
+A type definition specifies a nominal type.
 
 	type List (a) = Nil | Cons (a) (List a)
 
@@ -1705,9 +1706,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkzODc3MTc1LDE1NjkwNjg5MzAsODQ0OT
-M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
-LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
-I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
-LC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMjA3NTkwNzE1NCwxNTY5MDY4OTMwLDg0ND
+kzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2
+OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMD
+AyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5
+MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
