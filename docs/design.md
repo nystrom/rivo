@@ -472,14 +472,9 @@ We can simulate polymorphic variants with traits.
     instance RGB a => RGBW a
     instance RGBW (White)
 
+### Core types
 
-    fun f (x: RGB) = x
-    f : 
-    f Red
-    fun f (x: <RGB) = x
-    f : RGB a => a -> a
-    f Red
-
+We have the core types `#i32`, `#i64`, `#f32`, `#f64`
 ## Type definitions
 
 A `type` definition specifies a nominal type.
@@ -1737,10 +1732,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2Mz
-Y5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3
-MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2Nj
-Y0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5
-LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OT
-U4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbMTI1OTQ5NzExNywxODQ5MTYwNTQ5LDUyNj
+AyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAs
+ODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxOD
+Y1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0
+LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0Mj
+UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
