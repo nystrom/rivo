@@ -473,6 +473,11 @@ The following are equivalent (given the `Cons` type constructor above).
 	type List (a) = Nil | Cons a (List a)
 	type List (a) = Nil | Cons { hd: a, tl: List a }
 
+Like functions and traits, types can be overloaded. The union of the type The above is equivalent to:
+
+	type List (a) = Nil
+	type List (a) = Cons a (List a)
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -533,12 +538,6 @@ If the parameters of the trait are not unknowns, they must be types. This define
         fun mempty = []
         fun mappend (xs) (ys) = xs ++ ys
     }
-
-       
-## Inheritance
-
-Data and class definitions can extend others. There is no subtyping however.
-TODO: Not sure this is useful here.
 
 ## Types
 
@@ -1754,7 +1753,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM3NjU5NjAyNywtMTU1MTEzNDc3OSwtMT
+eyJoaXN0b3J5IjpbLTg5NjI0NDAxNiwtMTU1MTEzNDc3OSwtMT
 M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
 Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
