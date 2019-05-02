@@ -338,12 +338,12 @@ The following are equivalent:
     data Cons (hd) (tl) { _ }
     data Cons (hd') (tl') { let hd = hd'; let tl = tl' }
     
-    data P (a) (b::bs) (c)
-    data P (a') (bs') (c') { let a = a'; let b::bs = bs' }
+    data P (a) (b::bs) (c) { fun f (x) = x + c; _ }
+    data P (a') (bs') (c') { fun f (x) = x + c; let a = a'; let b::bs = bs'; let c = c' }
 
 A `data` definition may contain a record with field definitions.
 If the record is missing, the fields are captured from the definition parameters.
-The field definition `_` captures 
+The field definition `_` captures the parameters.
 
 A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
 (Nested `trait` and `data` definitions are also allowed?).
@@ -1601,7 +1601,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MDMzNzIyNTUsMTAyMTg2NTI2OCwtMT
+eyJoaXN0b3J5IjpbLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMT
 I2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1
 NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMT
 M2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
