@@ -450,8 +450,8 @@ induces the following definitions:
 
 A `data` definition induces a `type` definition.
 
-	type Nil
-	type Cons
+	type Nil = 'Nil
+	type Cons = 'Cons 
 
 Any value with tag `Cons` has type `Cons`.
 
@@ -1712,9 +1712,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OT
-M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
-LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
-I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
-LC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbNzcxOTA4MTY2LDUzNjM2OTYzNiwxNTY5MD
+Y4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEs
+MTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5Nz
+EyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUx
+LC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
