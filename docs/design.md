@@ -460,12 +460,15 @@ Any value with tag `Cons` has type `Cons`.
 Polymorphic variants.
 
     type RGB = Red | Green | Blue
+    trait RGB (a)
+    instance 
     type RGBW = RGB | White
 
     fun f (x: RGB) = x
-    f Red
-    fun f (x: a as RGB) = x
     f : 
+    f Red
+    fun f (x: <RGB) = x
+    f : RGB a => a -> a
     f Red
 
 ## Type definitions
@@ -1725,10 +1728,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTk0MjA5OTIxMSw1MzYzNjk2MzYsNTM2Mz
-Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0Nywt
-MTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4ND
-U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
-LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
-Q2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbMzAwNTc5NzIwLDUzNjM2OTYzNiw1MzYzNj
+k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0x
+NTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NT
+Y2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0Njgs
+MTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5ND
+Y5NDI3MF19
 -->
