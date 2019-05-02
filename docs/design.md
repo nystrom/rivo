@@ -329,7 +329,7 @@ A `data` definition introduces a data type. Members of the type are records.
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
 
 A `data` definition may contain a record with field definitions.
-The field definition `_` captures the parameters.
+The field definition `_` captures the parameters as `let` definitions.
 If the record is missing, the fields are captured from the definition parameters; that is, the default record is `{ _ }`.
 
 The following are equivalent:
@@ -1606,7 +1606,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwNjU4MTQwMDMsLTE1Mzc0MjU3MTEsMT
+eyJoaXN0b3J5IjpbLTEwNjQ1MDEzMTIsLTE1Mzc0MjU3MTEsMT
 AyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEy
 ODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC
 04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
