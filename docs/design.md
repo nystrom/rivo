@@ -330,8 +330,8 @@ The definition may take parameter patterns. Unknowns in the parameter patterns a
 
 The following are equivalent:
 
-    data Nil { }
     data Nil
+    data Nil { }
 
     data Cons (hd) (tl)
     data Cons (hd') (tl') { let hd = hd'; let tl = tl' }
@@ -339,6 +339,9 @@ The following are equivalent:
     data P (a) (b::bs)
     data P (a') (bs') { let a = a'; let b::bs = bs' }
 
+A `data` definition may contain a field definitions.
+
+A field definition is either a `let` definition, 
 	data Nil   // defines Nil { }
 	data Cons (hd) (tl)  // defines Cons { hd, tl }
 
@@ -1589,8 +1592,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0NjE5OTMwOTIsMTAyMTg2NTI2OCwtMT
-I2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1
-NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMT
-M2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbMTAyMTk0Njc3MiwxMDIxODY1MjY4LC0xMj
+Y2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1
+NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMz
+Y5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
