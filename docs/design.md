@@ -459,7 +459,13 @@ Any value with tag `Cons` has type `Cons`.
 
 Polymorphic variants.
 
-  
+    type RGB = Red | Green | Blue
+    type RGBW = RGB | White
+
+    fun f (x: RGB) = x
+    
+    fun f (x: <RGB) = x
+
 ## Type definitions
 
 A `type` definition specifies a nominal type.
@@ -1717,10 +1723,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTY4OTY0NDU1Nyw1MzYzNjk2MzYsNTM2Mz
-Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0Nywt
-MTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4ND
-U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
-LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OT
-Q2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbNzMwOTA1NDU0LDUzNjM2OTYzNiw1MzYzNj
+k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0x
+NTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NT
+Y2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0Njgs
+MTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5ND
+Y5NDI3MF19
 -->
