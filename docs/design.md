@@ -96,7 +96,10 @@ a `::` and a simple name (as above).
 
 ## Imports
 
-The `
+	import M::_
+	import M::x
+	import M::(x -> y)
+	import M::(x -> ())
 
 ## Terms
 
@@ -1658,9 +1661,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1NjYwNzg0MzAsNzIwOTI2MDQ3LC0xNT
-M3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2
-MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMT
-ExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5
-NDI3MF19
+eyJoaXN0b3J5IjpbODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNz
+QyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5
+NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMT
+IzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQy
+NzBdfQ==
 -->
