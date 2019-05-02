@@ -382,11 +382,11 @@ Any expression is a pattern matching the value of the expression.
 
 ### Record patterns
 
-`T { let p1 = x1; ...; pn = xn; _ }` matches records with tag `T` and fields `xi` with patterns `pi` plus any other fields with the wildcard pattern `_`.
+`T { x1 = p1; ...; xn = pn; xm; _ }` matches records with tag `T` and fields `xi` with patterns `pi` plus the field `xm` with pattern any other fields with the wildcard pattern `_`.
 
 ### Unknowns
 
-The pattern `x` or `?x` binds the vara
+The pattern `x` or `?x` binds the variable `x`.
 
 ## Trait definitions
 
@@ -1627,8 +1627,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTU5MTU2MzgwOSwtMTUzNzQyNTcxMSwxMD
-IxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4
-Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLT
-g0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTE3OTEyNjAyNjgsLTE1Mzc0MjU3MTEsMT
+AyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEy
+ODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC
+04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0MjcwXX0=
 -->
