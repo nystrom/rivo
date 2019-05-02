@@ -456,12 +456,26 @@ Each `data` definition induces a type constructor, for example:
 	data Cons (hd) (tl)
 	type Cons (a) (b) = Cons { hd: a, tl: b }
 
-## Type declarations
+	data False
+	type False
+	
+	data True
+	type True
+
+## Type definitions
+
+A `type` definition specifies an alias for a type.
+
+	type Boolean = False | True
 
 The following are equivalent (given the `Cons` type constructor above).
 
 	type List (a) = Nil | Cons a (List a)
 	type List (a) = Nil | Cons { hd: a, tl: List a }
+
+Type definitions can be parameterized:
+
+	type List (a) = Nil | Cons (a) (List a)
 
 ## Types
 
@@ -510,17 +524,7 @@ Also tuple types, list types, etc.
 
 `a` is a type.
 
-## Type definitions
 
-A `type` definition specifies a nominal type.
-
-	type List = Nil | Cons
-
-This specifies the disjoint union of `Nil` and `Cons`.
-
-Type definitions can be parameterized:
-
-	type List (a) = Nil | Cons (a) (List a)
 
 ## Trait definitions
 
@@ -1761,7 +1765,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAwNDQwODI5NCwtMTU1MTEzNDc3OSwtMT
+eyJoaXN0b3J5IjpbLTU2MjU1MTgxMywtMTU1MTEzNDc3OSwtMT
 M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
 Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
