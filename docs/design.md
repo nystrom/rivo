@@ -114,7 +114,14 @@ The set of names imported from a given path is computed as:
     plus
     x if M::x
     plus
+    x (as y) if M::(x -> y)
 
+Without a module name, an import imports from the parent:
+
+	import ()   // import nothing from the parent
+	import _    // import all from the parent
+	import x    // import x from the parent
+	import (x -> y) i 
 ## Terms
 
 There are two types of terms in Ivo: expressions and patterns.
@@ -1675,9 +1682,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzQyNDM1NTQyLDg0NDkzOTUxMiw3MjA5Mj
-YwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0Njgx
-NywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
-MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
-OSwtOTk0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbMTI5MDE5NjAwOCw4NDQ5Mzk1MTIsNzIwOT
+I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
+MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
+gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
+NzksLTk5NDY5NDI3MF19
 -->
