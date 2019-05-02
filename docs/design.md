@@ -498,6 +498,12 @@ Functions from `s` to `t` are `s -> t`.
 
 ### Parameterized types
 
+`List a` 
+
+### Type parameters
+
+`a` is a type.
+
 ## Type definitions
 
 A `type` definition specifies a nominal type.
@@ -1755,10 +1761,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTU2NjU4NzQwLDE4NDkxNjA1NDksNTI2MD
-I2ODE0LDUzNjM2OTYzNiw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4
-NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4Nj
-UyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQs
-MTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNT
-EwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNj
+AyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAs
+ODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxOD
+Y1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0
+LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0Mj
+UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
