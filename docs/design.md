@@ -96,6 +96,8 @@ a `::` and a simple name (as above).
 
 ## Imports
 
+The `
+
 ## Terms
 
 There are two types of terms in Ivo: expressions and patterns.
@@ -1656,8 +1658,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMj
-E4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgz
-ODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtOD
-QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTE1NjYwNzg0MzAsNzIwOTI2MDQ3LC0xNT
+M3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2
+MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMT
+ExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5
+NDI3MF19
 -->
