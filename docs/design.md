@@ -396,6 +396,8 @@ The pattern `x` or `?x` binds the variable `x`.
 
 The semantics are given by the Redex model.
 
+### A
+
 ## Type definitions
 
 A `data` definition introduces a data type. Members of the type are records.
@@ -455,7 +457,8 @@ A type definition specifies a type.
 This induces a pattern function:
 
 	fun List (? a) = (? Nil)
-	fun List (? a) = (? Cons 
+	fun List (? a) = (? Cons x xs)
+	    where x: a && xs: List a
 
 ## Trait definitions
 
@@ -1696,9 +1699,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTk3MTg2NzYzNyw4NDQ5Mzk1MTIsNzIwOT
-I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
-MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTE5MjI0NDY1NzEsODQ0OTM5NTEyLDcyMD
+kyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2
+ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLT
+k4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgz
+Mjc5LC05OTQ2OTQyNzBdfQ==
 -->
