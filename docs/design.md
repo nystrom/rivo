@@ -448,7 +448,15 @@ A `data` definition induces a `type` definition.
 
 ## Type definitions
 
-A type definition specifies a type to be used 
+A type definition specifies a type.
+
+	type List (a) = Nil | Cons (a) (List a)
+
+This induces a pattern function:
+
+	fun List (? a) = (? Nil)
+	fun List (? a) = (? Cons 
+
 ## Trait definitions
 
 A `trait` definition defines a trait or trait instance.
@@ -1688,7 +1696,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTAwMTA3MDIyNiw4NDQ5Mzk1MTIsNzIwOT
+eyJoaXN0b3J5IjpbMTk3MTg2NzYzNyw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
 MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
 gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
