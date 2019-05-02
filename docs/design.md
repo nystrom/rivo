@@ -473,7 +473,7 @@ The following are equivalent (given the `Cons` type constructor above).
 	type List (a) = Nil | Cons a (List a)
 	type List (a) = Nil | Cons { hd: a, tl: List a }
 
-Like functions and traits, types can be overloaded. The union of the type The above is equivalent to:
+Like functions and traits, types can be overloaded. The type is equivalent to the union of the types. Thus, the above is equivalent to:
 
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
@@ -1753,11 +1753,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTg5NjI0NDAxNiwtMTU1MTEzNDc3OSwtMT
-M0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYz
-Niw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOT
-I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
-MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzldfQ==
+eyJoaXN0b3J5IjpbNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMz
+Q3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2
+LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5Mj
+YwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0Njgx
+NywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
+MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
+OV19
 -->
