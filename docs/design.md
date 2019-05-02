@@ -424,14 +424,6 @@ The following are equivalent:
         let c = c' 
     }
 
-A `data` definition induces a pattern function. For instance,
-
-	data Cons (hd) (tl)
-
-induces
-
-	fun Cons (! hd) (! tl) = Cons { hd, tl }
-
 A field definition is either a `let` definition, a `var` definition, or a `fun` definition.
 
 (Nested `trait` and `data` definitions are also allowed?).
@@ -450,8 +442,15 @@ Or define a trait.
     trait List (Nil)
     trait List (Cons _ _)
 
+A `data` definition induces a pattern function. For instance,
 
+	data Cons (hd) (tl)
 
+induces
+
+	fun Cons (! hd) (! tl) = (? Cons { hd, tl })
+	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
+	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
 
 ## Trait definitions
 
@@ -1692,9 +1691,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTczMzEzNDYyNCw4NDQ5Mzk1MTIsNzIwOT
-I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
-MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
-gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
-NzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbLTE0Njc4NzU0NzgsODQ0OTM5NTEyLDcyMD
+kyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2
+ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLT
+k4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkwLC0xMzY5NTgz
+Mjc5LC05OTQ2OTQyNzBdfQ==
 -->
