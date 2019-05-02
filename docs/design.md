@@ -448,7 +448,7 @@ induces the following definitions:
 	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
 	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
 
-A `data` definition induces a `type` definition.
+Each `data` definition induces a `type` definition.
 
 	type Nil
 	type Cons
@@ -457,15 +457,17 @@ Any value with tag `Cons` has type `Cons`.
 
 ## Types
 
-Polymorphic variants.
+We can simulate polymorphic variants with traits.
 
     type RGB = Red | Green | Blue
+    
     trait RGB (a)
     instance RGB (Red)
     instance RGB (Green)
     instance RGB (Blue)
     
-    type RGBW = RGB | White
+        type RGBW = RGB | White
+
 
     fun f (x: RGB) = x
     f : 
@@ -1731,10 +1733,10 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNj
-k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0x
-NTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NT
-Y2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0Njgs
-MTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMyNzksLTk5ND
-Y5NDI3MF19
+eyJoaXN0b3J5IjpbLTE5NDIwMTAyOTEsNTI2MDI2ODE0LDUzNj
+M2OTYzNiw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIs
+NzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNj
+Y2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1
+OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNj
+k1ODMyNzksLTk5NDY5NDI3MF19
 -->
