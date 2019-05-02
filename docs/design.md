@@ -390,15 +390,19 @@ The pattern `x` or `?x` binds the variable `x`.
 
 ### Where patterns
 
-`p where f` matches `p` against the scrutinee then matches `f` against `True`.
+`p where f` matches `p` against the scrutinee then matches `f` against `True`. It is equivalent to `p & (f = True)`.
 
 ### Union patterns
 
-`p1 | p2` matches both patterns against the scrutinee, matching if either pattern matches. It is a dynamic error if the patterns match 
+`p1 | p2` matches both patterns against the scrutinee, matching if either pattern matches. It is a dynamic error if the patterns match different unknowns.
 
 ### Intersection patterns
 
-`p1 & p2` matches both patterns against the scrutinee, matching if both patterns match. 
+`p1 & p2` matches both patterns against the scrutinee, matching if both patterns match.
+
+### Bind patterns
+
+`p = e` matches 
 
 ## Trait definitions
 
@@ -1639,8 +1643,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc0MDQ4NDUwNCwtMTUzNzQyNTcxMSwxMD
-IxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4
-Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLT
-g0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbNDk0MTYyNTg4LC0xNTM3NDI1NzExLDEwMj
+E4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgz
+ODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
