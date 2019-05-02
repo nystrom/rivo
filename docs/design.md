@@ -492,13 +492,10 @@ We have the core types `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
 
 Any record `Foo { ... }` has type `Foo`.
 
-### Function types
-
-Functions from `s` to `t` are `s -> t`.
-
 ### Parameterized types
 
-`List a` 
+`C t` is a type of `C` is a type constructor (of kind `* -> *`) and `t` is a type. 
+As a specific instance, `s -> t` is a type if `s` and `t` are types. 
 
 ### Type parameters
 
@@ -1761,10 +1758,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNj
-AyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAs
-ODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxOD
-Y1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0
-LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0Mj
-UxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbODk2MTI1MTg3LC0xMzQ3MTEwNDQsMTg0OT
+E2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwx
+NTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0Mj
+U3MTEsMTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcs
+LTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMz
+EyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOTk0Njk0Mjcw
+XX0=
 -->
