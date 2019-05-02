@@ -452,7 +452,7 @@ A `data` definition induces a `type` definition.
 
 	type Nil
 	type Cons (a) = Cons (a) (List a)
-	type List 
+	type List (a) = Nil | Cons (a)
 
 ## Type definitions
 
@@ -1705,9 +1705,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MjIxMzM5MjIsMTU2OTA2ODkzMCw4ND
-Q5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUy
-NjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMT
-AwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEw
-OTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
+eyJoaXN0b3J5IjpbMTkzODc3MTc1LDE1NjkwNjg5MzAsODQ0OT
+M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
+LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
+I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
+LC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
 -->
