@@ -508,17 +508,11 @@ A `type` definition specifies a nominal type.
 
 	type List = Nil | Cons
 
-This specifies the union type of `Nil` and `Cons`.
+This specifies the disjoint union of `Nil` and `Cons`.
 
 Type definitions can be parameterized:
 
 	type List (a) = Nil | Cons (a) (List a)
-
-This induces a run-time type test function:
-
-	fun List (? a) = (? Nil)
-	fun List (? a) = (? Cons x xs)
-	    where x: a && xs: List a
 
 ## Trait definitions
 
@@ -1759,7 +1753,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIxMjg3MTY4MjMsLTEzNDcxMTA0NCwxOD
+eyJoaXN0b3J5IjpbLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxOD
 Q5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2
 LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNz
 QyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5
