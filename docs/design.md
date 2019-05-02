@@ -461,6 +461,10 @@ A `type` definition specifies a nominal type.
 
 	type List = Nil | Cons
 
+This specifies the union type of `Nil` and `Cons`.
+
+Type definitions can be parameterized:
+
 	type List (a) = Nil | Cons (a) (List a)
 
 This induces a run-time type test function:
@@ -1708,9 +1712,9 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzY2OTQ0Njg0LDE1NjkwNjg5MzAsODQ0OT
-M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
-LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
-I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
-LC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbLTIwOTU0NzM3MzEsMTU2OTA2ODkzMCw4ND
+Q5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUy
+NjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMT
+AwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEw
+OTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
