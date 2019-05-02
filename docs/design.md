@@ -102,7 +102,11 @@ An import takes a module name and a selector.
 	import M::_               // import all definitions from M
 	import M::x               // import only x from M
 	import M::(x -> y)        // import only x from M, renaming to y
-	import M::(x -> ())
+	import M::(x -> ())       // do not import x from M
+
+The set of names imported from a given path is computed as: 
+
+	all
 
 ## Terms
 
@@ -1664,7 +1668,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTczMTgyMTMwMSw4NDQ5Mzk1MTIsNzIwOT
+eyJoaXN0b3J5IjpbMTY2MTU4MDc5NCw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
 MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
 gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
