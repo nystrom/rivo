@@ -116,12 +116,11 @@ The set of names imported from a given path is computed as:
     plus
     x (as y) if M::(x -> y)
 
-Without a module name, an import imports from the parent. That is, the following are equivalent:
+Without a module name, an `import` imports from the enclosing scope. That is, the following are equivalent:
 
 	import x
 	import parent::x
 
-By default, 
 ## Terms
 
 There are two types of terms in Ivo: expressions and patterns.
@@ -370,6 +369,8 @@ Any expression is a pattern matching the value of the expression.
 ### Unknowns
 
 The pattern `x` or `?x` binds the variable `x`.
+
+`x` is an unknown if it there is no explict definition or exp
 
 ### Where patterns
 
@@ -1682,7 +1683,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4NzQzOTgxMSw4NDQ5Mzk1MTIsNzIwOT
+eyJoaXN0b3J5IjpbMTIyOTM4MDM2MSw4NDQ5Mzk1MTIsNzIwOT
 I2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4
 MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOT
 gzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNjk1ODMy
