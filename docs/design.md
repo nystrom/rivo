@@ -92,8 +92,9 @@ another name for the forward mode `+` operator.
 ## Qualified names
 
 A qualified name consists of a module name (which is just a qualified name)
-a .` and a simple name (as above).
+a `::` and a simple name (as above).
 
+## Imports
 
 ## Terms
 
@@ -1655,8 +1656,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTg3ODEzNDA2NywtMTUzNzQyNTcxMSwxMD
-IxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4
-Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLT
-g0MjUxMDkwLC0xMzY5NTgzMjc5LC05OTQ2OTQyNzBdfQ==
+eyJoaXN0b3J5IjpbNzIwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMj
+E4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgz
+ODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtOD
+QyNTEwOTAsLTEzNjk1ODMyNzksLTk5NDY5NDI3MF19
 -->
