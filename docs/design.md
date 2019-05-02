@@ -324,9 +324,18 @@ a `.` and a simple name (as above).
 
 ## Type definitions
 
-A `type` definition introduces a data type. Members of the type are records.
+A `data` definition introduces a data type. Members of the type are records.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
+
+The following are equivalent:
+
+    data Nil { }
+    data Nil
+
+    data Cons (hd) (tl)
+    data Cons (hd) (tl) { hd = hd, tl = tl }
+    data Cons (hd) (tl) 
 
 	data Nil   // defines Nil { }
 	data Cons (hd) (tl)  // defines Cons { hd, tl }
@@ -1578,8 +1587,8 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxOD
-Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
-OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3OSwtOT
-k0Njk0MjcwXX0=
+eyJoaXN0b3J5IjpbNTU1OTc0ODg3LDEwMjE4NjUyNjgsLTEyNj
+Y2NDY4MTcsMTg0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1
+OSwtOTgzMzQ0NjgsMTExMjMxMjk1MSwtODQyNTEwOTAsLTEzNj
+k1ODMyNzksLTk5NDY5NDI3MF19
 -->
