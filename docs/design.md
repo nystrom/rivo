@@ -482,9 +482,12 @@ A `type` definition induces a data definition for a reified type.
 
     data #List (a)
 
-    instance Type a => Type (#List a)
-       fun (? Nil) : (# = (! True)
-    fun (? Cons x y) : List (? a) = (x : a) && (y : List a)
+    class Type (a) (t)
+       fun (a) : (t) -> B
+
+    instance Type a => Type (List a) (#List t)
+       fun (? Nil) : (? #List a) = (! True)
+       fun (? Cons x y) : (? #List a) = (x : a) && (y : List a)
 
 (Actually the body of the test function is just evaluated whenever we use `e : T` syntax).
 
@@ -1771,11 +1774,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzQ0MTQ3MTMzLDEwNTczMDExMzEsLTU2MT
-QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
-NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
-Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0Nywt
-MTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4ND
-U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
-XX0=
+eyJoaXN0b3J5IjpbLTEzNjA3NTIyNDgsMTA1NzMwMTEzMSwtNT
+YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
+MDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1Mz
+YzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3
+LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMT
+g0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0
+NjhdfQ==
 -->
