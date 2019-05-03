@@ -478,6 +478,9 @@ Like functions and traits, types definitions can be overloaded. The type is equi
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
 
+Principal typing and coherence are the main issues here.
+The most specific type needs to be inferred.
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -1755,7 +1758,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE0MDAwODUyOCwxMDU3MzAxMTMxLC01Nj
+eyJoaXN0b3J5IjpbMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
 E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
 NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
 M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcs
