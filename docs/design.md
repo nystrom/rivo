@@ -478,10 +478,10 @@ Like functions and traits, types can be overloaded. The type is equivalent to th
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
 
-A type definition induces a test function.
+A `type` definition induces a type test function.
 
-    fun (! Nil) : List (? a)
-    fun 
+    fun (? Nil) is List (? a) = (! True)
+    fun (? Cons x y) is List (? a) = (x : a) && (y : List a)
 
 ### Core types
 
@@ -1758,11 +1758,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5NTAzNjM3MzksNTk0MjY4MDQxLC0xNT
-UxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4
-MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0ND
-kzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2
-OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMD
-AyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5
-MF19
+eyJoaXN0b3J5IjpbMTQxMTc5NTI4Nyw1OTQyNjgwNDEsLTE1NT
+ExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgx
+NCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OT
+M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
+LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
+I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
+XX0=
 -->
