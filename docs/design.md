@@ -448,7 +448,7 @@ induces the following definitions:
 	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
 	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
 
-Each `data` definition induces a record type (constructor), for example:
+Each `data` definition induces a record type (constructor) with the same name, for example:
 
 	data Nil  // type Nil { }, or just Nil
 	type Nil
@@ -473,18 +473,10 @@ The following are equivalent (given the `Cons` type constructor above).
 	type List (a) = Nil | Cons a (List a)
 	type List (a) = Nil | Cons { hd: a, tl: List a }
 
-Like functions and traits, types can be overloaded. The type is equivalent to the union of the types. Thus, the above is equivalent to:
+Like functions and traits, types definitions can be overloaded. The type is equivalent to the union of the types. Thus, the above is equivalent to:
 
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
-
-(Actually the body of the test function is just evaluated whenever we use `e : T` syntax).
-
-The pattern `p : T` is implemented as:
-
-	fun (! x) : List (? a) = (? x @ Nil)
-	fun (! x) : List (? a) = (? x @ Cons y z)
-	    where y : a && z : List a
 
 ### Core types
 
@@ -1763,11 +1755,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwNjU5NDg0OTEsMTA1NzMwMTEzMSwtNT
-YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
-MDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1Mz
-YzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3
-LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMT
-g0NTY2MDk3LC02OTcxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0
-NjhdfQ==
+eyJoaXN0b3J5IjpbMTE0MDAwODUyOCwxMDU3MzAxMTMxLC01Nj
+E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
+NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
+M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcs
+LTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxOD
+Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
+OF19
 -->
