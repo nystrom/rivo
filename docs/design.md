@@ -493,6 +493,8 @@ The theory is polymorphic variants.
         F z => z > 0
     }
 
+    isPositive _ :: [< I Int | F Float]
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -1770,11 +1772,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTYwMDQ3MzY1NCwtNTc0NDYxNjY4LC0xMD
-k0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAx
-MTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC
-0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5
-NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3Mj
-A5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0
-NjgxN119
+eyJoaXN0b3J5IjpbNzY4NTQ5NTQ0LC01NzQ0NjE2NjgsLTEwOT
+Q0MDM0NzAsLTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDEx
+MzEsLTU2MTQwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLT
+EzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2
+MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMD
+kyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2
+ODE3XX0=
 -->
