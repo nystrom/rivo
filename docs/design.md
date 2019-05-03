@@ -478,17 +478,20 @@ Like functions and traits, types can be overloaded. The type is equivalent to th
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
 
+A `type` definition induces a data definition for a reified type.
+
+     data List
 A `type` definition induces a type test function.
 
-    fun (? Nil) is List (? a) = (! True)
-    fun (? Cons x y) is List (? a) = (x : a) && (y : List a)
+    fun (? Nil) : List (? a) = (! True)
+    fun (? Cons x y) : List (? a) = (x : a) && (y : List a)
 
 (Actually the body of the test function is just evaluated whenever we use `e : T` syntax).
 
 The pattern `p : T` is implemented as:
 
-	fun (! x) is List (? a) = (? x @ Nil)
-	fun (! x) is List (? a) = (? x @ Cons y z)
+	fun (! x) : List (? a) = (? x @ Nil)
+	fun (! x) : List (? a) = (? x @ Cons y z)
 	    where y : a && z : List a
 
 ### Core types
@@ -1768,11 +1771,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTA1NzMwMTEzMSwtNTYxNDAyMjEyLDU5ND
-I2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LDE4NDkxNjA1
-NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNjk2MzYsMTU2OT
-A2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzEx
-LDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OT
-cxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1
-MV19
+eyJoaXN0b3J5IjpbOTU0NzUzMDc2LDEwNTczMDExMzEsLTU2MT
+QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
+NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
+Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0Nywt
+MTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMjY2NjQ2ODE3LDE4ND
+U2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1NTksLTk4MzM0NDY4
+XX0=
 -->
