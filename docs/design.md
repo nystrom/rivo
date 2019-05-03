@@ -481,7 +481,7 @@ Like functions and traits, types definitions can be overloaded. The type is equi
 Principal typing and coherence are the main issues here.
 The most specific type needs to be inferred.
 Since types are open, we can add more cases.
-The theo
+The theory is polymorphic variants.
 
 ### Core types
 
@@ -1760,11 +1760,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjUzNjkzMzE3LC0yNTkwMTgwMjQsMTg3OT
-g2MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0MjY4MDQx
-LC0xNTUxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1Mj
-YwMjY4MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMw
-LDg0NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMT
-g2NTI2OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4
-NF19
+eyJoaXN0b3J5IjpbLTEwOTQ0MDM0NzAsLTI1OTAxODAyNCwxOD
+c5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OTQyNjgw
+NDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LD
+UyNjAyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5
+MzAsODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMD
+IxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4
+Mzg0XX0=
 -->
