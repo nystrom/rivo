@@ -478,6 +478,11 @@ Like functions and traits, types can be overloaded. The type is equivalent to th
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
 
+A type definition induces a test function.
+
+    fun (! Nil) : List (? a)
+    fun 
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -1753,11 +1758,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMz
-Q3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2
-LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5Mj
-YwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0Njgx
-NywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05OD
-MzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5MCwtMTM2OTU4MzI3
-OV19
+eyJoaXN0b3J5IjpbLTE5NTAzNjM3MzksNTk0MjY4MDQxLC0xNT
+UxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4
+MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0ND
+kzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2
+OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMD
+AyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5
+MF19
 -->
