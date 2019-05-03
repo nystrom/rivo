@@ -480,10 +480,10 @@ Like functions and traits, types can be overloaded. The type is equivalent to th
 
 A `type` definition induces a data definition for a reified type.
 
-     data List
-A `type` definition induces a type test function.
+    data #List (a)
 
-    fun (? Nil) : List (? a) = (! True)
+    instance Type a => Type (#List a)
+       fun (? Nil) : (# = (! True)
     fun (? Cons x y) : List (? a) = (x : a) && (y : List a)
 
 (Actually the body of the test function is just evaluated whenever we use `e : T` syntax).
@@ -1771,7 +1771,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTU0NzUzMDc2LDEwNTczMDExMzEsLTU2MT
+eyJoaXN0b3J5IjpbNzQ0MTQ3MTMzLDEwNTczMDExMzEsLTU2MT
 QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
 NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
 Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0Nywt
