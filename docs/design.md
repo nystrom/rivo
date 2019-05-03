@@ -483,6 +483,12 @@ A `type` definition induces a type test function.
     fun (? Nil) is List (? a) = (! True)
     fun (? Cons x y) is List (? a) = (x : a) && (y : List a)
 
+(Actually the body of the test function is just evaluated whenever we use `e : T` syntax).
+
+The pattern `p : T` is implemented as:
+
+	fun (! x) is List (? a) = (? Nil)
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -1758,11 +1764,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQxMTc5NTI4Nyw1OTQyNjgwNDEsLTE1NT
-ExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgx
-NCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OT
-M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
-LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
-I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
-XX0=
+eyJoaXN0b3J5IjpbLTEzNTkwMzQxNzEsNTk0MjY4MDQxLC0xNT
+UxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4
+MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0ND
+kzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2
+OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMD
+AyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5
+MF19
 -->
