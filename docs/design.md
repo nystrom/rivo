@@ -499,11 +499,13 @@ We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`
 
 `_` is the type of any value. 
 All types are a subtype of `_`.
+It can be considered the infinite union.
 
 ### Nothing type
 
 `!` is the type of no value.
 All types are a supertype of `!`.
+It can be considered the empty union.
 
 ### Dynamic type
 
@@ -1766,11 +1768,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTU2MTQwMjIxMiw1OTQyNjgwNDEsLTE1NT
-ExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgx
-NCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OT
-M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
-LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
-I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
-XX0=
+eyJoaXN0b3J5IjpbMTA1NzMwMTEzMSwtNTYxNDAyMjEyLDU5ND
+I2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LDE4NDkxNjA1
+NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNjk2MzYsMTU2OT
+A2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzEx
+LDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2MDk3LC02OT
+cxMjgzODQsMTAwMjY0NTU1OSwtOTgzMzQ0NjgsMTExMjMxMjk1
+MV19
 -->
