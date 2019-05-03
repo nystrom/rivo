@@ -487,7 +487,9 @@ A `type` definition induces a type test function.
 
 The pattern `p : T` is implemented as:
 
-	fun (! x) is List (? a) = (? Nil)
+	fun (! x) is List (? a) = (? x @ Nil)
+	fun (! x) is List (? a) = (? x @ Cons y z)
+	    where y : a && z : List a
 
 ### Core types
 
@@ -1764,11 +1766,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNTkwMzQxNzEsNTk0MjY4MDQxLC0xNT
-UxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4
-MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0ND
-kzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2
-OCwtMTI2NjY0NjgxNywxODQ1NjYwOTcsLTY5NzEyODM4NCwxMD
-AyNjQ1NTU5LC05ODMzNDQ2OCwxMTEyMzEyOTUxLC04NDI1MTA5
-MF19
+eyJoaXN0b3J5IjpbLTU2MTQwMjIxMiw1OTQyNjgwNDEsLTE1NT
+ExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgx
+NCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OT
+M5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4
+LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMD
+I2NDU1NTksLTk4MzM0NDY4LDExMTIzMTI5NTEsLTg0MjUxMDkw
+XX0=
 -->
