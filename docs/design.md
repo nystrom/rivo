@@ -483,6 +483,12 @@ The most specific type needs to be inferred.
 Since types are open, we can add more cases.
 The theory is polymorphic variants.
 
+### Polymorphic variants
+
+    data I (a)
+    I 3 :: [> I Int]
+    
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -1760,11 +1766,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwOTQ0MDM0NzAsLTI1OTAxODAyNCwxOD
-c5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OTQyNjgw
-NDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LD
-UyNjAyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5
-MzAsODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMD
-IxODY1MjY4LC0xMjY2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4
-Mzg0XX0=
+eyJoaXN0b3J5IjpbLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMj
+U5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAy
+MjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LD
+E4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNjk2
+MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0xNT
+M3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2NDY4MTcsMTg0NTY2
+MDk3XX0=
 -->
