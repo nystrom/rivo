@@ -478,17 +478,6 @@ Like functions and traits, types can be overloaded. The type is equivalent to th
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
 
-A `type` definition induces a data definition for a reified type.
-
-    data #List (a)
-
-    class Type (a) (t)
-       fun (a) : (t) -> B
-
-    instance Type a => Type (List a) (#List t)
-       fun (? Nil) : (? #List a) = (! True)
-       fun (? Cons x y) : (? #List a) = (x : a) && (y : List a)
-
 (Actually the body of the test function is just evaluated whenever we use `e : T` syntax).
 
 The pattern `p : T` is implemented as:
@@ -1774,7 +1763,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNjA3NTIyNDgsMTA1NzMwMTEzMSwtNT
+eyJoaXN0b3J5IjpbLTIwNjU5NDg0OTEsMTA1NzMwMTEzMSwtNT
 YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
 MDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1Mz
 YzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3
