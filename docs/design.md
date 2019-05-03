@@ -480,6 +480,7 @@ Like functions and traits, types definitions can be overloaded. The type is equi
 
 Principal typing and coherence are the main issues here.
 The most specific type needs to be inferred.
+Since types are open, we can add more cases 
 
 ### Core types
 
@@ -1758,11 +1759,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
-E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
-NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
-M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcs
-LTE1Mzc0MjU3MTEsMTAyMTg2NTI2OCwtMTI2NjY0NjgxNywxOD
-Q1NjYwOTcsLTY5NzEyODM4NCwxMDAyNjQ1NTU5LC05ODMzNDQ2
-OF19
+eyJoaXN0b3J5IjpbLTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNT
+czMDExMzEsLTU2MTQwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3
+NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1Mz
+YzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEy
+LDcyMDkyNjA0NywtMTUzNzQyNTcxMSwxMDIxODY1MjY4LC0xMj
+Y2NjQ2ODE3LDE4NDU2NjA5NywtNjk3MTI4Mzg0LDEwMDI2NDU1
+NTldfQ==
 -->
