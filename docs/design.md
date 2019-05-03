@@ -493,10 +493,15 @@ The theory is polymorphic variants.
     
     fun isPositive (x) = match x {
         I y => y > 0
-        F z => z > 0
+        F z => z > 0.
     }
 
     isPositive _ :: [< I Int | F Float]
+
+	fun isPositive2 (x) = match x {
+	    I y => y > 0
+	    F z => z > 0.
+	    _ => 
 
 ### Core types
 
@@ -1775,11 +1780,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMT
-A5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMw
-MTEzMSwtNTYxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OS
-wtMTM0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2
-OTYzNiw1MzYzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNz
-IwOTI2MDQ3LC0xNTM3NDI1NzExLDEwMjE4NjUyNjgsLTEyNjY2
-NDY4MTddfQ==
+eyJoaXN0b3J5IjpbLTczNDAyMjczOCwtMTY1NDM5MjIyNywtNT
+c0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2
+MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC
+0xNTUxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYw
+MjY4MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLD
+g0NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2
+NTI2OF19
 -->
