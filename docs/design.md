@@ -629,9 +629,12 @@ With the following signature `::` is right associative:
 
 At most one argument type can be double-parenthesized.
 
-Left 
+By default, the first parameter is associative.
 
-### Alternatives
+Alternatives are selected by best-fit matching.
+If a forward context, it is a runtime error for more than one alternative to match.
+In a backward context, all matching alternatives are invoked.
+
 After the signature, zero or more alternatives can be provided. The alternatives are evaluated in order. The body of the first matching alternative is invoked.
 Each alternative is given by the function name and patterns for each argument, and then the function body.
 
@@ -1804,11 +1807,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA0NDE1MjIzNyw0MjAwMjYzMjcsNDA0Nj
-kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
-LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
-E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
-NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
-M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDdd
-fQ==
+eyJoaXN0b3J5IjpbNzEwNTQ4Mzk5LDQyMDAyNjMyNyw0MDQ2OT
+MxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAs
+LTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MT
+QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
+NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
+Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0N119
+
 -->
