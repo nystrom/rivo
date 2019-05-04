@@ -635,23 +635,18 @@ Alternatives are selected by best-fit matching.
 If a forward context, it is a runtime error for more than one alternative to match.
 In a backward context, all matching alternatives are invoked.
 
-After the signature, zero or more alternatives can be provided. The alternatives are evaluated in order. The body of the first matching alternative is invoked.
 Each alternative is given by the function name and patterns for each argument, and then the function body.
 
-    fun inc (Int) -> Int
-    fun inc (let x) = x + 1
+	// with types
+    fun inc (x: Int): Int = x + 1
     
-    fun if (Boolean) then {a} else {{a}} -> a
-    fun if (True) then (let e) else _ = e
-    fun if (False) then _ else (let e) = e
+    // without types
+    fun if (True) then {e} else {e} = e
+    fun if (False) then {_} else {e} = e
     
-    fun (Int) + (Int) -> Int
-    fun 0 + (x) = x
-    fun (x) + 0 = x
-    fun (x) + (y) = iadd x y
 
 
-## Mixfix functions
+## Mixfix function parsing
 
 Mixfix operators may be declared with `fun` definitions. A function is *mixfix* if its signature
 includes a symbol identifier or any identifier after the first position.
@@ -685,9 +680,9 @@ in the imported module.
 Since multiple functions may have the same name or overlapping names, parsing using these rules may be ambiguous.
 In this case, the compiler will report an error for any expression that cannot be parsed
 unambiguously. The programmer can usually resolve the error by adding parentheses.
-TODO: need to be more precise, need to allow overloading.
-**Invertible Functions**
-Functions in Fretta can be declared to support several *modes* of evaluation.
+
+### Invertible functions
+Functions in Ivo can be declared to support several *modes* of evaluation.
 Normal evaluation is referred to as *forward mode*. A function can be invoked in a *backward mode* by passing in its return value and optionally some arguments, yielding the other arguments.
 A function invoked in a backwards mode can be used as a *pattern* or to define a *stream*.
 A function that supports both forwards and backwards modes is called *invertible*.
@@ -1807,11 +1802,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzEwNTQ4Mzk5LDQyMDAyNjMyNyw0MDQ2OT
-MxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAs
-LTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MT
-QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
-NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
-Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0N119
-
+eyJoaXN0b3J5IjpbLTI0MjE4NDE5NCw0MjAwMjYzMjcsNDA0Nj
+kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
+LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
+E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
+NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
+M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDdd
+fQ==
 -->
