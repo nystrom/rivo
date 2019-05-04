@@ -859,6 +859,8 @@ Type classes:
 
 Borrowed from Fortress.
 
+    match planet in _
+
     case planet element of
       {"Mercury", "Venus", "Earth", "Mars"} => "inner"
       {"Jupiter", "Saturn", "Uranus", "Neptune"} => "outer"
@@ -873,11 +875,11 @@ Compare all cases with >
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwxOT
-YxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNjU0MzkyMjI3
-LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAyNCwxOD
-c5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OTQyNjgw
-NDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LD
-UyNjAyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1NjkwNjg5
-MzBdfQ==
+eyJoaXN0b3J5IjpbLTc1MjUzMDgzOCwtMTY1ODQwMjE1NywxMD
+I4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEs
+LTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMj
+U5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAy
+MjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LD
+E4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNjk2
+MzZdfQ==
 -->
