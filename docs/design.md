@@ -479,12 +479,9 @@ Like functions and traits, types definitions can be overloaded. The type is equi
 	type List (a) = Nil
 	type List (a) = Cons a (List a)
 
-Principal typing and coherence are the main issues here.
-The most specific type needs to be inferred.
-Since types are open, we can add more cases.
 The semantics is that all cases are gathered together into one definition.
 
-A type declared `open` can be overloaded in other modules.
+A type declared `open` can be overloaded in other modules. In this case, the definitions are merged at link time. 
 
 
 ### Core types
@@ -850,11 +847,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTEzNTc2ODE0MywtMTUzOTQ5MTE3OCwxOT
-A4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1
-MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNT
-c0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2
-MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC
-0xNTUxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYw
-MjY4MTRdfQ==
+eyJoaXN0b3J5IjpbNzYwNzEzMDM3LC0xNTM5NDkxMTc4LDE5MD
+gyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwxOTYxNjUy
+NDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNjU0MzkyMjI3LC01Nz
+Q0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAyNCwxODc5ODYx
+MTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OTQyNjgwNDEsLT
+E1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAy
+NjgxNF19
 -->
