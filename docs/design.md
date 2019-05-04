@@ -481,8 +481,8 @@ Like functions and traits, types definitions can be overloaded. The type is equi
 
 The semantics is that all cases are gathered together into one definition.
 
-A type declared `open` can be overloaded in other modules. In this case, the definitions are merged at link time. 
-
+A type declared `open` can be overloaded in other modules.
+Generally, when a type is overloaded in another module, functions involving that type are also overloade
 
 ### Core types
 
@@ -847,11 +847,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzYwNzEzMDM3LC0xNTM5NDkxMTc4LDE5MD
-gyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwxOTYxNjUy
-NDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNjU0MzkyMjI3LC01Nz
-Q0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAyNCwxODc5ODYx
-MTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OTQyNjgwNDEsLT
-E1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYwNTQ5LDUyNjAy
-NjgxNF19
+eyJoaXN0b3J5IjpbLTE3MzcxNDc3NzYsLTE1Mzk0OTExNzgsMT
+kwODI5MjM3NywtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2
+NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLT
+U3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4
+NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAyMjEyLDU5NDI2ODA0MS
+wtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LDE4NDkxNjA1NDksNTI2
+MDI2ODE0XX0=
 -->
