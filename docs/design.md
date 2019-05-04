@@ -400,6 +400,8 @@ The semantics are given by the Redex model.
 
 `p : T` matches if `p` matches the scrutinee and if the scrutinee has type `T`.
 
+## Function definitions
+
 ## Type definitions
 
 A `data` definition introduces a data type. Members of the type are records.
@@ -578,7 +580,8 @@ The unit type is defined by the built-in data type `()`.
 
 ## Function definitions
 
-Functions are declared with the `fun` keyword. A function declaration starts with a signature, which specifies the name, parameter types, and return type of the function, and is followed by the implementation. The signature is optional if it can be inferred.
+Functions are declared with the `fun` keyword, followed by zero or more parameters in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. ThenAfter an `=`, there is a function body.
+A function declaration starts with a signature, which specifies the name, parameter types, and return type of the function, and is followed by the implementation. The signature is optional if it can be inferred.
 Function declarations can be used to declare mix-fix operators. Symbols used in the function declaration are part of the function name.
 ### Signatures
 A function signature consists of a sequence of identifiers and parenthesized types, then an `->` and a return type.
@@ -1783,11 +1786,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDA0NjkzMSwtMTY1NDM5MjIyNywtNTc0ND
-YxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2
-MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC0xNT
-UxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4
-MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNTY5MDY4OTMwLDg0ND
-kzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3MTEsMTAyMTg2NTI2
-OF19
+eyJoaXN0b3J5IjpbLTk5NjAwNzY1OSw0MDQ2OTMxLC0xNjU0Mz
+kyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAy
+NCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OT
+QyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYw
+NTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2MzY5NjM2LDE1Nj
+kwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0NywtMTUzNzQyNTcx
+MV19
 -->
