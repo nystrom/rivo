@@ -781,33 +781,7 @@ Operations and their inverses:
     fun (x) ** (2*n+1) = x * (x ** 2*n)
     
     fun sqrt (x : Double) = math.sqrt(x)
-    fun sqrt (x : Float)  = math.sqrt(x.toDouble).toFloat
-    
-    # backward mode
-    fun sqrt (-> y * y) <- y
-
-**Invertible function invocation**
-Functions can be invoked in forward mode in any expression. For example, consider the function with the signature:
-
-    fun (List[a]) contains (a) -> Boolean
-    fun (List[a]) contains (-> a) <- Boolean
-
-We can invoke the function in an `if` expression, in forward mode:
-
-    if ([1,2,3] contains 1) then "yes" else "no"
-    # evaluates to yes
-
-Or we can invoke the function in backward mode as a stream:
-
-    [[1,2,3] contains (let x)]
-
-This yields a stream of the values 1, 2, and 3, bound to `x`.
-In forward mode, if any argument pattern does not match, then the function call fails with an exception.
-If used in an `|` expression, if an argument pattern in the function called in the left operand fails,
-the second function is called instead.
-Functions can be invoked in backward mode in patterns and in streams.
-If used in a pattern, if the return value pattern or any argument pattern does not match, then a pattern match using the function fails.
-If used in a stream, if the return value pattern or any argument pattern does not match, then the result stream is empty.
+    fun sqrt (! y * y) = (? y)
 
 ## Function overloading
 
@@ -1777,11 +1751,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNjQyNTYyOTEsNDIwMDI2MzI3LDQwND
-Y5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3
-MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNT
-YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
-MDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1Mz
-YzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3
-XX0=
+eyJoaXN0b3J5IjpbMTk4OTQ5OTIxMSw0MjAwMjYzMjcsNDA0Nj
+kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
+LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
+E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
+NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
+M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDdd
+fQ==
 -->
