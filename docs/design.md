@@ -735,7 +735,7 @@ Another example: `zip` and `unzip`:
     fun zip xs [] = []
     fun zip [] ys = []
     fun zip (x::xs) (y::ys) = (x,y)::zip xs ys
-    # backward
+    // backward
     fun zip (! xs) (! ys) = (? xys)
         where {
             xs = map fst xys
@@ -744,13 +744,10 @@ Another example: `zip` and `unzip`:
         
 Then we can define `unzip` as:
 
-    fun unzip xys = (xs, ys)
+    fun unzip (xys) = (xs, ys)
       where
         zip xs ys == xys
     
-`where` introduces a formula context. The body of a backward function
-
-is often a formula.
 
     zipWith:
     # forward mode
@@ -762,20 +759,20 @@ is often a formula.
     # backward mode
     fun zipWith (c -> (a,b)) (-> List[a]) (-> List[b]) <- List[c]
     fun zipWith (f) (-> xs) (-> ys) = zs
-      where:
+      where {
         xys = map f zs
-        xs = map (fun xy: xy.1) xys
-        ys = map (fun xy: xy.2) xys
-    zipWith3, etc. can be defined similarly.
+        xs = map fst xys
+        ys = map snd xys
+      }
 
 Operations and their inverses:
 
     fun (a) ** (Nat) -> a where Num a
-    fun (x) ** 0 = 1
-    fun (x) ** 1 = x
-    fun (x) ** 2 = x * x
-    fun (x) ** 3 = x * x * x
-    fun (x) ** 4 = x * x * x * x
+    fun (x) ** (0) = 1
+    fun (x) ** (1) = x
+    fun (x) ** 2) = x * x
+    fun (x) ** 3) = x * x * x
+    fun (x) ** 4) = x * x * x * x
     fun (x) ** n where even n =
       let y = x ** (n/2)
           y * y
@@ -1781,11 +1778,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzc0ODk1ODIwLDQyMDAyNjMyNyw0MDQ2OT
-MxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAs
-LTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MT
-QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
-NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
-Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0N119
-
+eyJoaXN0b3J5IjpbLTE3MzI5OTc5MDIsNDIwMDI2MzI3LDQwND
+Y5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3
+MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNT
+YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
+MDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1Mz
+YzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3
+XX0=
 -->
