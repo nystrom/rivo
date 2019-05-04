@@ -592,7 +592,7 @@ If more than one function is selected, the _most specific_ is invoked, if it is 
 When invoked, the function body `where` clause is evaluated, then the output attributes, in order from left to right.
 
 Functions can be overloaded.
-
+If a function is declared `open`, it can be overloaded in another module.
 
 Function declarations can be used to declare mix-fix operators. Symbols used in the function declaration are part of the function name.
 ### Signatures
@@ -1798,11 +1798,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTgxNjM2NjU3LDQyMDAyNjMyNyw0MDQ2OT
-MxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAs
-LTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MT
-QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
-NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
-Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0N119
+eyJoaXN0b3J5IjpbMzAzMDUyMTIsNDIwMDI2MzI3LDQwNDY5Mz
+EsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwt
+MjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxND
+AyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0
+LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNj
+k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3XX0=
 
 -->
