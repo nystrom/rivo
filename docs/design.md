@@ -482,34 +482,10 @@ Like functions and traits, types definitions can be overloaded. The type is equi
 Principal typing and coherence are the main issues here.
 The most specific type needs to be inferred.
 Since types are open, we can add more cases.
-The theory is polymorphic variants.
+The semantics is that all cases are gathered together into one definition.
 
 A type declared `open` can be overloaded in other modules.
 
-The semantics is that all cases are gathered together into one definition.
-
-### Polymorphic variants
-
-    data I (a)
-    I 3 :: [> I Int]
-
-    data F (a)
-    F 3 :: [> F Float]
-    
-    fun isPositive (x) = match x {
-        I y => y > 0
-        F z => z > 0.
-    }
-
-    isPositive _ :: [< I Int | F Float]
-
-	fun isPositive2 (x) = match x {
-	    I y => y > 0
-	    F z => z > 0.
-	    _ => error
-	}
-
-    isPositive2 _ :: [> I Int | F Float]
 
 ### Core types
 
@@ -874,11 +850,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMT
-Y1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2
-MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMT
-A5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMw
-MTEzMSwtNTYxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OS
-wtMTM0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2
-OTYzNl19
+eyJoaXN0b3J5IjpbMTEzNTc2ODE0MywtMTUzOTQ5MTE3OCwxOT
+A4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1
+MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNT
+c0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2
+MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC
+0xNTUxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYw
+MjY4MTRdfQ==
 -->
