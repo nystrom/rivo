@@ -853,24 +853,6 @@ Type classes:
     Percentage a where Real a between 0 and 100
     Probability a where Real a between 0 and 1
     Point a n-d points (implemented by Point2 etc)
-    
-## Transactional memory
-
-Fretta supports transactional memory. Here is an atomic counter:
-
-    class Counter:
-      var v: Int
-    
-    fun getAndInc (Counter) -> Int
-    fun getAndInc (c) =
-      atomic:
-        c.v = c.v + 1
-        c.v
-
-Normal variables can be used in transactions.
-For Java backend, Can build on top of `DeuceSTM`, which just lets you annotate methods as `@Atomic`.
-Just compile all `var` variables to `STMVar` and use Scala's implementation.
-For gcc backend, can use `gcc-4.7 -fgnu-tm`.
 
 ## Modules
 
@@ -1480,11 +1462,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzM1ODA2OTgsNDIwMDI2MzI3LDQwNDY5Mz
-EsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwt
-MjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxND
-AyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0
-LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNj
-k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3XX0=
-
+eyJoaXN0b3J5IjpbMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0Nj
+kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
+LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
+E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
+NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
+M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDdd
+fQ==
 -->
