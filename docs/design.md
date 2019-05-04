@@ -580,7 +580,10 @@ The unit type is defined by the built-in data type `()`.
 
 ## Function definitions
 
-Functions are declared with the `fun` keyword, followed by zero or more parameters in parentheses. Parameters are patterns. After the parameters is an optional guard `where e`, where `e` is a formula. After an `=`, there is the function body. The function body may be omitted, meaning the function is _abstract_. Afterh tbe 
+Functions are declared with the `fun` keyword, followed by zero or more _a in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. After an `=`, there is the function body. The function body may be omitted, meaning the function is _abstract_. After the body is another optional `where` clause.
+
+Parameters may specify a _mode_, either `!` (output) or `?` (input).
+If no modes are specified, the parameters are 
 
 Functions can be overloaded.
 
@@ -1789,7 +1792,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAxMzQyMjYyNCw0MDQ2OTMxLC0xNjU0Mz
+eyJoaXN0b3J5IjpbMTI0ODYyMDgxMiw0MDQ2OTMxLC0xNjU0Mz
 kyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAy
 NCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OT
 QyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYw
