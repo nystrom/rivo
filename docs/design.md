@@ -486,6 +486,8 @@ Generally, when a type is overloaded in another module, functions involving that
 
 An `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function.
 
+An `open` function
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -849,11 +851,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOT
-A4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1
-MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNT
-c0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2
-MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC
-0xNTUxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYw
-MjY4MTRdfQ==
+eyJoaXN0b3J5IjpbMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNT
+M5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1
+OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNj
+U0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAx
+ODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMi
+w1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5
+MTYwNTQ5XX0=
 -->
