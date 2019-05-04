@@ -865,20 +865,16 @@ Borrowed from Fortress.
       _ -> "none"
     }
 
-compiles to:
-
-    match planet in ["Mercury", "Venus", "Earth", "Mars"]
-
 Compare all cases with >
 
-    case most > of
-       1 mile => yes
-       1 km => no
-    end
+    match values max _ _ {
+       1 mile -> yes
+       1 km -> no
+    }
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTA3MTA3OTc2MywtMTY1ODQwMjE1NywxMD
+eyJoaXN0b3J5IjpbMTA0NzQxMTg0MywtMTY1ODQwMjE1NywxMD
 I4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEs
 LTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMj
 U5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAy
