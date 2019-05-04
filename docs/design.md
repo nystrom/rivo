@@ -694,28 +694,19 @@ For example, here is an `inc` function declared in forward mode:
 Here is the backwards mode:
 
     fun inc (? Int)  Int
-    fun inc (! y-1) = (? y)
+    fun inc (! x) = (? y)
+        where x = y - 1
 
-The "function body" (`y` is just a pattern that matches the return value.
+The "function body" (`y`) is just a pattern that matches the return value.
 The `where` clause is used to specify the code to evaluate to bind the argument.
 Variables in the argument and return value patterns are in scope in the `where` clause.
 As shorthand, the returned argument expression can be written inline.
 
-    fun inc (? Int) <- Int
-    fun inc (? y - 1) = (let y)
-
-The compiler can automatically generate backward modes. See [Romanenko PEPM'91].
-We can explicitly write the different signatures and the compiler will check if the different modes can be generated.
-
-    fun inc (Int) -> Int
-    fun inc (? Int) <- Int
-    fun inc (x) = x + 1
+    fun inc (! y - 1) = (? y)
 
 A backward mode can also generate a stream of results. This is done by defining several alternatives which bind the unknown argument variable differently.
 
-    fun (List[a]) contains (? a) <- Boolean
-    fun [] contains (? z) = False
-    fun (x::xs) contains (? z) = True
+    fun (? x) in (? x::xs) (x::xs) contains (? z) = True
       where:
         z == x || xs contains z
 
@@ -1787,11 +1778,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTUxNzkwOTUxMSw0MjAwMjYzMjcsNDA0Nj
-kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
-LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
-E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
-NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
-M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDdd
-fQ==
+eyJoaXN0b3J5IjpbLTEwNDUwNjY1ODAsNDIwMDI2MzI3LDQwND
+Y5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3
+MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNT
+YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
+MDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1Mz
+YzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3
+XX0=
 -->
