@@ -826,12 +826,13 @@ A Tuple `(e1, ..., en)` is sugar for `tuple{n} e1 ... en`, where `tuple{n}` is o
        fun tuple2 (a) (b) -> t a b
        fun (t a b) .1 -> a
        fun (t a b) .2 -> b
+       
 ## Data types
 
 The following data types are defined in the library:
 
     Int (arbitrary precision)
-    Int8, Int16, Int32,Int64,Int128`
+    Int8, Int16, Int32, Int64, Int128 
     Rat (arbitrary precision)
     Float32, Float64 
     Bit 
@@ -852,6 +853,7 @@ Type classes:
     Percentage a where Real a between 0 and 100
     Probability a where Real a between 0 and 1
     Point a n-d points (implemented by Point2 etc)
+    
 ## Transactional memory
 
 Fretta supports transactional memory. Here is an atomic counter:
@@ -1478,11 +1480,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI4MjQ4MDM4OCw0MjAwMjYzMjcsNDA0Nj
-kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
-LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
-E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
-NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
-M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDdd
-fQ==
+eyJoaXN0b3J5IjpbMzM1ODA2OTgsNDIwMDI2MzI3LDQwNDY5Mz
+EsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwt
+MjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxND
+AyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0
+LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNj
+k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3XX0=
+
 -->
