@@ -443,7 +443,8 @@ A `data` definition induces a function definition that matches instances of the 
 	data Cons (hd) (tl)
 
 induces the following definitions:
-
+  
+    fun Cons (? hd) (? tl) = (! Cons { hd, tl })
 	fun Cons (! hd) (! tl) = (? Cons { hd, tl })
 	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
 	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
@@ -869,7 +870,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTk1NTUzMDAwNSwtMTY1ODQwMjE1NywxMD
+eyJoaXN0b3J5IjpbMTkwODI5MjM3NywtMTY1ODQwMjE1NywxMD
 I4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEs
 LTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMj
 U5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAy
