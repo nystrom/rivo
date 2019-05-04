@@ -580,7 +580,7 @@ The unit type is defined by the built-in data type `()`.
 
 ## Function definitions
 
-Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. After an `=`, there is the function _return attribute_. The return attribute may be omitted, meaning the function is _abstract_. After the body is another optional `where` clause.
+Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. After an `=`, there is the function _return attribute_. The return attribute may be omitted, meaning the function is _abstract_. After the body is another optional `where` clause with a formula.
 
 Attributes may specify a _mode_, either `!` (output) or `?` (input).
 If no modes are specified, the parameters are all `?` mode and the return attribute is `!` mode. If a mode is specified for any attribute, it must be specified for all.
@@ -588,7 +588,9 @@ If no modes are specified, the parameters are all `?` mode and the return attrib
 Output attributes are expressions. Input attributes are patterns.
 When calling a function, input attributes are matched left to right, then the guard is matched against `True`. If all succeed, the function is selected.
 If more than one function is selected, the _most specific_ is invoked, if it is unique.
-If more 
+
+When invoked, the function body `where` clause is evaluated, then the output attributes, in order from left to right.
+
 Functions can be overloaded.
 
 
@@ -1796,11 +1798,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDIwMDI2MzI3LDQwNDY5MzEsLTE2NTQzOT
-IyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0
-LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAyMjEyLDU5ND
-I2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LDE4NDkxNjA1
-NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNjk2MzYsMTU2OT
-A2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzEx
-XX0=
+eyJoaXN0b3J5IjpbOTgxNjM2NjU3LDQyMDAyNjMyNyw0MDQ2OT
+MxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAs
+LTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MT
+QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
+NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
+Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0N119
+
 -->
