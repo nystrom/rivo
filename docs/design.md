@@ -681,37 +681,22 @@ Since multiple functions may have the same name or overlapping names, parsing us
 In this case, the compiler will report an error for any expression that cannot be parsed
 unambiguously. The programmer can usually resolve the error by adding parentheses.
 
-### Invertible functions
+### Backward functions
+
 Functions in Ivo can be declared to support several *modes* of evaluation.
 Normal evaluation is referred to as *forward mode*. A function can be invoked in a *backward mode* by passing in its return value and optionally some arguments, yielding the other arguments.
 A function invoked in a backwards mode can be used as a *pattern* or to define a *stream*.
-A function that supports both forwards and backwards modes is called *invertible*.
-An invertible function can be used as both a function and as a pattern for
-matching.
-Constructors are always invertible functions.
-An expression is invertible if it calls invertible functions.
-Backwards modes are automatically generated if the function body is invertible.
-Backward modes can be define explicitly by inverting the return type arrow in the signature (`<-`) and annotating
-the returned arguments with arrows `->`. The "body" of the function is given by a pattern and a where
-clause is used to define the returned arguments. For example, here is an `inc` function declared in forward mode:
 
-    fun inc (Int) -> Int
-    fun inc (let x) = x + 1
+For example, here is an `inc` function declared in forward mode:
 
-ALTERNATIVE:
-
-    fun inc _ :: Int -> Int
-    fun inc (Int) = (? Int)
-    fun inc (let x) = x + 1
+    fun inc (x) = x + 1
 
 Here is the backwards mode:
 
-    fun inc (? Int) <- Int
-    fun inc (? x) = (let y)
-      where:
-        x = y - 1
+    fun inc (? Int)  Int
+    fun inc (! y-1) = (? y)
 
-The "function body" is just a pattern that matches the return value.
+The "function body" (`y` is just a pattern that matches the return value.
 The `where` clause is used to specify the code to evaluate to bind the argument.
 Variables in the argument and return value patterns are in scope in the `where` clause.
 As shorthand, the returned argument expression can be written inline.
@@ -1802,7 +1787,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI0MjE4NDE5NCw0MjAwMjYzMjcsNDA0Nj
+eyJoaXN0b3J5IjpbLTUxNzkwOTUxMSw0MjAwMjYzMjcsNDA0Nj
 kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
 LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
 E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
