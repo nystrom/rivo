@@ -606,13 +606,16 @@ The following function signature is for an infix `+` operator on integers.
 
     fun (_: Int) + (_: Int) : Int
 
-If curly brackets are used instead of parentheses, the argument is call-by-name rather than call-by-value.
+If curly brackets are used instead of parentheses, the argument is call-by-name rather than call-by-value. 
+
+> Call-by-name parameters are not supported in Ivo 1.0.
+
 For example, the following operator defines short-circuiting boolean AND:
 
-    fun (Boolean) && {Boolean} -> Boolean
+    fun (_: Boolean) && {_: Boolean} : Boolean
 
 When invoked, the second argument is not evaluated unless used in the function body.
-Functions can be used to define mix-fix operators. For example, the ternary function `if` is defined as:
+Functions can be used to define mixfix operators. For example, the ternary function `if` is defined as:
 
     fun if (Boolean) then {a} else {a} -> a
 
@@ -622,9 +625,12 @@ Parameters may be double-parenthesized (or double-bracketed) to indicate operato
 
 With the following signature `::` is right associative:
 
-    fun (a) :: ((List[a])) -> List[a]
+    fun (_: a) :: ((_: List a)) : List a
 
 At most one argument type can be double-parenthesized.
+
+Left 
+
 ### Alternatives
 After the signature, zero or more alternatives can be provided. The alternatives are evaluated in order. The body of the first matching alternative is invoked.
 Each alternative is given by the function name and patterns for each argument, and then the function body.
@@ -1798,7 +1804,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTMyNzc0NzY5NCw0MjAwMjYzMjcsNDA0Nj
+eyJoaXN0b3J5IjpbMjA0NDE1MjIzNyw0MjAwMjYzMjcsNDA0Nj
 kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
 LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
 E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
