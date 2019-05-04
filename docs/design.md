@@ -744,10 +744,11 @@ Another example: `zip` and `unzip`:
         
 Then we can define `unzip` as:
 
-    fun unzip xys = (xs,ys)
-      where:
+    fun unzip xys = (xs, ys)
+      where
         zip xs ys == xys
-    where introduces a formula context. The body of a backward function
+    
+`where` introduces a formula context. The body of a backward function
 
 is often a formula.
 
@@ -1780,7 +1781,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDY1Mjg1ODUwLDQyMDAyNjMyNyw0MDQ2OT
+eyJoaXN0b3J5IjpbMzc0ODk1ODIwLDQyMDAyNjMyNyw0MDQ2OT
 MxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAs
 LTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MT
 QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
