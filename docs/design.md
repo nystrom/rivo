@@ -706,22 +706,21 @@ As shorthand, the returned argument expression can be written inline.
 
 A backward mode can also generate a stream of results. This is done by defining several alternatives which bind the unknown argument variable differently.
 
-    fun (? x) in (? x::xs) (x::xs) contains (? z) = True
-      where:
-        z == x || xs contains z
-
+    fun (! x) in (? x::xs) = (? True)
+    fun (! z) in (? x::xs) = (? True)
+      where z in xs
+      
 Higher-order functions can also be invertible. Here, is the forward mode for `map`, which takes
 a function as an argument.
 
-    fun map (a -> b) (List[a]) -> List[b]
-    fun map (f) [] = []
+    fun map (_: a -> b) (_: List a): List b
+    fun map (f) ([]) = []
     fun map (f) (x::xs) = f x :: map f xs
 
 In the backward mode, the type of the function argument is inverted.
 
-    fun map (b -> a) (? List[a]) <- List[b]
-    fun map (f) (? []) = []
-    fun map (f) (? f x :: map f xs) = (x::xs)
+    fun map (f) (! []) = []
+    fun map (f) (! f x :: map f xs) = (x::xs)
 
 Using this invertible `map`, we can apply the inverted function to each element of a
 list.
@@ -1778,7 +1777,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNDUwNjY1ODAsNDIwMDI2MzI3LDQwND
+eyJoaXN0b3J5IjpbLTEwODEyNDU1NjcsNDIwMDI2MzI3LDQwND
 Y5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3
 MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNT
 YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
