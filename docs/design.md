@@ -580,8 +580,11 @@ The unit type is defined by the built-in data type `()`.
 
 ## Function definitions
 
-Functions are declared with the `fun` keyword, followed by zero or more parameters in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. ThenAfter an `=`, there is a function body.
-A function declaration starts with a signature, which specifies the name, parameter types, and return type of the function, and is followed by the implementation. The signature is optional if it can be inferred.
+Functions are declared with the `fun` keyword, followed by zero or more parameters in parentheses. Parameters are patterns. After the parameters is an optional guard `where e`, where `e` is a formula. After an `=`, there is the function body. The function body may be omitted, meaning the function is _abstract_. Afterh tbe 
+
+Functions can be overloaded.
+
+
 Function declarations can be used to declare mix-fix operators. Symbols used in the function declaration are part of the function name.
 ### Signatures
 A function signature consists of a sequence of identifiers and parenthesized types, then an `->` and a return type.
@@ -1786,7 +1789,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk5NjAwNzY1OSw0MDQ2OTMxLC0xNjU0Mz
+eyJoaXN0b3J5IjpbMjAxMzQyMjYyNCw0MDQ2OTMxLC0xNjU0Mz
 kyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAy
 NCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OT
 QyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5MTYw
