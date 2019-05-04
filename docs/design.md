@@ -585,7 +585,9 @@ Functions are declared with the `fun` keyword, followed by zero or more _paramet
 Attributes may specify a _mode_, either `!` (output) or `?` (input).
 If no modes are specified, the parameters are all `?` mode and the return attribute is `!` mode. If a mode is specified for any attribute, it must be specified for all.
 
-Output attributes are 
+Output attributes are expressions. Input attributes are patterns.
+When calling a function, input attributes are matched left to right, then the guard is matched against `True`. If all succeed, the function is selected.
+At this point
 Functions can be overloaded.
 
 
@@ -1793,11 +1795,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQ1NzIwMTI5LDQwNDY5MzEsLTE2NTQzOT
-IyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0
-LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAyMjEyLDU5ND
-I2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LDE4NDkxNjA1
-NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNjk2MzYsMTU2OT
-A2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3LC0xNTM3NDI1NzEx
-XX0=
+eyJoaXN0b3J5IjpbLTIwNjAzMDYyNjUsNDA0NjkzMSwtMTY1ND
+M5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgw
+MjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNT
+k0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEwNDQsMTg0OTE2
+MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNjM2OTYzNiwxNT
+Y5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDcsLTE1Mzc0MjU3
+MTFdfQ==
 -->
