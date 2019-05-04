@@ -736,8 +736,12 @@ Another example: `zip` and `unzip`:
     fun zip [] ys = []
     fun zip (x::xs) (y::ys) = (x,y)::zip xs ys
     # backward
-    fun zip (! map (fun xy: xy.1) xys) (! map (fun xy: xy.2) xys) <- xys
-
+    fun zip (! xs) (! ys) = (? xys)
+        where {
+            xs = map fst xys
+            ys = map snd xys
+        }
+        
 Then we can define `unzip` as:
 
     fun unzip xys = (xs,ys)
@@ -1776,11 +1780,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3NjczMjYwMjYsNDIwMDI2MzI3LDQwND
-Y5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3
-MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNT
-YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
-MDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1Mz
-YzNjk2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3
-XX0=
+eyJoaXN0b3J5IjpbNDY1Mjg1ODUwLDQyMDAyNjMyNyw0MDQ2OT
+MxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAs
+LTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MT
+QwMjIxMiw1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0
+NCwxODQ5MTYwNTQ5LDUyNjAyNjgxNCw1MzYzNjk2MzYsNTM2Mz
+Y5NjM2LDE1NjkwNjg5MzAsODQ0OTM5NTEyLDcyMDkyNjA0N119
+
 -->
