@@ -770,19 +770,18 @@ Operations and their inverses:
     fun (a) ** (Nat) -> a where Num a
     fun (x) ** (0) = 1
     fun (x) ** (1) = x
-    fun (x) ** 2) = x * x
-    fun (x) ** 3) = x * x * x
-    fun (x) ** 4) = x * x * x * x
-    fun (x) ** n where even n =
-      let y = x ** (n/2)
+    fun (x) ** (2) = x * x
+    fun (x) ** (3) = x * x * x
+    fun (x) ** (4) = x * x * x * x
+    fun (x) ** (2*n) = {
+      let y = x ** n {
           y * y
-    fun (x) ** n =
-      let y = x ** (n/2)
-          y * y * x
+      }
+    }
+    fun (x) ** (2*n+1) = x * (x ** 2*n)
     
-    fun sqrt (a) -> a where Fractional a
-    fun sqrt (x :: Double) = java.lang.Math.sqrt(x)
-    fun sqrt (x :: Float)  = java.lang.Math.sqrt(x.toDouble).toFloat
+    fun sqrt (x : Double) = math.sqrt(x)
+    fun sqrt (x : Float)  = math.sqrt(x.toDouble).toFloat
     
     # backward mode
     fun sqrt (-> y * y) <- y
@@ -1778,7 +1777,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MzI5OTc5MDIsNDIwMDI2MzI3LDQwND
+eyJoaXN0b3J5IjpbLTEwNjQyNTYyOTEsNDIwMDI2MzI3LDQwND
 Y5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3
 MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNT
 YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
