@@ -859,12 +859,15 @@ Type classes:
 
 Borrowed from Fortress.
 
-    match planet in _
+    match planet in _ {
+      ["Mercury", "Venus", "Earth", "Mars"] -> "inner"
+      ["Jupiter", "Saturn", "Uranus", "Neptune"] -> "outer"
+      _ -> "none"
+    }
 
-    case planet element of
-      {"Mercury", "Venus", "Earth", "Mars"} => "inner"
-      {"Jupiter", "Saturn", "Uranus", "Neptune"} => "outer"
-      _ => "none"
+compiles to:
+
+    match planet in ["Mercury", "Venus", "Earth", "Mars"]
 
 Compare all cases with >
 
@@ -875,7 +878,7 @@ Compare all cases with >
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTc1MjUzMDgzOCwtMTY1ODQwMjE1NywxMD
+eyJoaXN0b3J5IjpbMTA3MTA3OTc2MywtMTY1ODQwMjE1NywxMD
 I4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEs
 LTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMj
 U5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAy
