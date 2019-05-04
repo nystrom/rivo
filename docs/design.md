@@ -486,7 +486,7 @@ The theory is polymorphic variants.
 
 A type declared `open` can be overloaded in other modules.
 
-The semantics is that all 
+The semantics is that all cases are gathered together into one definition.
 
 ### Polymorphic variants
 
@@ -874,11 +874,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTYxOTQ3MDkxMiwxOTA4MjkyMzc3LC0xNj
-U4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAwMjYz
-MjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMD
-k0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAx
-MTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC
-0xMzQ3MTEwNDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5
-NjM2XX0=
+eyJoaXN0b3J5IjpbLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMT
+Y1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2
+MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMT
+A5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMw
+MTEzMSwtNTYxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OS
+wtMTM0NzExMDQ0LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2
+OTYzNl19
 -->
