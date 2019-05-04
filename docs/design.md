@@ -580,7 +580,10 @@ The unit type is defined by the built-in data type `()`.
 
 ## Function definitions
 
-Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. After an `=`, there is the function _return attribute_. The return attribute may be omitted, meaning the function is _abstract_. After the body is another optional `where` clause with a formula.
+Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. 
+After an `=`, there is the function _return attribute_. The return attribute may be omitted, meaning the function is _abstract_. After the body is another optional `where` clause with a formula.
+
+
 
 Attributes may specify a _mode_, either `!` (output) or `?` (input).
 If no modes are specified, the parameters are all `?` mode and the return attribute is `!` mode. If a mode is specified for any attribute, it must be specified for all.
@@ -591,11 +594,12 @@ If more than one function is selected, the _most specific_ is invoked, if it is 
 
 When invoked, the function body `where` clause is evaluated, then the output attributes, in order from left to right.
 
-Functions can be overloaded.
+Functions can be overloaded by providing more than one alternative.
 If a function is declared `open`, it can be overloaded in another module.
+At link time, the function is checked to determine if the types agree.
 
-Function declarations can be used to declare mix-fix operators. Symbols used in the function declaration are part of the function name.
-### Signatures
+### Alternatives
+
 A function signature consists of a sequence of identifiers and parenthesized types, then an `->` and a return type.
 The signature must include at least one identifier and at least one parameter type.
 The following function signature is for a function named `inc`, which takes an integer and returns an integer.
@@ -1798,11 +1802,11 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzAzMDUyMTIsNDIwMDI2MzI3LDQwNDY5Mz
-EsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwt
-MjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxND
-AyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0
-LDE4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNj
-k2MzYsMTU2OTA2ODkzMCw4NDQ5Mzk1MTIsNzIwOTI2MDQ3XX0=
-
+eyJoaXN0b3J5IjpbMTc5OTU3Mjc4OSw0MjAwMjYzMjcsNDA0Nj
+kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
+LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
+E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
+NDQsMTg0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNj
+M2OTYzNiwxNTY5MDY4OTMwLDg0NDkzOTUxMiw3MjA5MjYwNDdd
+fQ==
 -->
