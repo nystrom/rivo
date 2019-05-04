@@ -583,8 +583,6 @@ The unit type is defined by the built-in data type `()`.
 Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. 
 After an `=`, there is the function _return attribute_. The return attribute may be omitted, meaning the function is _abstract_. After the body is another optional `where` clause with a formula.
 
-
-
 Attributes may specify a _mode_, either `!` (output) or `?` (input).
 If no modes are specified, the parameters are all `?` mode and the return attribute is `!` mode. If a mode is specified for any attribute, it must be specified for all.
 
@@ -600,15 +598,13 @@ At link time, the function is checked to determine if the types agree.
 
 ### Alternatives
 
-A function signature consists of a sequence of identifiers and parenthesized types, then an `->` and a return type.
-The signature must include at least one identifier and at least one parameter type.
 The following function signature is for a function named `inc`, which takes an integer and returns an integer.
 
-    fun inc (Int) -> Int
+    fun inc (x: Int) : Int
 
 The following function signature is for an infix `+` operator on integers.
 
-    fun (Int) + (Int) -> Int
+    fun (_: Int) + (_: Int) : Int
 
 If curly brackets are used instead of parentheses, the argument is call-by-name rather than call-by-value.
 For example, the following operator defines short-circuiting boolean AND:
@@ -1802,7 +1798,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc5OTU3Mjc4OSw0MjAwMjYzMjcsNDA0Nj
+eyJoaXN0b3J5IjpbMTMyNzc0NzY5NCw0MjAwMjYzMjcsNDA0Nj
 kzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcw
 LC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01Nj
 E0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEw
