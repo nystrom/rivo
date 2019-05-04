@@ -400,11 +400,9 @@ The semantics are given by the Redex model.
 
 `p : T` matches if `p` matches the scrutinee and if the scrutinee has type `T`.
 
-## Function definitions
+## Data definitions
 
-## Type definitions
-
-A `data` definition introduces a data type. Members of the type are records.
+A `data` definition introduces a data type. Members of the type are tagged records.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
 
@@ -644,8 +642,6 @@ Each alternative is given by the function name and patterns for each argument, a
     fun if (True) then {e} else {e} = e
     fun if (False) then {_} else {e} = e
     
-
-
 ## Mixfix function parsing
 
 Mixfix operators may be declared with `fun` definitions. A function is *mixfix* if its signature
@@ -655,7 +651,7 @@ If `E` is the parser nonterminal for expressions
 and if `P` is the nonterminal for primary expressions, then
 the parser is extended as follows for a module with function definitions `f1`, ... `fn`.
 
-    E ::= E1
+    E  ::= E1
     E1 ::= r1
          | E2
     E2 ::= r2
@@ -873,11 +869,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzE1NTU4MDQzLC0xNjU4NDAyMTU3LDEwMj
-g1NTkyNjksMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwt
-MTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNT
-kwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIy
-MTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3MTEwNDQsMT
-g0OTE2MDU0OSw1MjYwMjY4MTQsNTM2MzY5NjM2LDUzNjM2OTYz
-Nl19
+eyJoaXN0b3J5IjpbMTk1NTUzMDAwNSwtMTY1ODQwMjE1NywxMD
+I4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEs
+LTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMj
+U5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNTYxNDAy
+MjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzExMDQ0LD
+E4NDkxNjA1NDksNTI2MDI2ODE0LDUzNjM2OTYzNiw1MzYzNjk2
+MzZdfQ==
 -->
