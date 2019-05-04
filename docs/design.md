@@ -720,24 +720,23 @@ a function as an argument.
 In the backward mode, the type of the function argument is inverted.
 
     fun map (f) (! []) = []
-    fun map (f) (! f x :: map f xs) = (x::xs)
+    fun map (f) (! z :: map f xs) = (x::xs)
+       where f z = x
 
 Using this invertible `map`, we can apply the inverted function to each element of a
 list.
 
-    let map inc (let xs) == [1,2,3]
+    let map inc xs == [1,2,3]
     # binds xs to [0,1,2]
 
-Thanks to Luis Mastrangelo for the example.
 Another example: `zip` and `unzip`:
 
-    fun zip (List[a]) (List[b]) -> List[(a,b)]
-    # forward
+    // forward
     fun zip xs [] = []
     fun zip [] ys = []
     fun zip (x::xs) (y::ys) = (x,y)::zip xs ys
     # backward
-    fun zip (-> map (fun xy: xy.1) xys) (-> map (fun xy: xy.2) xys) <- xys
+    fun zip (! map (fun xy: xy.1) xys) (! map (fun xy: xy.2) xys) <- xys
 
 Then we can define `unzip` as:
 
@@ -1777,7 +1776,7 @@ Compare all cases with >
     end
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwODEyNDU1NjcsNDIwMDI2MzI3LDQwND
+eyJoaXN0b3J5IjpbLTE3NjczMjYwMjYsNDIwMDI2MzI3LDQwND
 Y5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3
 MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMSwtNT
 YxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0NzEx
