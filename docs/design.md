@@ -504,7 +504,9 @@ It is a link-time error to have ambiguous functions and types.
 
 ## Type inference
 
-
+Each open type is translated to a type class.
+Each open function is translated to a type class.
+Each alternative is translated to 
 
 ### Core types
 
@@ -869,11 +871,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMT
-kwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEz
-MjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNT
-csMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2
-OTMxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0Nz
-AsLTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2
-MTQwMjIxMl19
+eyJoaXN0b3J5IjpbMTk3MDA1ODUzOCwxNjA5MzQ4MjM1LC0yMD
+IyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIy
+MzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3Ny
+wtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIw
+MDI2MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OC
+wtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1
+NzMwMTEzMV19
 -->
