@@ -483,7 +483,7 @@ The semantics is that all cases are gathered together into one definition.
 
 A type declared `open` can be overloaded in other modules. Generally, when a type is overloaded in another module, functions involving that type are also overloaded. 
 
-Functions using `open` types should be declared `open`. That is, an `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type. It is allowed for a function to treat an open type parame
+Functions using `open` types should be declared `open`. That is, an `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type. It is allowed for a function to treat an open type parametrically (that is, to move it between variables).
 
 > TODO: Matching of type is checked for completeness within a module. Matching of open types is not checked for completeness.
 
@@ -866,7 +866,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIxMTkwNTMxNDAsLTE5MDYyMzIyNjAsNj
+eyJoaXN0b3J5IjpbLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNj
 Y4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5
 MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNj
 ksMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5
