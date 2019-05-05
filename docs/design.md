@@ -511,14 +511,16 @@ Each data definition is translated to a type class with a single constructor met
     data Nil
     data Cons (hd) (tl)
 
-    variant xs :: Nil
-       make :: xs
+    class Nil xs
+       mkNil :: xs
     
-    variant xs :: Cons a b
-       make :: a -> b -> xs
+    class Cons a b xs | xs -> a b
+       mkCons :: a -> b -> xs
     
-	data List (a) = Nil | Cons (a) (List a)
+	type List (a) = Nil | Cons (a) (List a)
 
+	class List a xs | xs -> a
+	   
     
 	variant xs :: List x 
 	    nil :: xs 
@@ -905,7 +907,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODM2MTYyMzc2LDE2MDkzNDgyMzUsLTIwMj
+eyJoaXN0b3J5IjpbOTAxMzM4NTQwLDE2MDkzNDgyMzUsLTIwMj
 IyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIz
 NjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC
 0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAw
