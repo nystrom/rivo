@@ -484,9 +484,11 @@ The semantics is that all cases are gathered together into one definition.
 A type declared `open` can be overloaded in other modules.
 Generally, when a type is overloaded in another module, functions involving that type are also overloaded.
 
-An `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function.
+An `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type.
 
-An `open` function
+## Linking
+
+When linking, open function
 
 ### Core types
 
@@ -851,11 +853,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNT
-M5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1
-OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNj
-U0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAx
-ODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMi
-w1OTQyNjgwNDEsLTE1NTExMzQ3NzksLTEzNDcxMTA0NCwxODQ5
-MTYwNTQ5XX0=
+eyJoaXN0b3J5IjpbMjA4NDQ3MzA2MiwxMjY2MzIyMzYwLDE3MT
+Q1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQw
+MjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LD
+QwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQw
+MzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMS
+wtNTYxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0
+NzExMDQ0XX0=
 -->
