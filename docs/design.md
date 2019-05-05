@@ -481,10 +481,9 @@ Like functions and traits, types definitions can be overloaded. The type is equi
 
 The semantics is that all cases are gathered together into one definition.
 
-A type declared `open` can be overloaded in other modules.
-Generally, when a type is overloaded in another module, functions involving that type are also overloaded.
+A type declared `open` can be overloaded in other modules. Generally, when a type is overloaded in another module, functions involving that type are also overloaded. 
 
-An `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type.
+Functions using `open` types should be declared `open`. That is, an `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type. It is allowed for a function to treat an open type parame
 
 > TODO: Matching of type is checked for completeness within a module. Matching of open types is not checked for completeness.
 
@@ -499,7 +498,7 @@ When linking modules, a dispatch function is generated for each open function in
 When linking modules, overlapping instances are checked.
 
 It is a compile-time error to have visible overlapping instances.
-It is a static error to have visible ambiguous functions and types.
+It is a compile-time error to have visible ambiguous functions and types.
 It is a link-time error to have overlapping instances.
 It is a link-time error to have ambiguous functions and types.
 
@@ -867,11 +866,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkyNTgzMTQ2NSwtMTkwNjIzMjI2MCw2Nj
-g2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkx
-MTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OS
-wxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNjU0Mzky
-MjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAyNC
-wxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OTQy
-NjgwNDFdfQ==
+eyJoaXN0b3J5IjpbLTIxMTkwNTMxNDAsLTE5MDYyMzIyNjAsNj
+Y4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5
+MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNj
+ksMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5
+MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMj
+QsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0
+MjY4MDQxXX0=
 -->
