@@ -486,9 +486,11 @@ Generally, when a type is overloaded in another module, functions involving that
 
 An `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type.
 
-## Linking
+Matching of open types are not checked for completeness.
 
-When linking, open function
+## Linking and dispatch
+
+When linking modules, a dispatch function is generated for each open function in the modules.
 
 ### Core types
 
@@ -853,11 +855,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA4NDQ3MzA2MiwxMjY2MzIyMzYwLDE3MT
-Q1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQw
-MjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LD
-QwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQw
-MzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1NzMwMTEzMS
-wtNTYxNDAyMjEyLDU5NDI2ODA0MSwtMTU1MTEzNDc3OSwtMTM0
-NzExMDQ0XX0=
+eyJoaXN0b3J5IjpbNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxND
+UxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAy
+MTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAwMjYzMjcsND
+A0NjkzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAz
+NDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC
+01NjE0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3
+MTEwNDRdfQ==
 -->
