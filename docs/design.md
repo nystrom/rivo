@@ -490,7 +490,9 @@ Matching of open types are not checked for completeness.
 
 ## Linking and dispatch
 
-When linking modules, a dispatch function is generated for each open function in the modules.
+When linking modules, a dispatch function is generated for each open function in the linked modules.
+
+
 
 ### Core types
 
@@ -855,11 +857,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxND
-UxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAy
-MTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAwMjYzMjcsND
-A0NjkzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAz
-NDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC
-01NjE0MDIyMTIsNTk0MjY4MDQxLC0xNTUxMTM0Nzc5LC0xMzQ3
-MTEwNDRdfQ==
+eyJoaXN0b3J5IjpbLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNj
+YzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4Mjky
+Mzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNS
+w0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNTc0NDYx
+NjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MC
+wxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0MjY4MDQxLC0xNTUx
+MTM0Nzc5XX0=
 -->
