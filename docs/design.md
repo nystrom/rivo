@@ -488,9 +488,12 @@ An `open` type cannot be matched as a parameter of a closed function nor matched
 
 > TODO: Matching of type is checked for completeness within a module. Matching of open types is not checked for completeness.
 
-## Linking and dispatch
+## Linking 
 
 When linking modules, the modules are checked for ambiguous or incomplete open functions and ambiguous open types.
+
+> TODO: Ambiguous (open) functions are in general allowed in backward modes.
+
 When linking modules, a dispatch function is generated for each open function in the linked modules.
 
 
@@ -858,11 +861,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNTI1Nzg0ODMsLTE5MDYyMzIyNjAsNj
-Y4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5
-MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNj
-ksMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5
-MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMj
-QsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0
-MjY4MDQxXX0=
+eyJoaXN0b3J5IjpbMTY4MDA1MjYxNSwtMTkwNjIzMjI2MCw2Nj
+g2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkx
+MTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OS
+wxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNjU0Mzky
+MjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0NzAsLTI1OTAxODAyNC
+wxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2MTQwMjIxMiw1OTQy
+NjgwNDFdfQ==
 -->
