@@ -515,13 +515,11 @@ Each type definition is translated into a type class.
 
 	type List (a) = Nil | Cons (a) (List a)
 
-    data NilCon xs = Nil xs | Cons xs
-
 	class List a xs | xs -> a
 	   mkNil :: xs
 	   mkCons :: a -> xs -> xs
 	   
-	instance List a Nil
+	instance List a (NilCons xs)
 	   mkNil = Nil Nil
 	instance List a xs => List a (Cons a xs)
 	   mkCons hd tl = Cons (Cons hd tl)
@@ -906,7 +904,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNTIxMDgxMDAsMjA2ODQ5OTM5NCwxNj
+eyJoaXN0b3J5IjpbLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNj
 A5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5
 MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNz
 gsMTkwODI5MjM3NywtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5
