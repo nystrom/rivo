@@ -496,6 +496,12 @@ When linking modules, the modules are checked for ambiguous or incomplete open f
 
 When linking modules, a dispatch function is generated for each open function in the linked modules.
 
+When linking modules, overlapping instances are checked.
+
+It is a compile-time error to have visible overlapping instances.
+It is a static error to have visible ambiguous functions and types.
+It is a link-time error to have overlapping instances.
+It is a link-time error to have ambiguous functions and types.
 
 
 ### Core types
@@ -861,7 +867,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY4MDA1MjYxNSwtMTkwNjIzMjI2MCw2Nj
+eyJoaXN0b3J5IjpbMTkyNTgzMTQ2NSwtMTkwNjIzMjI2MCw2Nj
 g2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkx
 MTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OS
 wxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNjU0Mzky
