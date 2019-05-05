@@ -510,7 +510,7 @@ Each data definition is translated to a type class with a single constructor met
 
 	data List (a) = Nil | Cons (a) (List a)
 
-	variant xs ∈ List x 
+	variant xs :: List x 
 	    nil :: xs 
 	    cons :: x -> xs -> xs
 
@@ -523,7 +523,13 @@ Each alternative is translated to an instance.
 
 	length :: List a -> Int
 	
-	record Length
+	record a :: Length
+	    length a -> Int
+	instance List x xs ∈ Length where 
+	   length nil = 0 
+	   length (cons x xs) = 1 + length xs 
+	instance List2 x  xs ∈ Length where 
+	   length (cons2 x y xs) = length (cons x (cons y xs)) instance AppendList x  xs ∈ Length where length (unit x) = 1 length (append xs ys) = length xs + length ys
 
 ### Core types
 
@@ -888,7 +894,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkzMzI5Mzg4MywxNjA5MzQ4MjM1LC0yMD
+eyJoaXN0b3J5IjpbMTU5OTAzNDMwMSwxNjA5MzQ4MjM1LC0yMD
 IyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIy
 MzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3Ny
 wtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIw
