@@ -506,6 +506,7 @@ It is a link-time error to have ambiguous functions and types.
 
 The type system is based on Kagawa's extension of Haskell with polymorphic variants.
 
+Each data definition is translated to a type class with a single constructor method.
 Each open type is translated to a type class.
 Each constructor is translated to an instance with a constructor.
 
@@ -875,7 +876,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNzA3NjQwOTMsMTYwOTM0ODIzNSwtMj
+eyJoaXN0b3J5IjpbLTEzNzg4NDkxODcsMTYwOTM0ODIzNSwtMj
 AyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMy
 MjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNz
 csLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQy
