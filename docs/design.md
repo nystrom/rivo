@@ -515,14 +515,16 @@ Each type definition is translated into a type class.
 
 	type List (a) = Nil | Cons (a) (List a)
 
+    data NilCon xs = Nil xs | Cons xs
+
 	class List a xs | xs -> a
 	   mkNil :: xs
 	   mkCons :: a -> xs -> xs
 	   
 	instance List a Nil
-	   mkNil = Nil
+	   mkNil = Nil Nil
 	instance List a xs => List a (Cons a xs)
-	   mkCons = Cons
+	   mkCons hd tl = Cons (Cons hd tl)
 
 Each open type is translated to a type class.
 Each constructor is translated to an instance with a constructor.
@@ -904,7 +906,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MzM2NDcyOTIsMjA2ODQ5OTM5NCwxNj
+eyJoaXN0b3J5IjpbLTEzNTIxMDgxMDAsMjA2ODQ5OTM5NCwxNj
 A5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5
 MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNz
 gsMTkwODI5MjM3NywtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5
