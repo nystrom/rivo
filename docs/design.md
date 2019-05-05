@@ -508,8 +508,18 @@ The type system is based on Kagawa's extension of Haskell with polymorphic varia
 
 Each data definition is translated to a type class with a single constructor method.
 
+    data Nil
+    data Cons (hd) (tl)
+
+    variant xs :: Nil
+       make :: xs
+    
+    variant xs :: Cons a b
+       make :: a -> b -> xs
+    
 	data List (a) = Nil | Cons (a) (List a)
 
+    
 	variant xs :: List x 
 	    nil :: xs 
 	    cons :: x -> xs -> xs
@@ -895,11 +905,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTExMDIxNTMzOCwxNjA5MzQ4MjM1LC0yMD
-IyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIy
-MzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3Ny
-wtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIw
-MDI2MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OC
-wtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1
-NzMwMTEzMV19
+eyJoaXN0b3J5IjpbODM2MTYyMzc2LDE2MDkzNDgyMzUsLTIwMj
+IyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIz
+NjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC
+0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAw
+MjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC
+0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3
+MzAxMTMxXX0=
 -->
