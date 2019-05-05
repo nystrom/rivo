@@ -504,9 +504,13 @@ It is a link-time error to have ambiguous functions and types.
 
 ## Type inference
 
+The type system is based on Kagawa's extension of Haskell with polymorphic variants.
+
 Each open type is translated to a type class.
-Each open function is translated to a type class.
-Each alternative is translated to 
+Each constructor is translated to an instance with a constructor.
+
+Each open function is translated to a type class with a single method.
+Each alternative is translated to an instance.
 
 ### Core types
 
@@ -871,11 +875,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTk3MDA1ODUzOCwxNjA5MzQ4MjM1LC0yMD
-IyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIy
-MzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3Ny
-wtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIw
-MDI2MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OC
-wtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1
-NzMwMTEzMV19
+eyJoaXN0b3J5IjpbLTEwNzA3NjQwOTMsMTYwOTM0ODIzNSwtMj
+AyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMy
+MjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNz
+csLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQy
+MDAyNjMyNyw0MDQ2OTMxLC0xNjU0MzkyMjI3LC01NzQ0NjE2Nj
+gsLTEwOTQ0MDM0NzAsLTI1OTAxODAyNCwxODc5ODYxMTYwLDEw
+NTczMDExMzFdfQ==
 -->
