@@ -506,32 +506,23 @@ It is a link-time error to have ambiguous functions and types.
 
 The type system is based on Kagawa's extension of Haskell with polymorphic variants.
 
-Each data definition is translated to a type class with a single constructor method.
+Each data definition is translated to a data definition.
 
     data Nil
     data Cons (hd) (tl)
 
-    class Nil xs
-       mkNil :: xs
-    
-    class Cons a b xs | xs -> a b
-       mkCons :: a -> b -> xs
-    
+Each type definition is translated into a type class.
+
 	type List (a) = Nil | Cons (a) (List a)
 
 	class List a xs | xs -> a
 	   mkNil' :: xs
 	   mkCons' :: a -> xs -> xs
 	   
-	instance List a xs => Nil xs
-	   mkNil = mkNil'
+	instance List a Nil
+	   mkNil = Nil
 	instance List a xs => Cons a xs xs
-	   mkCons = mkCons'
-    
-	variant xs :: List x 
-	    nil :: xs 
-	    cons :: x -> xs -> xs
-
+	   mkCons = Cons
 
 Each open type is translated to a type class.
 Each constructor is translated to an instance with a constructor.
@@ -913,11 +904,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA2ODQ5OTM5NCwxNjA5MzQ4MjM1LC0yMD
-IyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIy
-MzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3Ny
-wtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIw
-MDI2MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OC
-wtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1
-NzMwMTEzMV19
+eyJoaXN0b3J5IjpbLTc4NzY1Mjg3NywyMDY4NDk5Mzk0LDE2MD
+kzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4Njky
+NjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OC
+wxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2
+MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNy
+wtNTc0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3
+OTg2MTE2MF19
 -->
