@@ -502,6 +502,9 @@ It is a compile-time error to have visible ambiguous functions and types.
 It is a link-time error to have overlapping instances.
 It is a link-time error to have ambiguous functions and types.
 
+## Type inference
+
+
 
 ### Core types
 
@@ -866,11 +869,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNj
-Y4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5
-MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNj
-ksMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5
-MjIyNywtNTc0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMj
-QsMTg3OTg2MTE2MCwxMDU3MzAxMTMxLC01NjE0MDIyMTIsNTk0
-MjY4MDQxXX0=
+eyJoaXN0b3J5IjpbMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMT
+kwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEz
+MjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNT
+csMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2
+OTMxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEwOTQ0MDM0Nz
+AsLTI1OTAxODAyNCwxODc5ODYxMTYwLDEwNTczMDExMzEsLTU2
+MTQwMjIxMl19
 -->
