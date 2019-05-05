@@ -516,12 +516,12 @@ Each type definition is translated into a type class.
 	type List (a) = Nil | Cons (a) (List a)
 
 	class List a xs | xs -> a
-	   mkNil' :: xs
-	   mkCons' :: a -> xs -> xs
+	   mkNil :: xs
+	   mkCons :: a -> xs -> xs
 	   
 	instance List a Nil
 	   mkNil = Nil
-	instance List a xs => Cons a xs xs
+	instance List a xs => List a (Cons a xs)
 	   mkCons = Cons
 
 Each open type is translated to a type class.
@@ -904,11 +904,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTc4NzY1Mjg3NywyMDY4NDk5Mzk0LDE2MD
-kzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4Njky
-NjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OC
-wxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2
-MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNy
-wtNTc0NDYxNjY4LC0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3
-OTg2MTE2MF19
+eyJoaXN0b3J5IjpbLTE5MzM2NDcyOTIsMjA2ODQ5OTM5NCwxNj
+A5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5
+MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNz
+gsMTkwODI5MjM3NywtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5
+NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEsLTE2NTQzOTIyMj
+csLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4
+Nzk4NjExNjBdfQ==
 -->
