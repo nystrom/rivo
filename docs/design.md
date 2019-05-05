@@ -517,11 +517,14 @@ Each type definition is translated into a type class.
 	instance List a Nil
 	instance List a xs => List a (Cons a xs)
 
-Use of the type `List a` 
-Each open type is translated to a type class.
-Each constructor is translated to an instance with a constructor.
+Use of the type `List a` translates into `List a xs => xs`.
 
 Each open function is translated to a type class with a single method.
+
+    fun length (List a) -> Int
+
+    class Length xs
+        length :: xs 
 Each alternative is translated to an instance.
 
 	record a \ Length
@@ -898,7 +901,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzQ4OTU1OTQwLDYwNDMyODM3NiwtMTkzMD
+eyJoaXN0b3J5IjpbODQ0MDk3NDM2LDYwNDMyODM3NiwtMTkzMD
 YzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgy
 MzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LD
 EyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4
