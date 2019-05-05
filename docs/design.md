@@ -520,6 +520,8 @@ Each data definition is translated to a type class with a single constructor met
 	type List (a) = Nil | Cons (a) (List a)
 
 	class List a xs | xs -> a
+	   mkNil :: xs
+	   mkCons :: a -> xs -> xs
 	   
     
 	variant xs :: List x 
@@ -907,11 +909,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTAxMzM4NTQwLDE2MDkzNDgyMzUsLTIwMj
-IyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIz
-NjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC
-0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAw
-MjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC
-0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3
-MzAxMTMxXX0=
+eyJoaXN0b3J5IjpbLTE3NDUzNjkxNjQsMTYwOTM0ODIzNSwtMj
+AyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMy
+MjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNz
+csLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQy
+MDAyNjMyNyw0MDQ2OTMxLC0xNjU0MzkyMjI3LC01NzQ0NjE2Nj
+gsLTEwOTQ0MDM0NzAsLTI1OTAxODAyNCwxODc5ODYxMTYwLDEw
+NTczMDExMzFdfQ==
 -->
