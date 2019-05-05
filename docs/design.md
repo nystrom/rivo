@@ -521,6 +521,10 @@ Each constructor is translated to an instance with a constructor.
 Each open function is translated to a type class with a single method.
 Each alternative is translated to an instance.
 
+	length :: List a -> Int
+	
+	record Length
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -884,11 +888,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTE2ODc4MDEzLDE2MDkzNDgyMzUsLTIwMj
-IyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIz
-NjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC
-0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAw
-MjYzMjcsNDA0NjkzMSwtMTY1NDM5MjIyNywtNTc0NDYxNjY4LC
-0xMDk0NDAzNDcwLC0yNTkwMTgwMjQsMTg3OTg2MTE2MCwxMDU3
-MzAxMTMxXX0=
+eyJoaXN0b3J5IjpbMTkzMzI5Mzg4MywxNjA5MzQ4MjM1LC0yMD
+IyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIy
+MzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3Ny
+wtMTY1ODQwMjE1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIw
+MDI2MzI3LDQwNDY5MzEsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OC
+wtMTA5NDQwMzQ3MCwtMjU5MDE4MDI0LDE4Nzk4NjExNjAsMTA1
+NzMwMTEzMV19
 -->
