@@ -504,8 +504,6 @@ It is a link-time error to have ambiguous functions and types.
 
 ## Type inference
 
-The type system is based on Kagawa's extension of Haskell with polymorphic variants.
-
 Each data definition is translated to a data definition.
 
     data Nil
@@ -900,11 +898,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMj
-A2ODQ5OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2
-MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNT
-ksLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMjE1Nywx
-MDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5Mz
-EsLTE2NTQzOTIyMjcsLTU3NDQ2MTY2OCwtMTA5NDQwMzQ3MCwt
-MjU5MDE4MDI0XX0=
+eyJoaXN0b3J5IjpbNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMT
+g3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIy
+MjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MC
+wxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2
+NTg0MDIxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNj
+MyNyw0MDQ2OTMxLC0xNjU0MzkyMjI3LC01NzQ0NjE2NjgsLTEw
+OTQ0MDM0NzBdfQ==
 -->
