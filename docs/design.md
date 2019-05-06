@@ -517,6 +517,12 @@ Each type definition is translated into a type class.
 	instance Nil : List a Nil
 	instance xs : List a => Cons a xs : List a
 
+Recursion turns into 
+	type Foo a = Bar (Foo [a])
+
+    class xs : Foo a | xs -> a
+    instance xs : Foo [a] => Bar xs : List a
+
 Use of the type `List a` translates into `List a xs => xs`.
 
 Open function alternatives are just inferred as is. Each alternative may have a different type. It is a link-time error for alternatives to have incompatible types.
@@ -911,11 +917,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNDc1MTkzNjksODQxMzI4NTc3LC0xMD
-QzMDIyMDIzLDYwNDMyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3
-MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOT
-AsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcx
-NDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC0xNjU4ND
-AyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAwMjYzMjcs
-NDA0NjkzMV19
+eyJoaXN0b3J5IjpbMTAwMzM4MTM5MCw4NDEzMjg1NzcsLTEwND
+MwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3Nzcz
+MTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MC
+wtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0
+NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MD
+IxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0
+MDQ2OTMxXX0=
 -->
