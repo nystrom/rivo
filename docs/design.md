@@ -528,7 +528,9 @@ Recursion turns into a type parameter
 
 Open function alternatives are just inferred as is. Each alternative may have a different type. It is a link-time error for alternatives to have incompatible types.
 
-Gradu
+### Gradual typing
+
+If a type is omitted it is inferred. If the inferred type results in a type error, the dynamic type `?` is used. 
 
 ### Core types
 
@@ -893,11 +895,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQxOTMzMzM0LDg0MTMyODU3NywtMTA0Mz
-AyMjAyMyw2MDQzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMx
-MDAsMjA2ODQ5OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC
-0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1
-MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMj
-E1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQw
-NDY5MzFdfQ==
+eyJoaXN0b3J5IjpbMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwND
+MwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3Nzcz
+MTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MC
+wtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0
+NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MD
+IxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0
+MDQ2OTMxXX0=
 -->
