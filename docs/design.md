@@ -526,7 +526,6 @@ Each open function is translated to a type class with a single method.
     class Length z a | z -> a
         length :: List a => z -> xs -> Int
     
-    
 Each alternative is translated to an instance.
 
 	record a \ Length
@@ -903,11 +902,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOT
-MwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0
-ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2Mj
-UsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5
-MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwxOTYxNj
-UyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0xNjU0MzkyMjI3LC01
-NzQ0NjE2NjhdfQ==
+eyJoaXN0b3J5IjpbMjAzMDQyNTk5NSwtMTA0MzAyMjAyMyw2MD
+QzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5
+OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMj
+YwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1
+Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMjE1NywxMDI4NT
+U5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEsLTE2
+NTQzOTIyMjddfQ==
 -->
