@@ -530,7 +530,9 @@ Open function alternatives are just inferred as is. Each alternative may have a 
 
 ### Gradual typing
 
-If a type is omitted it is inferred. If the inferred type results in a type error, the dynamic type `?` is used. 
+If a type is omitted, it is inferred. If the inferred type results in a type error, the dynamic type `?` is used. 
+
+When unifying `C` is preferred to `?`, which is preferred to `a`.
 
 ### Core types
 
@@ -895,11 +897,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwND
-MwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3Nzcz
-MTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MC
-wtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0
-NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MD
-IxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0
-MDQ2OTMxXX0=
+eyJoaXN0b3J5IjpbMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMz
+I4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMDYzNTcw
+NiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgyMzUsLT
+IwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYz
+MjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMz
+c3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0
+MjAwMjYzMjddfQ==
 -->
