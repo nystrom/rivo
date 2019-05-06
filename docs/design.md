@@ -519,7 +519,20 @@ Each type definition is translated into a type class.
 
 Use of the type `List a` translates into `List a xs => xs`.
 
-Open function alternatives are just inferred as is. Each alternative may have a different type. It is a link-time error for alternatives to have incompatible 
+Open function alternatives are just inferred as is. Each alternative may have a different type. It is a link-time error for alternatives to have incompatible types.
+The linker generates a dispatcher function.
+
+    module M1
+    fun length (Nil) = 0
+
+    module M2
+    fun length (Cons x xs) = 1 + length xs
+    // Cons a b -> 
+
+	module M3
+	import M1, M2
+	fun length (xs)
+       module 
     
 Each alternative is translated to an instance.
 
@@ -897,11 +910,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4NzQ5MTUwMzcsLTEwNDMwMjIwMjMsNj
-A0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0
-OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMj
-I2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0x
-NTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyOD
-U1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0MDQ2OTMxLC0x
-NjU0MzkyMjI3XX0=
+eyJoaXN0b3J5IjpbMTY0ODMxMjA5MSwtMTA0MzAyMjAyMyw2MD
+QzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5
+OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMj
+YwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1
+Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMjE1NywxMDI4NT
+U5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEsLTE2
+NTQzOTIyMjddfQ==
 -->
