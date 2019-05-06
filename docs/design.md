@@ -513,9 +513,9 @@ Each type definition is translated into a type class.
 
 	type List (a) = Nil | Cons (a) (List a)
 
-	class List a xs | xs -> a
-	instance List a Nil
-	instance List a xs => List a (Cons a xs)
+	class xs : List a | xs -> a
+	instance Nil : List a Nil
+	instance xs : List a => Cons a xs : List a
 
 Use of the type `List a` translates into `List a xs => xs`.
 
@@ -911,11 +911,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwND
-MyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5
-Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNj
-AsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUz
-OTQ5MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NT
-kyNjksMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1
-NDM5MjIyN119
+eyJoaXN0b3J5IjpbLTEyNDc1MTkzNjksODQxMzI4NTc3LC0xMD
+QzMDIyMDIzLDYwNDMyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3
+MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOT
+AsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcx
+NDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMzc3LC0xNjU4ND
+AyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0MjAwMjYzMjcs
+NDA0NjkzMV19
 -->
