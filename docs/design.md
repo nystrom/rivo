@@ -517,42 +517,18 @@ Each type definition is translated into a type class.
 	instance Nil : List a Nil
 	instance xs : List a => Cons a xs : List a
 
-Recursion turns into 
-	type Foo a = Bar (Foo [a])
-
-    class xs : Foo a | xs -> a
-    instance xs : Foo [a] => Bar xs : List a
-
 Use of the type `List a` translates into `List a xs => xs`.
 
+Recursion turns into a type parameter
+
+	type A a = B (A [a])
+
+    class xs : A a | xs -> a
+    instance xs : A [a] => B xs : List a
+
 Open function alternatives are just inferred as is. Each alternative may have a different type. It is a link-time error for alternatives to have incompatible types.
-The linker generates a dispatcher function.
 
-    module M1
-    fun length (Nil) = 0
-    // Nil -> Nat
-
-    module M2
-    fun length (Cons x xs) = 1 + length xs
-    // Cons a b -> Nat
-
-	module M3
-	import M1, M2
-	fun length (xs)
-       module 
-    
-Each alternative is translated to an instance.
-
-	record a \ Length
-	    length a -> Int
-	instance List x \xs ∈ Length where 
-	   length nil = 0 
-	   length (cons x xs) = 1 + length xs 
-	instance List2 x \ xs ∈ Length where 
-	   length (cons2 x y xs) = length (cons x (cons y xs)) 
-	instance AppendList x \ xs ∈ Length where 
-	   length (unit x) = 1 
-	   length (append xs ys) = length xs + length ys
+Gradu
 
 ### Core types
 
@@ -917,11 +893,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTAwMzM4MTM5MCw4NDEzMjg1NzcsLTEwND
-MwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3Nzcz
-MTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MC
-wtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0
-NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MD
-IxNTcsMTAyODU1OTI2OSwxOTYxNjUyNDE1LDQyMDAyNjMyNyw0
-MDQ2OTMxXX0=
+eyJoaXN0b3J5IjpbMTQxOTMzMzM0LDg0MTMyODU3NywtMTA0Mz
+AyMjAyMyw2MDQzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMx
+MDAsMjA2ODQ5OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC
+0xOTA2MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1
+MTMyNTksLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMj
+E1NywxMDI4NTU5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQw
+NDY5MzFdfQ==
 -->
