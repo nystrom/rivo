@@ -534,6 +534,8 @@ If a type is omitted, it is inferred. If the inferred type results in a type err
 
 When unifying `C` is preferred to `?`, which is preferred to `a`.
 
+## Types
+
 ### Core types
 
 We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
@@ -897,11 +899,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMz
-I4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMDYzNTcw
-NiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgyMzUsLT
-IwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYz
-MjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4MjkyMz
-c3LC0xNjU4NDAyMTU3LDEwMjg1NTkyNjksMTk2MTY1MjQxNSw0
-MjAwMjYzMjddfQ==
+eyJoaXN0b3J5IjpbLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMj
+M5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0MzI4Mzc2
+LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkzOTQsMT
+YwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2
+OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMT
+c4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwx
+OTYxNjUyNDE1XX0=
 -->
