@@ -524,10 +524,11 @@ The linker generates a dispatcher function.
 
     module M1
     fun length (Nil) = 0
+    // Nil -> Nat
 
     module M2
     fun length (Cons x xs) = 1 + length xs
-    // Cons a b -> 
+    // Cons a b -> Nat
 
 	module M3
 	import M1, M2
@@ -910,11 +911,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY0ODMxMjA5MSwtMTA0MzAyMjAyMyw2MD
-QzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5
-OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMj
-YwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1
-Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMjE1NywxMDI4NT
-U5MjY5LDE5NjE2NTI0MTUsNDIwMDI2MzI3LDQwNDY5MzEsLTE2
-NTQzOTIyMjddfQ==
+eyJoaXN0b3J5IjpbODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwND
+MyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5
+Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNj
+AsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUz
+OTQ5MTE3OCwxOTA4MjkyMzc3LC0xNjU4NDAyMTU3LDEwMjg1NT
+kyNjksMTk2MTY1MjQxNSw0MjAwMjYzMjcsNDA0NjkzMSwtMTY1
+NDM5MjIyN119
 -->
