@@ -8,7 +8,7 @@ Ivo programs are gradually typed, providing the flexibility of dynamic typing wh
 
 ### Credits
 
-Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system. Traits are influenced by Haskell's type classes and Rust's traits. Open type and function definitions are based on the research language J&,  by   and Rust with some features from the research language J&  and , the syntax is based on Haskell with a bit of Rust, Scala, and X10 thrown in. Traits were influenced by Haskell's type classes and Rust’s traits. The treatment of backward-mode functions and pattern matching were inspired by the research language JMatch.
+Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system. Traits are influenced by Haskell's type classes and Rust's traits. Open type and function definitions are based on the research language J& plus polymorphic variants in OCaml and some research extensions of Haskell. The syntax is based on Haskell with a bit of Rust, Scala, and X10 thrown in. The treatment of backward-mode functions and pattern matching were inspired by the research language JMatch.
 
 ### Organization
 
@@ -909,11 +909,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE2MzkzNzEwOTEsMzcwNDE3MTEwLDE2Mz
-A3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5
-NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOT
-MwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0
-ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2Mj
-UsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5
-MDgyOTIzNzddfQ==
+eyJoaXN0b3J5IjpbOTgwOTc2MzAxLDM3MDQxNzExMCwxNjMwNz
+kyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQs
+ODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMD
+YzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgy
+MzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LD
+EyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4
+MjkyMzc3XX0=
 -->
