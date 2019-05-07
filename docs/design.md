@@ -118,11 +118,12 @@ Ivo supports the following values:
 ### Functions
 
 Function values take 0 or more parameters and return one value. Function values include a captured environment.
-Function values include a mode for the paramet
+Function values include a mode for the parameters and return.
+Function values include an optional flag (`default` or `unique`).
 
 ### Thunks
 
-Thunk values 
+Thunk values include an optional flag (`default` or `unique`).
 
 ## Terms
 
@@ -931,11 +932,11 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## Modules and linking
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAwOTQxNzUyMyw0MTQwNjgxMTYsMzcwND
-E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
-MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
-I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
-OTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MC
-w2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5
-NDkxMTc4XX0=
+eyJoaXN0b3J5IjpbLTIwNDg4ODY1NDgsNDE0MDY4MTE2LDM3MD
+QxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1
+LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwND
+MyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5
+Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNj
+AsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUz
+OTQ5MTE3OF19
 -->
