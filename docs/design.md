@@ -945,17 +945,19 @@ Linking may extend open functions and types. This means that the behavior of exi
 For dynamic safety: the behavior of a function should not change when a new variant is added. More strongly, a function should not depend on the loading order of modules. When a new variant is added, there should be no code that references the new variant (because otherwise it would already be loaded). So no existing code can create the variant or match on the variant. New function alternatives, however, should not match existing variants with higher priority than existing function alternatives.
 
 To not change dynamic behavior, alternatives loaded later have lower priority than earlier ones.  
-But then behavior depends on load order.  
+But then behavior depends on load order.  But we can make this a static requirement: imported modules have lower priority than the current module. Thus, the current module always overrides an imported module. I THINK this works???
   
 Should make it an error if later alternative overrides earlier for the same inputs. How? Types? Pattern priority? Link time check with compile time warning like relaxed MultiJava?  
+
+
   
 Same with traits and overlapping instances.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3ND
-UyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0
-NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwND
-E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
-MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
-I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
-OTRdfQ==
+eyJoaXN0b3J5IjpbNjkzMzE2MDk3LDExMzkxNTM0MzYsODcwNT
+I2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQyNDgwNzcw
+LC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0MD
+Y4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIs
+MTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMD
+IyMDIzLDYwNDMyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEw
+MF19
 -->
