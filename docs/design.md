@@ -6,11 +6,11 @@ Ivo is a gradually-typed programming language that combines features of function
 
 Ivo programs are gradually typed, providing the flexibility of dynamic typing while allowing a large class of errors cannot to be checked at compile time. Ivo’s type system is powerful, allowing you to easily model data. Ivo allows programmers to define their own data types, with control over how these are represented in memory. Ivo allows programmers to define their own operations using familiar syntax. Ivo allows programmers to easily write queries on their data.
 
-#### Credits
+### Credits
 
 Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system, the syntax is based on Haskell, Ruby, and Python with a bit of Rust, Scala, and X10 thrown in. Traits were influenced by Haskell's type classes and Rust’s traits. The treatment of backward-mode functions and pattern matching were inspired by the language JMatch.
 
-## Organization
+### Organization
 
 This document describes the Ivo language from the bottom up.
 
@@ -21,7 +21,7 @@ This document describes the Ivo language from the bottom up.
 - definitions
 - modules and linking
 
-## Core language
+### Core language
 
 We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are in the appendix. We present a grammar and informal semantics here.
 
@@ -909,11 +909,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3Nz
-gwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1Nzcs
-LTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMT
-g3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIy
-MjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MC
-wxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2
-NTg0MDIxNTddfQ==
+eyJoaXN0b3J5IjpbLTQxNDU4NDI0MSwzNzA0MTcxMTAsMTYzMD
+c5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0
+LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYsLTE5Mz
+A2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNjA5MzQ4
+MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNS
+wxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkw
+ODI5MjM3N119
 -->
