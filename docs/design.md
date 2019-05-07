@@ -70,26 +70,28 @@ Integer literals can be of any length.
 A decimal integer matches the regular expression  `0 | [1-9] [_0-9]*`.
 A binary integer matches the regular expression  `0b[_0-1]+`.
 A hexadecimal integer matches the regular expression  `0x[_0-9a-fA-F]+`.
+
 #### Rationals
 Rational numbers can be written as `decimal . decimal e[+-]? decimal`, or as `hexadecimal . hexadecimal p[+-?] hexadecimal`.
 Integer and rational literals are overloaded to support different number
 representations.
-##### Characters
+
+#### Characters
 A character literal is enclosed in single quotes. There are the usual escapes.
 Ivo supports Unicode-21 characters.
 Character literals are overloaded to support characters in different encodings.
-##### Strings
+
+#### Strings
 A string literal is enclosed in double quotes. There are the usual escapes.
 String literals are overloaded to support different string representations.
 Strings can be implemented as lists, arrays, ropes, etc.
 
-
-## Names
+### Names
 
 A name is either an identifier or a parenthesized function name.
 A function name is a sequence of identifiers and placeholders followed by `=` and another placeholder.
-A placeholder is either `_`, indicating an input parameter, or `?`, indicating an output parameter.
-For instance, `_ + _ = ?` is the name of the forward mode `+` operator, and
+A placeholder is either `?`, indicating an input parameter, or `!`, indicating an output parameter.
+For instance, `_ + _ = !` is the name of the forward mode `+` operator, and
 
     _ + ? = _ is the name of one of the backward mode + operators.
 
@@ -97,7 +99,7 @@ In any function name, at least one of the placeholders must be `?`.
 The forward mode binding placeholder (i.e., `= ?`) can be omitted. So `_ + _` is
 another name for the forward mode `+` operator.
 
-## Qualified names
+### Qualified names
 
 A qualified name consists of a module name (which is just a qualified name)
 a `::` and a simple name (as above).
@@ -907,7 +909,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQwMDI2MzEzMyw0MTQwNjgxMTYsMzcwND
+eyJoaXN0b3J5IjpbMTI4NTI3MzE3Nyw0MTQwNjgxMTYsMzcwND
 E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
 MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
 I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
