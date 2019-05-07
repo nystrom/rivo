@@ -104,7 +104,13 @@ another name for the forward mode `+` operator.
 A qualified name consists of a module name (which is just a qualified name)
 a `::` and a simple name (as above).
 
+## Types
 
+## Values
+
+Ivo supports the following values:
+
+- primitives of type `#i8`, `#i16`, `#i32`, `#i64`, `
 
 ## Terms
 
@@ -913,11 +919,11 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## Modules and linking
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNzQ4MzM2MzksNDE0MDY4MTE2LDM3MD
-QxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1
-LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwND
-MyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5
-Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNj
-AsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUz
-OTQ5MTE3OF19
+eyJoaXN0b3J5IjpbMjA3NzQ0MzU2LDQxNDA2ODExNiwzNzA0MT
+cxMTAsMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwx
+NDIyMzkyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMj
+gzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5
+NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLD
+Y2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0
+OTExNzhdfQ==
 -->
