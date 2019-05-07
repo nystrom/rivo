@@ -12,6 +12,8 @@ Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerla
 
 ### Organization
 
+An Ivo program is a set of modules. Modules provide a namespace for definitions. A module consists of a set of declarations of variables, functions, data types, and traits. Declarations may include expressions, formulas, patterns, and types.
+
 This document describes the Ivo language from the bottom up.
 
 - lexical structure
@@ -21,24 +23,17 @@ This document describes the Ivo language from the bottom up.
 - definitions
 - modules and linking
 
-### Core language
-
-An Ivo program is a set of modules. Modules provide a namespace for definitions. A module consists of a set of declarations of variables, functions, data types, and traits. Declarations may include expressions, formulas, patterns, and types.
-
 We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are defined using PLT Redex and can be found in the appendix. We present a grammar and informal semantics for full Ivo here.
-
-## Program structure
-
 
 ## Lexical structure
 
-#### Comments
-Comments begin with `#`  and continue to the end of the line.
+### Comments
+Comments begin with `//`  and continue to the end of the line.
 
-#### Unicode
+### Unicode
 Ivo supports Unicode-21 identifiers and operators.
 
-#### Identifiers and reserved words
+### Identifiers and reserved words
 All strings of non-whitespace, printable characters are identifiers unless they are
 reserved. Identifiers that begin with a letter may contain only letters and digits.
 Identifiers that begin with a symbol must consist only of symbols.
@@ -59,19 +54,23 @@ Because Ivo has few built-in constructs, the language has very few reserved symb
     module
     trait
     val var
-    where
+    where with
     ->
+    :
+    =
+    <-
+    :=
     _
 
-#### Literals
+### Literals
 
-##### Integers
+#### Integers
 Ivo provides several kinds of numbers.
 Integer literals can be of any length.
 A decimal integer matches the regular expression  `0 | [1-9] [_0-9]*`.
 A binary integer matches the regular expression  `0b[_0-1]+`.
 A hexadecimal integer matches the regular expression  `0x[_0-9a-fA-F]+`.
-##### Rationals
+#### Rationals
 Rational numbers can be written as `decimal . decimal e[+-]? decimal`, or as `hexadecimal . hexadecimal p[+-?] hexadecimal`.
 Integer and rational literals are overloaded to support different number
 representations.
@@ -908,7 +907,7 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTU3MjA3NTkxMCw0MTQwNjgxMTYsMzcwND
+eyJoaXN0b3J5IjpbMTQwMDI2MzEzMyw0MTQwNjgxMTYsMzcwND
 E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
 MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
 I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
