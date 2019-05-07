@@ -933,12 +933,17 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 	import parent::x
 
 ## Modules and linking
+
+A module consists of a set of definitions 
+A module can import from other modules.
+
+A program is a set of modules. The main module is given to the interpreter and the 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNz
-ExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0
-MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyOD
-M3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0
-LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNj
-Y4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5
-MTE3OF19
+eyJoaXN0b3J5IjpbMTk1NDI0MTI0NiwtMjYzMjk1MCw0MTQwNj
+gxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwx
+MTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMj
+IwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAw
+LDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMT
+kwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEz
+MjU5XX0=
 -->
