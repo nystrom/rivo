@@ -944,13 +944,12 @@ Linking may extend open functions and types. This means that the behavior of exi
 
 For dynamic safety: the behavior of a function should not change when a new variant is added. More strongly, a function should not depend on the loading order of modules. When a new variant is added, there should be no code that references the new variant (because otherwise it would already be loaded). So no existing code can create the variant or match on the variant. New function alternatives, however, should not match existing variants with higher priority than existing function alternatives.
 
-
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNz
-E5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAs
-MTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMz
-kyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYs
-LTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNj
-A5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5
-MjYyNV19
+eyJoaXN0b3J5IjpbMTUxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNz
+kyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0MDY4MTE2
+LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MD
+ExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMDIyMDIz
+LDYwNDMyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMD
+Y4NDk5Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYy
+MzIyNjBdfQ==
 -->
