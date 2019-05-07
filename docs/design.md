@@ -60,6 +60,7 @@ Because Ivo has few built-in constructs, the language has very few reserved symb
     =
     <-
     :=
+	? !
     _
 
 ### Literals
@@ -90,10 +91,9 @@ Strings can be implemented as lists, arrays, ropes, etc.
 
 A name is either an identifier or a parenthesized function name.
 A function name is a sequence of identifiers and placeholders followed by `=` and another placeholder.
-A placeholder is either `?`, indicating an input parameter, or `!`, indicating an output parameter.
-For instance, `_ + _ = !` is the name of the forward mode `+` operator, and
-
-    _ + ? = _ is the name of one of the backward mode + operators.
+A placeholder is either `_`, indicating an input parameter, or `!`, indicating an output parameter.
+For instance, `_ + _ = !` is the name of the forward mode `+` operator, and `_ + ! = _` 
+is the name of one of the backward mode + operators.
 
 In any function name, at least one of the placeholders must be `?`.
 The forward mode binding placeholder (i.e., `= ?`) can be omitted. So `_ + _` is
@@ -104,32 +104,7 @@ another name for the forward mode `+` operator.
 A qualified name consists of a module name (which is just a qualified name)
 a `::` and a simple name (as above).
 
-## Imports
 
-An import takes a module name and a selector.
-
-	import M::()              // import no definitions from M
-	import M::_               // import all definitions from M
-	import M::x               // import only x from M
-	import M::(x -> y)        // import only x from M, renaming to y
-	import M::(x -> ())       // do not import x from M
-
-The set of names imported from a given path is computed as: 
-
-	all names from M if M::_
-	minus
-	all names from M if M::()
-	minus
-    x if M::(x -> ())
-    plus
-    x if M::x
-    plus
-    x (as y) if M::(x -> y)
-
-Without a module name, an `import` imports from the enclosing scope. That is, the following are equivalent:
-
-	import x
-	import parent::x
 
 ## Terms
 
@@ -908,12 +883,41 @@ Compare all cases with >
        1 km -> no
     }
 
+
+## Imports
+
+An import takes a module name and a selector.
+
+	import M::()              // import no definitions from M
+	import M::_               // import all definitions from M
+	import M::x               // import only x from M
+	import M::(x -> y)        // import only x from M, renaming to y
+	import M::(x -> ())       // do not import x from M
+
+The set of names imported from a given path is computed as: 
+
+	all names from M if M::_
+	minus
+	all names from M if M::()
+	minus
+    x if M::(x -> ())
+    plus
+    x if M::x
+    plus
+    x (as y) if M::(x -> y)
+
+Without a module name, an `import` imports from the enclosing scope. That is, the following are equivalent:
+
+	import x
+	import parent::x
+
+## Modules and linking
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI4NTI3MzE3Nyw0MTQwNjgxMTYsMzcwND
-E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
-MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
-I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
-OTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MC
-w2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5
-NDkxMTc4XX0=
+eyJoaXN0b3J5IjpbLTEzNzQ4MzM2MzksNDE0MDY4MTE2LDM3MD
+QxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1
+LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwND
+MyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5
+Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNj
+AsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUz
+OTQ5MTE3OF19
 -->
