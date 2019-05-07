@@ -16,8 +16,10 @@ This document describes the Ivo language from the bottom up.
 
 - lexical structure
 - types
-- 
-The language is described from the bottom up. 
+- expressions
+- patterns
+- definitions
+- modules and linking
 
 ## Core language
 
@@ -908,11 +910,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyOTMxOTI5MjIsLTk3NzgwNDAwMiwxMT
-cwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIw
-MjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLD
-IwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkw
-NjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMj
-U5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcs
-MTAyODU1OTI2OV19
+eyJoaXN0b3J5IjpbMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNz
+AxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAy
+Myw2MDQzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMj
+A2ODQ5OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2
+MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNT
+ksLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMjE1Nywx
+MDI4NTU5MjY5XX0=
 -->
