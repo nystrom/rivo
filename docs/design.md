@@ -25,7 +25,6 @@ This document describes the Ivo language from the bottom up.
 
 We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are in the appendix. We present a grammar and informal semantics here.
 
-
 ## Program structure
 
 An Ivo program is a set of modules. Modules provide a namespace for definitions.
@@ -910,11 +909,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNz
-AxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAy
-Myw2MDQzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMj
-A2ODQ5OTM5NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2
-MjMyMjYwLDY2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNT
-ksLTE1Mzk0OTExNzgsMTkwODI5MjM3NywtMTY1ODQwMjE1Nywx
-MDI4NTU5MjY5XX0=
+eyJoaXN0b3J5IjpbMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3Nz
+gwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1Nzcs
+LTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMT
+g3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIy
+MjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MC
+wxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2
+NTg0MDIxNTddfQ==
 -->
