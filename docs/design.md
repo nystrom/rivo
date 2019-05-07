@@ -10,6 +10,15 @@ Ivo programs are gradually typed, providing the flexibility of dynamic typing wh
 
 Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system, the syntax is based on Haskell, Ruby, and Python with a bit of Rust, Scala, and X10 thrown in. Traits were influenced by Haskell's type classes and Rust’s traits. The treatment of backward-mode functions and pattern matching were inspired by the language JMatch.
 
+## Organization
+
+This document describes the Ivo language from the bottom up.
+
+- lexical structure
+- types
+- 
+The language is described from the bottom up. 
+
 ## Core language
 
 We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are in the appendix. We present a grammar and informal semantics here.
@@ -899,11 +908,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMj
-M5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0MzI4Mzc2
-LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkzOTQsMT
-YwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2
-OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMT
-c4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcsMTAyODU1OTI2OSwx
-OTYxNjUyNDE1XX0=
+eyJoaXN0b3J5IjpbLTEyOTMxOTI5MjIsLTk3NzgwNDAwMiwxMT
+cwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIw
+MjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLD
+IwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkw
+NjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMj
+U5LC0xNTM5NDkxMTc4LDE5MDgyOTIzNzcsLTE2NTg0MDIxNTcs
+MTAyODU1OTI2OV19
 -->
