@@ -8,7 +8,7 @@ Ivo programs are gradually typed, providing the flexibility of dynamic typing wh
 
 ### Credits
 
-Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system. Traits are influenced by Haskell's type classes and Rust's traits. Open type and function definitions are based on the research language J& plus polymorphic variants in OCaml and some research extensions of Haskell. The syntax is based on Haskell with a bit of Rust, Scala, and X10 thrown in. The treatment of backward-mode functions and pattern matching were inspired by the research language JMatch.
+Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system. Traits are influenced by Haskell's type classes and Rust's traits. Open type and function definitions are based on the research language J& plus polymorphic variants in OCaml and some research extensions of Haskell. The syntax is based on Haskell with a bit of Rust, Scala, and X10 thrown in. The treatment of backward-mode functions and pattern matching were inspired by the research language JMatch plus the LogicT library from Haskell. Macros were inspired by Rust and Racket. 
 
 ### Organization
 
@@ -23,7 +23,7 @@ This document describes the Ivo language from the bottom up.
 
 ### Core language
 
-We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are in the appendix. We present a grammar and informal semantics here.
+We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are defined using PLT Redex and ain  in the appendix. We present a grammar and informal semantics here.
 
 ## Program structure
 
@@ -909,11 +909,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTgwOTc2MzAxLDM3MDQxNzExMCwxNjMwNz
-kyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQs
-ODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMD
-YzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgy
-MzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LD
-EyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4
-MjkyMzc3XX0=
+eyJoaXN0b3J5IjpbMTMyOTIyNTI0MSwzNzA0MTcxMTAsMTYzMD
+c5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0
+LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYsLTE5Mz
+A2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNjA5MzQ4
+MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNS
+wxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkw
+ODI5MjM3N119
 -->
