@@ -947,15 +947,15 @@ For dynamic safety: the behavior of a function should not change when a new vari
 To not change dynamic behavior, alternatives loaded later have lower priority than earlier ones.  
 But then behavior depends on load order.  
   
-Should make it an error if later alternative overrides earlier for the same inputs. How? Types? Pattern priority? Link time check with compile time warning like relaxed multijava?  
+Should make it an error if later alternative overrides earlier for the same inputs. How? Types? Pattern priority? Link time check with compile time warning like relaxed MultiJava?  
   
 Same with traits and overlapping instances.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxND
-M2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYz
-OTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNz
-kyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQs
-ODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMD
-YzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgy
-MzVdfQ==
+eyJoaXN0b3J5IjpbMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3ND
+UyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0
+NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwND
+E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
+MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
+I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
+OTRdfQ==
 -->
