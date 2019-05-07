@@ -934,20 +934,20 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## Modules and linking
 
-A module consists of a set of definitions and an expression.
+A module consists of a set of definitions and an initializer expression.
 A module can import from other modules.
 
-A program is a set of modules. The main module is given to the interpreter and the expression is evaluated.
+A program is a set of modules. The main module is given to the interpreter and the initializer expression is evaluated.
 
-Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. Linking may extend open functions and types. This means that the behavior of existing functions may change.
+Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. Linking may extend open functions and types. This means that the behavior of existing functions may change if they reference open definitions.
 
 > This is not a good thing.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTYzMTcxOTg1OCwtMjYzMjk1MCw0MTQwNj
-gxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwx
-MTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMj
-IwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAw
-LDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMT
-kwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEz
-MjU5XX0=
+eyJoaXN0b3J5IjpbLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0MD
+Y4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIs
+MTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMD
+IyMDIzLDYwNDMyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEw
+MCwyMDY4NDk5Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLT
+E5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUx
+MzI1OV19
 -->
