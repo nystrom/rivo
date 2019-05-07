@@ -123,6 +123,8 @@ Function values include an optional flag (`default` or `unique`).
 
 ### Thunks
 
+A thunk is a function that takes no parameters.
+Thunk values include a captured environment.
 Thunk values include an optional flag (`default` or `unique`).
 
 ## Terms
@@ -932,11 +934,11 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## Modules and linking
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwNDg4ODY1NDgsNDE0MDY4MTE2LDM3MD
-QxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1
-LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwND
-MyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5
-Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNj
-AsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUz
-OTQ5MTE3OF19
+eyJoaXN0b3J5IjpbLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNz
+ExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0
+MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyOD
+M3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0
+LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNj
+Y4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5
+MTE3OF19
 -->
