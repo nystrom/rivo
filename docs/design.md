@@ -23,7 +23,7 @@ This document describes the Ivo language from the bottom up.
 
 ### Core language
 
-We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are defined using PLT Redex and ain  in the appendix. We present a grammar and informal semantics here.
+We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are defined using PLT Redex and can be found in the appendix. We present a grammar and informal semantics for full Ivo here.
 
 ## Program structure
 
@@ -909,11 +909,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTMyOTIyNTI0MSwzNzA0MTcxMTAsMTYzMD
-c5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0
-LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYsLTE5Mz
-A2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNjA5MzQ4
-MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNS
-wxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkw
-ODI5MjM3N119
+eyJoaXN0b3J5IjpbNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNz
+kyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQs
+ODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMD
+YzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgy
+MzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LD
+EyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4
+MjkyMzc3XX0=
 -->
