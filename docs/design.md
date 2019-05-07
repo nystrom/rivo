@@ -954,12 +954,16 @@ Should make it an error if later alternative overrides earlier for the same inpu
 
   
 Same with traits and overlapping instances.
+
+
+
+If we adopt "smarted recompilation" from Shao and Appel, we can separately compile every module without reference to others. We infer the "minimum" types of imported modules (based not on their d
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMT
-M5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5
-NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC
-0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5
-NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MT
-MyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYsLTE5MzA2MzU3
-MDZdfQ==
+eyJoaXN0b3J5IjpbLTE1MTY4MTQ2NjIsLTEwMDIyNzM2MDMsLT
+cxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIw
+MDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC
+0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcx
+MTAsMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxND
+IyMzkyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgz
+NzZdfQ==
 -->
