@@ -110,7 +110,9 @@ a `::` and a simple name (as above).
 
 Ivo supports the following values:
 
-- primitives of type `#i8`, `#i16`, `#i32`, `#i64`, `
+- primitive values of type `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`
+- function values
+- tagged records
 
 ## Terms
 
@@ -919,11 +921,11 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## Modules and linking
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA3NzQ0MzU2LDQxNDA2ODExNiwzNzA0MT
-cxMTAsMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwx
-NDIyMzkyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMj
-gzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5
-NCwxNjA5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLD
-Y2ODY5MjYyNSwxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0
-OTExNzhdfQ==
+eyJoaXN0b3J5IjpbMTU3MDQ3NjI1Miw0MTQwNjgxMTYsMzcwND
+E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
+MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
+I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
+OTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MC
+w2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5
+NDkxMTc4XX0=
 -->
