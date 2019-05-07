@@ -934,8 +934,7 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## Modules and linking
 
-A module consists of a set of definitions and an initializer expression.
-A module can import from other modules.
+A module consists of a set of definitions and an initializer expression. A module can import names from other modules.
 
 A program is a set of modules. The main module is given to the interpreter and the initializer expression is evaluated.
 
@@ -945,11 +944,11 @@ For dynamic safety: the behavior of a function should not change when a new vari
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMj
-YzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYs
-LTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMj
-g1NzcsLTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2
-LC0xMTg3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMj
-AyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMy
-MjM2MF19
+eyJoaXN0b3J5IjpbMTg0NjY0NDI2MiwtMTc5Mjk5NDQ0LC0xNz
+E5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAs
+MTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMz
+kyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYs
+LTE5MzA2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNj
+A5MzQ4MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5
+MjYyNV19
 -->
