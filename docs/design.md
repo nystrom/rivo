@@ -8,7 +8,7 @@ Ivo programs are gradually typed, providing the flexibility of dynamic typing wh
 
 ### Credits
 
-Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system with some influence from the J& research programming language, the syntax is based on Haskell with a bit of Rust, Scala, and X10 thrown in. Traits were influenced by Haskell's type classes and Rust’s traits. The treatment of backward-mode functions and pattern matching were inspired by the research language JMatch.
+Ivo was designed at the Università della Svizzera italiano in Lugano, Switzerland, and implemented by Nate Nystrom and Igor Moreno Santos. Ivo’s design was influenced by several programming languages. In particular, the type system is based on the Haskell type system. Traits are influenced by Haskell's type classes and Rust's traits. Open definitions  and Rust with some features from the research language J&  and , the syntax is based on Haskell with a bit of Rust, Scala, and X10 thrown in. Traits were influenced by Haskell's type classes and Rust’s traits. The treatment of backward-mode functions and pattern matching were inspired by the research language JMatch.
 
 ### Organization
 
@@ -909,11 +909,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE2NjUwNzkyNDMsMzcwNDE3MTEwLDE2Mz
-A3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5
-NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOT
-MwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0
-ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2Mj
-UsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5NDkxMTc4LDE5
-MDgyOTIzNzddfQ==
+eyJoaXN0b3J5IjpbMjA1MjczOTY4NywzNzA0MTcxMTAsMTYzMD
+c5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0
+LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYsLTE5Mz
+A2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNjA5MzQ4
+MjM1LC0yMDIyMjIyMDkwLC0xOTA2MjMyMjYwLDY2ODY5MjYyNS
+wxMjY2MzIyMzYwLDE3MTQ1MTMyNTksLTE1Mzk0OTExNzgsMTkw
+ODI5MjM3N119
 -->
