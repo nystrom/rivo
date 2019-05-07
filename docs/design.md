@@ -957,13 +957,15 @@ Same with traits and overlapping instances.
 
 
 
-If we adopt "smarted recompilation" from Shao and Appel, we can separately compile every module without reference to others. We infer the "minimum" types of imported modules (based not on their d
+If we adopt "smarted recompilation" from Shao and Appel, we can separately compile every module without reference to others. We infer the "minimum" types of imported modules (based not on their declarations, but on how they are used in the importing modules). We then check then types on linking: unifying type variables in the cross-module signatures. This means that if a module changes 
+
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1MTY4MTQ2NjIsLTEwMDIyNzM2MDMsLT
-cxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIw
-MDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC
-0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcx
-MTAsMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxND
-IyMzkyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgz
-NzZdfQ==
+eyJoaXN0b3J5IjpbOTg1MjM4MDUsLTEwMDIyNzM2MDMsLTcxMj
+E4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1
+LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNz
+E5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAs
+MTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMz
+kyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzZd
+fQ==
 -->
