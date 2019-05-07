@@ -941,13 +941,15 @@ A program is a set of modules. The main module is given to the interpreter and t
 
 Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. Linking may extend open functions and types. This means that the behavior of existing functions may change if they reference open definitions.
 
+For dynamic safety: the behavior of a function should not change when a new variant is added. That is the new When a new variant is added, the existing function ALTERNATIVES should not match the new variant, but 
+
 > This is not a good thing.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0MD
-Y4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nzc4MDQwMDIs
-MTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3LC0xMDQzMD
-IyMDIzLDYwNDMyODM3NiwtMTkzMDYzNTcwNiwtMTE4Nzc3MzEw
-MCwyMDY4NDk5Mzk0LDE2MDkzNDgyMzUsLTIwMjIyMjIwOTAsLT
-E5MDYyMzIyNjAsNjY4NjkyNjI1LDEyNjYzMjIzNjAsMTcxNDUx
-MzI1OV19
+eyJoaXN0b3J5IjpbLTMxOTQ2OTc1MSwtMTcxOTE5NjM5NiwtMj
+YzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYs
+LTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMj
+g1NzcsLTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2
+LC0xMTg3NzczMTAwLDIwNjg0OTkzOTQsMTYwOTM0ODIzNSwtMj
+AyMjIyMjA5MCwtMTkwNjIzMjI2MCw2Njg2OTI2MjUsMTI2NjMy
+MjM2MF19
 -->
