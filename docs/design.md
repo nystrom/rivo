@@ -934,12 +934,12 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## Modules and linking
 
-A module consists of a set of definitions 
+A module consists of a set of definitions and an expression.
 A module can import from other modules.
 
-A program is a set of modules. The main module is given to the interpreter and the 
+A program is a set of modules. The main module is given to the interpreter and the expression is evaluated.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTk1NDI0MTI0NiwtMjYzMjk1MCw0MTQwNj
+eyJoaXN0b3J5IjpbLTU2MDUwNjIwNywtMjYzMjk1MCw0MTQwNj
 gxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwx
 MTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMj
 IwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAw
