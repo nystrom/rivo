@@ -944,13 +944,18 @@ Linking may extend open functions and types. This means that the behavior of exi
 
 For dynamic safety: the behavior of a function should not change when a new variant is added. More strongly, a function should not depend on the loading order of modules. When a new variant is added, there should be no code that references the new variant (because otherwise it would already be loaded). So no existing code can create the variant or match on the variant. New function alternatives, however, should not match existing variants with higher priority than existing function alternatives.
 
-Dynamic loading should not affect the semantics.
+To not change dynamic behavior, alternatives loaded later have lower priority than earlier ones.  
+But then behavior depends on load order.  
+  
+Should make it an error if later alternative overrides earlier for the same inputs. How? Types? Pattern priority? Link time check with compile time warning like relaxed multijava?  
+  
+Same with traits and overlapping instances.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTczNTU3NTA3NiwxNTc0NTIwMDY1LDE1MT
-QzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2
-Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMD
-c5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0
-LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYsLTE5Mz
-A2MzU3MDYsLTExODc3NzMxMDAsMjA2ODQ5OTM5NCwxNjA5MzQ4
-MjM1XX0=
+eyJoaXN0b3J5IjpbODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxND
+M2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYz
+OTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNz
+kyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQs
+ODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMD
+YzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgy
+MzVdfQ==
 -->
