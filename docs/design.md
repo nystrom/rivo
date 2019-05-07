@@ -938,13 +938,15 @@ A module consists of a set of definitions and an initializer expression. A modul
 
 A program is a set of modules. The main module is given to the interpreter and the initializer expression is evaluated.
 
-Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. Linking may extend open functions and types. This means that the behavior of existing functions may change if they reference open definitions. We would like to ensure this does not happen.
+Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. 
+
+Linking may extend open functions and types. This means that the behavior of existing functions may change if they reference open definitions. We would like to ensure this does not happen.
 
 For dynamic safety: the behavior of a function should not change when a new variant is added. More strongly, a function should not depend on the loading order of modules. When a new variant is added, there should be no code that references the new variant (because otherwise it would already be loaded). So no existing code can create the variant or match on the variant. New function alternatives, however, should not match existing variants with higher priority than existing function alternatives.
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg0NjY0NDI2MiwtMTc5Mjk5NDQ0LC0xNz
+eyJoaXN0b3J5IjpbMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNz
 E5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAs
 MTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMz
 kyMzk0LDg0MTMyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYs
