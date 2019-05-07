@@ -938,8 +938,11 @@ A module consists of a set of definitions and an expression.
 A module can import from other modules.
 
 A program is a set of modules. The main module is given to the interpreter and the expression is evaluated.
+
+Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. Linking may extend open functions and types. This means that the semantics of a 
+When a module is
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTU2MDUwNjIwNywtMjYzMjk1MCw0MTQwNj
+eyJoaXN0b3J5IjpbLTMzNzI3MTgwMSwtMjYzMjk1MCw0MTQwNj
 gxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwx
 MTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMj
 IwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAw
