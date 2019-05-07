@@ -23,13 +23,12 @@ This document describes the Ivo language from the bottom up.
 
 ### Core language
 
+An Ivo program is a set of modules. Modules provide a namespace for definitions. A module consists of a set of declarations of variables, functions, data types, and traits. Declarations may include expressions, formulas, patterns, and types.
+
 We give the semantics of Ivo by translation into simpler constructs. This core language consists of just types and a few simple expressions. The formal semantics of the core are defined using PLT Redex and can be found in the appendix. We present a grammar and informal semantics for full Ivo here.
 
 ## Program structure
 
-An Ivo program is a set of modules. Modules provide a namespace for definitions.
-A module consists of a set of declarations of values, functions, types, traits, etc.
-Declarations may include expressions, formulas, patterns, and types.
 
 ## Lexical structure
 
@@ -909,11 +908,11 @@ Compare all cases with >
     }
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNz
-kyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQs
-ODQxMzI4NTc3LC0xMDQzMDIyMDIzLDYwNDMyODM3NiwtMTkzMD
-YzNTcwNiwtMTE4Nzc3MzEwMCwyMDY4NDk5Mzk0LDE2MDkzNDgy
-MzUsLTIwMjIyMjIwOTAsLTE5MDYyMzIyNjAsNjY4NjkyNjI1LD
-EyNjYzMjIzNjAsMTcxNDUxMzI1OSwtMTUzOTQ5MTE3OCwxOTA4
-MjkyMzc3XX0=
+eyJoaXN0b3J5IjpbLTU3MjA3NTkxMCw0MTQwNjgxMTYsMzcwND
+E3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUs
+MTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIwMjMsNjA0Mz
+I4Mzc2LC0xOTMwNjM1NzA2LC0xMTg3NzczMTAwLDIwNjg0OTkz
+OTQsMTYwOTM0ODIzNSwtMjAyMjIyMjA5MCwtMTkwNjIzMjI2MC
+w2Njg2OTI2MjUsMTI2NjMyMjM2MCwxNzE0NTEzMjU5LC0xNTM5
+NDkxMTc4XX0=
 -->
