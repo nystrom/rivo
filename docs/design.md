@@ -946,6 +946,8 @@ For dynamic safety: the behavior of a function should not change when a new vari
 
 To not change dynamic behavior, alternatives loaded later have lower priority than earlier ones.  
 But then behavior depends on load order.  But we can make this a static requirement: imported modules have lower priority than the current module. Thus, the current module always overrides an imported module. I think this works???
+
+
   
 Should make it an error if later alternative overrides earlier for the same inputs. How? Types? Pattern priority? Link time check with compile time warning like relaxed MultiJava?  
 
@@ -953,11 +955,11 @@ Should make it an error if later alternative overrides earlier for the same inpu
   
 Same with traits and overlapping instances.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MD
-UyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3
-MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxND
-A2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOTc3ODA0MDAy
-LDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3NywtMTA0Mz
-AyMjAyMyw2MDQzMjgzNzYsLTE5MzA2MzU3MDYsLTExODc3NzMx
-MDBdfQ==
+eyJoaXN0b3J5IjpbLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMT
+M5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5
+NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC
+0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5
+NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MT
+MyODU3NywtMTA0MzAyMjAyMyw2MDQzMjgzNzYsLTE5MzA2MzU3
+MDZdfQ==
 -->
