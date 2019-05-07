@@ -939,13 +939,13 @@ A module can import from other modules.
 
 A program is a set of modules. The main module is given to the interpreter and the initializer expression is evaluated.
 
-Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. Linking may extend open functions and types. This means that the behavior of existing functions may change if they reference open definitions.
+Modules are loaded lazily. When a module is first referenced, it is loaded and linked. At this point the module's expression is evaluated. Linking may extend open functions and types. This means that the behavior of existing functions may change if they reference open definitions. We would like to ensure this does not happen.
 
-For dynamic safety: the behavior of a function should not change when a new variant is added. More strongly, a function should not depend on the loading order of modules. When a new variant is added, there should be no code that references the new variant (because otherwise it would already be loaded). So no existing code can create the variant or match on the variant. New functions, howe
+For dynamic safety: the behavior of a function should not change when a new variant is added. More strongly, a function should not depend on the loading order of modules. When a new variant is added, there should be no code that references the new variant (because otherwise it would already be loaded). So no existing code can create the variant or match on the variant. New function alternatives, however, should not match existing variants with higher priority than existing function alternatives.
 
-> This is not a good thing.
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTcwMTg1MTQwOSwtMTcxOTE5NjM5NiwtMj
+eyJoaXN0b3J5IjpbLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMj
 YzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYs
 LTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMj
 g1NzcsLTEwNDMwMjIwMjMsNjA0MzI4Mzc2LC0xOTMwNjM1NzA2
