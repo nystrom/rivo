@@ -583,7 +583,7 @@ Types and functions can be extended in any module.
 Instances of traits can be implemented in any module.
 
 It is an error if trait instances overlap.
-It is an error if a call (in expression context) dispatches to zero or more than one alternative. No module's alternatives are higher priority than another. The only case we have to watch out for is if a "new" module has a more specific pattern than an "old"
+It is an error if a call (in expression context) dispatches to zero or more than one alternative. No module's alternatives are higher priority than another. The only case we have to watch out for is if a "new" alternative has a more specific pattern than an "old" alternative. This will change the behavior of the function.
 
 
 ## Linking open functions
@@ -1095,7 +1095,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MjQxMDU1NTEsLTMzODAxNjUxMyw0Mz
+eyJoaXN0b3J5IjpbLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0Mz
 Q1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIz
 MywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLT
 E1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAy
