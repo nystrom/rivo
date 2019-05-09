@@ -575,6 +575,14 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 
 > TODO: Matching of type is checked for completeness within a module. Matching of open types is not checked for completeness.
 
+## Linking
+
+> This section overrides other sections that discuss linking.
+
+Types and functions can be extended in any module.
+Instances of traits can be implemented in any module.
+
+
 ## Linking open functions
 
 Types can be extended in any module.
@@ -672,7 +680,7 @@ Yes.
 
 Alternatively, we can just make it an error to have overlapping alternatives, excluding alternatives declared `default`. This seems to be the simplest solution. That is, alternatives are implicitly declared `unique`. When dispatching, if more than one alternative matches, we report an error.			
 
-In backward modes, this doesn't work well. We want to have all solutions.      
+In backward modes, this doesn't work well. We want to have all solutions. 
 
 ## Type inference
 
@@ -1084,11 +1092,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMT
-A4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQz
-LDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNT
-UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
-ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
-wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
-OTE5NjM5Nl19
+eyJoaXN0b3J5IjpbNTI0MzA5NDQyLC0zMzgwMTY1MTMsNDM0NT
+I3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMzMs
+LTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0xNT
+k5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3
+MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcwNTI2NDkyLD
+E1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzky
+OTk0NDRdfQ==
 -->
