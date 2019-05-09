@@ -482,13 +482,12 @@ A `data` definition introduces a data type. Members of the type are tagged recor
 
 The definition may take parameter patterns. Unknowns in the parameter patterns are fields of the record. The name of the definition (and the enclosing definitions) is the tag of the record.
 
-A `data` definition may contain a block with nested definitions.
-Field definitions are either `let` definitions, `var` definitions, `fun` definitions, `data` definitions, or the definition `_`.
+A `data` definition may optionally contain a block with nested definitions. Field definitions are either `let` definitions, `var` definitions, `fun` definitions, `data` definitions, or the definition `_`.
 
-The field definition `_` captures the unknowns in the `data` definition parameters as `let` definitions.
+The field definition `_` captures the unknowns in the `data` definition parameters as `let` definitions. If the block is missing, the fields are captured from the definition parameters; that is, the default block is `{ _ }`.
+
 A `let` or `var` definition defines fields using a formula.
-It is an err
-If the record is missing, the fields are captured from the definition parameters; that is, the default record is `{ _ }`.
+If a record is created in an expression context, it  
 
 The following are equivalent:
 
@@ -996,11 +995,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODYyOTAzMTY3LC0xNTk5OTIyNzkwLDU1Mz
-E0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgw
-MjU1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMT
-UxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkx
-OTYzOTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNj
-MwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIz
-OTRdfQ==
+eyJoaXN0b3J5IjpbMjA2NjcyNjc1MCwtMTU5OTkyMjc5MCw1NT
+MxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4
+MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LD
+E1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5
+MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMT
+YzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzky
+Mzk0XX0=
 -->
