@@ -575,7 +575,7 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 
 > TODO: Matching of type is checked for completeness within a module. Matching of open types is not checked for completeness.
 
-## Open types and functions
+## Linking open functions
 
 Types can be extended in any module.
 Functions can be extended in any module.
@@ -625,55 +625,15 @@ The following example is taken from the classboxes  [Bergel '05]
     module Bar
     import LinkChecker.ping
 	import System.ping
-	ping "bar"      // calls System.ping
-
-
+	ping "bar"      // ambiguous
     
-When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
+## Linking traits
 
-Thus:
-
-	module M1
-	fun f = 1
-	module M2
-	import M1
-	fun f = 2 // overrides f
-	module M3
-	import M1
-	fun g = f  // M1.f
-	module M4
-	import M2
-	import M3.g
-	f // 2
-	g // 1
-	
-
-To prevent a module from changing the behavior of existing code, it is an error if alternatives in more than one module match.
-
-Or: the definition in a module overrides the definition in imported modules.
-
-    module M1
-    fun f = 1
-    f // 1
-
-    module M2
-    fun f = 2
-    f // 2
-	
-	module M3
-	import M1
-	import M2
-	f // ambiguous
-	for (x <- f) x // [1,2]
- 
-    module M4
-    import M1
-    fun f = 4
-    f // 4
-     
-	
-
-This is basically the same as the overlapping instances requirement: it is an error if there is more than one matching instance of a trait.
+    module Prelude
+    trait Eq (a) {
+        fun (a) == (a) -> Bool
+    }
+    trait Eq (Int) {
 
 ## Linking 
 
@@ -1100,7 +1060,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTU1NTc2NDY5MCwtNTA5NjUwMzc4LDE0NT
+eyJoaXN0b3J5IjpbMjAwODE4NTc5NiwtNTA5NjUwMzc4LDE0NT
 Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
 NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
 wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
