@@ -654,7 +654,9 @@ Still require no overlapping instances.
 
 Declaring a trait instance `unique` means there cannot be overlapping instances at run time.
 Declaring a trait instance `default` means if it overlaps, it should yield to the other instance (unless both are `default`).
-Declaring a trait instance without a flag al
+Declaring a trait instance without a flag allows overlapping instances, which may result in an ambiguity error. But, imported instance still lose if there's more than once instance.
+
+> Can we trick aMIGHT have to 
 
 ## Linking 
 
@@ -1081,11 +1083,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTEyNzU2NjkxMSwtNTA5NjUwMzc4LDE0NT
-Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
-NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
-wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
-NTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQyNDgwNz
-cwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0
-MDY4MTE2XX0=
+eyJoaXN0b3J5IjpbNzQwNjIwNTY5LC01MDk2NTAzNzgsMTQ1Nj
+Y0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2
+NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC
+0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1
+MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3Nz
+AsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQw
+NjgxMTZdfQ==
 -->
