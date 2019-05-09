@@ -467,6 +467,9 @@ The semantics are given by the Redex model.
 
 `p : T` matches `v` if if `p` matches `v` and if the `v` has type `T`.
 
+## Evaluation contexts
+
+An expression may be evaluated in either _expression context_ or _pattern context_
 ## Formula definitions
 
 A `let` or `var` definition introduces variables in the body of a `data` definition.
@@ -475,12 +478,12 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 
 A `fun` definition introduces a function.
 
-
 ## Data definitions
 
 A `data` definition introduces a data type. Members of the type are tagged records.
 
-The definition may take parameter patterns. The name of the definition (and the enclosing definitions) is the tag of the record.
+The definition may take parameter patterns. Unknowns in the parameter patterns may be used to define fields. The name of the definition (and the enclosing definitions) is the tag of the record.
+The definition, like a `fun` definition, may be mixfix. The definition defines a constructor that creates a tagged record.
 
 A `data` definition may optionally contain a block with nested definitions. Field definitions are either `let` definitions, `var` definitions, `fun` definitions, `data` definitions, or the definition `_`.
 
@@ -992,7 +995,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTUzOTI0Nzg5NCwtMTU5OTkyMjc5MCw1NT
+eyJoaXN0b3J5IjpbMTg0NjExMzE5NCwtMTU5OTkyMjc5MCw1NT
 MxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4
 MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LD
 E1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5
