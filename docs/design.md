@@ -582,6 +582,21 @@ Functions can be extended in any module.
 
 To prevent a module from changing the behavior of existing code, it is an error if alternatives in more than one module match.
 
+Or: the definition in a module overrides the definition in imported modules.
+
+    module M1
+    fun f = 1
+    f // 1
+
+    module M2
+    fun f = 2
+    f // 2
+	
+	module M3
+	import M1
+	fun f = 3
+	
+
 This is basically the same as the overlapping instances requirement: it is an error if there is more than one matching instance of a trait.
 
 ## Linking 
@@ -1009,11 +1024,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMT
-U5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIy
-NzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5Mi
-wxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5
-Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNi
-wzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAx
-MTUxNV19
+eyJoaXN0b3J5IjpbMTIzMDY1NzEzOCwyMTA2MDYzODEzLC0xOD
+M2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4
+NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0Mz
+YsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQy
+NDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5NT
+AsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nzc4
+MDQwMDJdfQ==
 -->
