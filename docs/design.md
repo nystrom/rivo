@@ -512,8 +512,11 @@ If a record is created in a pattern context, a stream of records is created for 
 	data C (xs) {
 	   let x in xs
 	}
+
+	C [1]  // C { x = 1 }
 	
-	for (c = C [1,2,3]) 
+	# C returns [1,2,3]
+	for (c = C [1,2,3]) c
 
 A `fun` definition defines immutable fields of function type.
 
@@ -1003,7 +1006,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4NDc2MjE0OTcsLTE1OTk5MjI3OTAsNT
+eyJoaXN0b3J5IjpbLTEzOTYyODgzMjgsLTE1OTk5MjI3OTAsNT
 UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
 ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
 wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
