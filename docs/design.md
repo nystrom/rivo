@@ -606,12 +606,16 @@ The following example is taken from the classboxes  [Bergel '05]
     import System.Socket
     import System.HTTPSocket
     import GetLinks
-    fun ping (Socket) (host) // override
+    fun ping (Socket) (host) // override (only visible here)
     fun check (url) = {
+        socket = HTTPSocket url
+        contents = socket
         body = parseHtml
         for link in getLinks body {
-            ping (Socket) link.host
-           }
+            ping link.host
+        }
+    }
+    
 When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
 
 Thus:
@@ -1083,11 +1087,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjYxMjEwNjY3LDE0NTY2NDcyMzMsLTgzNj
-QwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIy
-NzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMy
-wtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1
-MjAwNjUsMTUxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0ND
-QsLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQx
-NzExMF19
+eyJoaXN0b3J5IjpbMTIzODQzNzU5OSwxNDU2NjQ3MjMzLC04Mz
+Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
+Mjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MD
+MsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0
+NTIwMDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5ND
+Q0LC0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0
+MTcxMTBdfQ==
 -->
