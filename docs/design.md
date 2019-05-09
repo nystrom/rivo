@@ -523,18 +523,11 @@ If a record is created in a pattern context, a stream of records is created for 
 						 // C { x = 2, y = 1 },
 						 // C { x = 2, y = 2 }
 
-
 A `fun` definition defines immutable fields of function type.
 
 A `data` definition defines a nested data type as well as a constructor for that type. 
 
-(Nested `trait` and `data` definitions are also allowed?).
-
-
-	data Nil             // defines Nil { }
-	data Cons (hd) (tl)  // defines Cons { hd, tl }
-
-A `data` definition induces a function definition that matches instances of the type. For instance,
+A `data` definition induces a function definition for the constructor and for functions that matche instances of the type. For instance,
 
 	data Cons (hd) (tl)
 
@@ -1012,7 +1005,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyMjQ3MDY4OTcsLTE1OTk5MjI3OTAsNT
+eyJoaXN0b3J5IjpbLTIwNDQ5OTk3NTIsLTE1OTk5MjI3OTAsNT
 UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
 ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
 wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
