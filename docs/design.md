@@ -427,7 +427,7 @@ Any expression is a pattern matching the value of the expression.
 
 ### Nil
 
-`()` matches no values.
+`!` matches no values.
 
 ### Record patterns
 
@@ -465,7 +465,7 @@ The semantics are given by the Redex model.
 
 ### Ascribe patterns
 
-`p : T` matches if `p` matches the scrutinee and if the scrutinee has type `T`.
+`p : T` matches if `p` matches and if the scrutinee has type `T`.
 
 ## Data definitions
 
@@ -979,7 +979,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTczOTc5MDc1NSw1NTMxNDM2NTQsLTEzMz
+eyJoaXN0b3J5IjpbMTM4NzcyNDYyOCw1NTMxNDM2NTQsLTEzMz
 Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
 NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
 M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
