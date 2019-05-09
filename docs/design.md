@@ -106,6 +106,50 @@ a `::` and a simple name (as above).
 
 ## Types
 
+### Core types
+
+We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
+
+### Any type
+
+`_` is the type of any value. 
+All types are a subtype of `_`.
+It can be considered the infinite union.
+
+### Nothing type
+
+`!` is the type of no value.
+All types are a supertype of `!`.
+It can be considered the empty union.
+
+### Dynamic type
+
+`?` is the dynamic type. Any value can be coerced to this type.
+It is equivalent to `#box`.
+
+### Record types
+
+Any record `Foo { .. xi: ei .. }` has type `Foo { .. xi: ti .. }`.
+
+### Parameterized types
+
+`C t` is a type of `C` is a type constructor (of kind `* -> *`) and `t` is a type. 
+As a specific instance, the function type `s -> t` is a type if `s` and `t` are types. 
+Also tuple types, list types, etc.
+
+### Type parameters
+
+`a` is a type.
+
+### Union types
+
+`s | t` is the union of types `s` and `t`.
+`s` and `t` and both subtypes of `s | t`.
+
+### Intersection types
+
+`s & t` is the intersection of types `s` and `t`.
+
 ## Values
 
 Ivo supports the following values:
@@ -113,6 +157,7 @@ Ivo supports the following values:
 - primitives of type `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`
 - function values
 - thunks
+- streams
 - references to immutable tagged records
 
 ### Functions
@@ -126,6 +171,11 @@ Function values include an optional flag (`default` or `unique`).
 A thunk is a function that takes no parameters.
 Thunk values include a captured environment.
 Thunk values include an optional flag (`default` or `unique`).
+
+### Streams
+
+### Records
+
 
 ## Terms
 
@@ -310,6 +360,7 @@ If a variable is captured by a data (constructor) declaration, that constructor 
 The value of the block is the value of the last expression in the block.
 
 ### Streams
+
 A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
 Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
 A stream may be empty, finite, or infinite.
@@ -540,51 +591,8 @@ If a type is omitted, it is inferred. If the inferred type results in a type err
 
 When unifying `C` is preferred to `?`, which is preferred to `a`.
 
-## Types
 
-### Core types
 
-We have the core types `#i8`, `#i16`, `#i32`, `#i64`, `#f32`, `#f64`, and `#box`.
-
-### Any type
-
-`_` is the type of any value. 
-All types are a subtype of `_`.
-It can be considered the infinite union.
-
-### Nothing type
-
-`!` is the type of no value.
-All types are a supertype of `!`.
-It can be considered the empty union.
-
-### Dynamic type
-
-`?` is the dynamic type. Any value can be coerced to this type.
-It is equivalent to `#box`.
-
-### Record types
-
-Any record `Foo { .. xi: ei .. }` has type `Foo { .. xi: ti .. }`.
-
-### Parameterized types
-
-`C t` is a type of `C` is a type constructor (of kind `* -> *`) and `t` is a type. 
-As a specific instance, the function type `s -> t` is a type if `s` and `t` are types. 
-Also tuple types, list types, etc.
-
-### Type parameters
-
-`a` is a type.
-
-### Union types
-
-`s | t` is the union of types `s` and `t`.
-`s` and `t` and both subtypes of `s | t`.
-
-### Intersection types
-
-`s & t` is the intersection of types `s` and `t`.
 
 ## Trait definitions
 
@@ -961,11 +969,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMD
-AyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0
-OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLT
-E3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgx
-MTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMT
-cwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1NzcsLTEwNDMwMjIw
-MjNdfQ==
+eyJoaXN0b3J5IjpbLTE0MjU1NDAwMDIsNTUzMTQzNjU0LC0xMz
+M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
+MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
+EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
+Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
+k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
+NzddfQ==
 -->
