@@ -649,6 +649,11 @@ The following example is taken from the classboxes  [Bergel '05]
         fun (Foo x) == (Foo y) = x == y
     }
 
+Circular imports may result in an ambiguity error.
+Still require no overlapping instances.
+
+Declaring a trait `unique` means there 
+
 ## Linking 
 
 When linking modules, the modules are checked for ambiguous or incomplete open functions and ambiguous open types.
@@ -1074,7 +1079,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE3MjU5MjcyMiwtNTA5NjUwMzc4LDE0NT
+eyJoaXN0b3J5IjpbMTg2OTM2NTA4NCwtNTA5NjUwMzc4LDE0NT
 Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
 NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
 wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
