@@ -583,8 +583,14 @@ Instances of traits can be implemented in any module.
 
 When a module `M` is loaded, it may provide a new alternative `a` for an existing function `f`. If the `a` overlaps another alternative of `f`, it has priority in `M` and in any module that (later) imports `M`. Other modules (that do not import `M`) do not see `a`.
 
-The following example is take
+The following example is taken from the classboxes  [Bergel '05]
 
+    module System
+    data Socket
+    data HTTPSocket
+    fun ping (host)
+
+    module HTML
 When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
 
 Thus:
@@ -1056,7 +1062,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTU2MDUwNDY4OSwxNDU2NjQ3MjMzLC04Mz
+eyJoaXN0b3J5IjpbLTgxNzQwNzgzOCwxNDU2NjQ3MjMzLC04Mz
 Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
 Mjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MD
 MsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0
