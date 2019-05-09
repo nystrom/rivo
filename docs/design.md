@@ -633,7 +633,19 @@ The following example is taken from the classboxes  [Bergel '05]
     trait Eq (a) {
         fun (a) == (a) -> Bool
     }
+    // instance
     trait Eq (Int) {
+        fun (x) == (y) = ieq x y
+    }
+
+    module M
+    import Prelude
+    data Foo (a)
+    
+    trait Eq (Foo a) where Eq a {
+    // calls Prelude.== and 
+        fun (Foo x) == (Foo y) = x == y
+    }
 
 ## Linking 
 
@@ -1060,7 +1072,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAwODE4NTc5NiwtNTA5NjUwMzc4LDE0NT
+eyJoaXN0b3J5IjpbMTA4MzQyNjU1MywtNTA5NjUwMzc4LDE0NT
 Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
 NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
 wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
