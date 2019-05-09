@@ -658,7 +658,7 @@ Declaring a trait instance without a flag allows overlapping instances, which ma
 
 > Can we trick an upstream module into using the wrong instance?
 
-Foo
+Yes.
 
 	module M
 	fun foo (a) where Eq a -> a
@@ -1096,11 +1096,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjExMTA4MjA5LC01MDk2NTAzNzgsMTQ1Nj
-Y0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2
-NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC
-0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1
-MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3Nz
-AsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQw
-NjgxMTZdfQ==
+eyJoaXN0b3J5IjpbNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5Nj
+UwMzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEz
+LC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMT
+MzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkx
+NTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NC
+wxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2
+MzI5NTBdfQ==
 -->
