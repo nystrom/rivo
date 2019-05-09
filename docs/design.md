@@ -609,10 +609,10 @@ The following example is taken from the classboxes  [Bergel '05]
     fun ping (Socket) (host) // override (only visible here)
     fun check (url) = {
         socket = HTTPSocket url
-        contents = socket
+        contents = getHttp socket
         body = parseHtml
         for link in getLinks body {
-            ping link.host
+            Socket ping link.host
         }
     }
     
@@ -1087,7 +1087,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTIzODQzNzU5OSwxNDU2NjQ3MjMzLC04Mz
+eyJoaXN0b3J5IjpbLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC04Mz
 Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
 Mjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MD
 MsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0
