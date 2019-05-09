@@ -585,8 +585,12 @@ Instances of traits can be implemented in any module.
 It is an error if trait instances overlap.
 It is an error if a call (in expression context) dispatches to zero or more than one alternative. No module's alternatives are higher priority than another. The only case we have to watch out for is if a "new" alternative has a more specific pattern than an "old" alternative. This will change the behavior of the function.
 
+## Mixfix resolution
+
 
 ## Linking open functions
+
+> OBSOLETE
 
 Types can be extended in any module.
 Functions can be extended in any module.
@@ -640,6 +644,8 @@ The following example is taken from the classboxes  [Bergel '05]
     
 ## Linking traits
 
+> OBSOLETE
+
     module Prelude
     trait Eq (a) {
         fun (x) == (y) = ! (x != y) 
@@ -686,6 +692,8 @@ Alternatively, we can just make it an error to have overlapping alternatives, ex
 In backward modes, this doesn't work well. We want to have all solutions. 
 
 ## Type inference
+
+> OBSOLETE
 
 Each data definition is translated to a data definition.
 
@@ -738,6 +746,12 @@ If the parameters of the trait are not unknowns, they must be types. This define
         fun mempty = []
         fun mappend (xs) (ys) = xs ++ ys
     }
+    
+Trait instances may be guarded.
+
+	trait Eq (List a) where (Eq a) {
+	    fun (Nil) == (Nil) = True
+	    fun (x::xs) == 
 
 ## Types
 
@@ -1095,11 +1109,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0Mz
-Q1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIz
-MywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLT
-E1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAy
-MjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OT
-IsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3
-OTI5OTQ0NF19
+eyJoaXN0b3J5IjpbLTEyNjkwNzAwODksLTE3NTMwODMzMTIsLT
+MzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAz
+NzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLT
+E4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2
+OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1Mz
+QzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEz
+NDI0ODA3NzBdfQ==
 -->
