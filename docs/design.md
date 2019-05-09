@@ -577,7 +577,10 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 
 ## Open types and functions
 
+Types can be extended in any module.
+Functions can be extended in any module.
 
+To prevent a module from changing the behavior of existing 
 
 ## Linking 
 
@@ -1004,11 +1007,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNT
-UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
-ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
-wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
-OTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLD
-E2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5
-MjM5NF19
+eyJoaXN0b3J5IjpbLTIxMDU5OTY2MjgsLTE4MzY5MDc2NzAsLT
+E1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAy
+MjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OT
+IsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3
+OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMT
+YsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcw
+MTE1MTVdfQ==
 -->
