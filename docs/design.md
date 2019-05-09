@@ -540,10 +540,9 @@ induces the following definitions:
 
 Each `data` definition induces a record type (constructor) with the same name, for example:
 
-	data Nil  // type Nil { }, or just Nil
-	type Nil
-
-	data Cons (hd) (tl) // type Cons { hd: a, tl: b }
+	data Nil   // type Nil { }
+	data Cons (hd) (tl) 
+	           // type forall a b. Cons { hd: a, tl: b }
 
 	data False // type False	
 	data True  // type True
@@ -1005,7 +1004,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwNDQ5OTk3NTIsLTE1OTk5MjI3OTAsNT
+eyJoaXN0b3J5IjpbLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNT
 UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
 ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
 wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
