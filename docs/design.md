@@ -669,22 +669,8 @@ Yes.
 	fun bar (a) where Eq a = foo a
 	bar 1 // calls bar with local Eq Int
 		  // passes local Eq Int to foo
+		  // 
 				      
-				
-## Linking 
-
-When linking modules, the modules are checked for ambiguous or incomplete open functions and ambiguous open types.
-
-> TODO: Ambiguous (open) functions are in general allowed in backward modes.
-
-When linking modules, a dispatch function is generated for each open function in the linked modules.
-
-When linking modules, overlapping instances are checked.
-
-It is a compile-time error to have visible overlapping instances.
-It is a compile-time error to have visible ambiguous functions and types.
-It is a link-time error to have overlapping instances.
-It is a link-time error to have ambiguous functions and types.
 
 ## Type inference
 
@@ -1096,11 +1082,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5Nj
-UwMzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEz
-LC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMT
-MzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkx
-NTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NC
-wxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2
-MzI5NTBdfQ==
+eyJoaXN0b3J5IjpbMjA0Njc1NDU5MCw0MzQ1Mjc0NzYsMjExMT
+A4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQz
+LDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNT
+UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
+ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
+wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
+OTE5NjM5Nl19
 -->
