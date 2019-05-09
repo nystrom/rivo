@@ -158,7 +158,7 @@ Ivo supports the following values:
 - function values
 - thunks
 - streams
-- references to immutable tagged records
+- tagged records
 
 ### Functions
 
@@ -174,7 +174,10 @@ Thunk values include an optional flag (`default` or `unique`).
 
 ### Streams
 
-### Records
+### Tagged records
+
+Records are tagged. Fields of a record may be `let`, `var`, or `fun`.
+Records are created by calling the constructor of a `data` definition.
 
 
 ## Terms
@@ -969,11 +972,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0MjU1NDAwMDIsNTUzMTQzNjU0LC0xMz
-M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
-MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
-EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
-Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
-k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
-NzddfQ==
+eyJoaXN0b3J5IjpbMTMzMTMxMDMzOCw1NTMxNDM2NTQsLTEzMz
+Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
+NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
+M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
+OTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOT
+c3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3
+N119
 -->
