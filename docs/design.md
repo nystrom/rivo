@@ -580,7 +580,9 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 Types can be extended in any module.
 Functions can be extended in any module.
 
-To prevent a module from changing the behavior of existing 
+To prevent a module from changing the behavior of existing code, it is an error if alternatives in more than one module match.
+
+This is basically the same as the overlapping instances requirement: it is an error if there is more than one matching instance of a trait.
 
 ## Linking 
 
@@ -1007,11 +1009,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIxMDU5OTY2MjgsLTE4MzY5MDc2NzAsLT
-E1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAy
-MjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OT
-IsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3
-OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMT
-YsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcw
-MTE1MTVdfQ==
+eyJoaXN0b3J5IjpbMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMT
+U5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIy
+NzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5Mi
+wxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5
+Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNi
+wzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAx
+MTUxNV19
 -->
