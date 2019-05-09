@@ -280,12 +280,13 @@ The expression `e1 & e2` evaluates to the stream containing just `e1` if it is e
 
 ### Variables
 
-The expression `x` or `!x` evaluates to the value in variable `x`.
+The expression `!x` evaluates to the value in variable `x`.
 
-If `x` is overloaded, `x` evaluates to the stream of values bound to `x`.
-If `x` is not overloaded, `x` evaluates to a singleton stream in a pattern context and 
+If `x` is overloaded, `!x` evaluates to the stream of values bound to `x` in a pattern context and to a runtime error in an expression context.
 
-The pattern `x` or `?x` binds variable `x`
+If `x` is not overloaded, `!x` evaluates to a singleton stream in a pattern context and to the value in an expression context.
+
+In an expression context `!x` can be shortened to just `x`.
 
 ### let expressions
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
@@ -987,11 +988,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjY4Mjk4NTc3LDU1MzE0MzY1NCwtMTMzNj
-k4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0
-MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMz
-QyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5
-NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nz
-c4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3
-XX0=
+eyJoaXN0b3J5IjpbLTE1MzQyNjExNzYsNTUzMTQzNjU0LC0xMz
+M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
+MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
+EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
+Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
+k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
+NzddfQ==
 -->
