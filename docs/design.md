@@ -389,9 +389,6 @@ If a variable is captured by a function (including within a trait or instance de
 If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
 The value of the block is the value of the last expression in the block.
 
-
-
-
 ### Core expressions
 
 An expression `#(e)` or `#{e}` is a core expression.
@@ -411,7 +408,7 @@ The result of a core expression must be a `box`.
 
 The only core types are `i32`, `i64`, `f32`, `f64`, `i8`, `i16`, and `box`, and function types.
 
-## Lists
+### Lists
 
 The syntax `[1,2,3]` is syntactic sugar for `1:2:3:[]`.
 The syntax `[1..10]` is syntactic sugar for `iterate from 1 to 10`.
@@ -419,17 +416,6 @@ The syntax `[1,3..10]` is syntactic sugar for `iterate from 1 then 3 to 10`.
 The syntax `[1..]` is syntactic sugar for `iterate from 1` 
 The syntax `[1,3..]` is syntactic sugar for `iterate from 1 then 3`.
 The `iterate` functions are defined in the `Enum` trait, so implementers of the trait determine the semantics.
-The default implementation:
-
-    trait Enum a:
-      fun iterate from (a) to (a) -> List[a]   where Enum a
-      fun iterate from x to y = iterate from x to y using ( _ + 1 )
-    
-      fun iterate from x to y using f = if x > y then [] else x : iterate from (f x) to y
-    
-      fun iterate from x then y to z = if x > y then [] else x : iterate from y to z using (fun z: z + y - x)
-    
-      ...
 
 ## Patterns
 
@@ -993,11 +979,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE2MzI1MzYyNDQsNTUzMTQzNjU0LC0xMz
-M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
-MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
-EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
-Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
-k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
-NzddfQ==
+eyJoaXN0b3J5IjpbLTczOTc5MDc1NSw1NTMxNDM2NTQsLTEzMz
+Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
+NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
+M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
+OTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOT
+c3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3
+N119
 -->
