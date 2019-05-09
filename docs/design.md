@@ -179,13 +179,13 @@ Streams are essentially lazy lists. A stream may be created in several ways:
 - by invoking an overloaded function (creating a stream of the results)
 - by evaluating a formula in a `for`, `let`, or `var` expression, producing a stream results
 
-A stream may be empty. This often indicates an error. The stream of Typically they are evaluated in the
+A stream may be empty. This often indicates an error. The nil value `!` is the empty stream.
+The stream `_` is the infinite stream of all values.
 
 ### Tagged records
 
 Records are tagged. Fields of a record may be `let`, `var`, or `fun`.
 Records are created by invoking the constructor of a `data` definition, providing values of the fields.
-
 
 ## Terms
 
@@ -215,7 +215,7 @@ Each value literal has a unique tag.
 
 `_` is the any literal. It is equivalent to the union of all values.
 
-`()` is the nil literal. It is equivalent to the empty union.
+`!` is the nil literal. It is equivalent to the empty union.
 
 ### Tuple literals
 
@@ -224,7 +224,7 @@ A tuple `(e1, e2, ..., en)` is equivalent to `Prelude::Tuple e1 e2 ... en`.
 
 The expression `(e)` is equivalent to `e`.
 
-The expression `()` is the nil literal.
+The expression `!` is the nil literal.
 
 ### List literals
 
@@ -979,11 +979,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExOTUzNTc2NTcsNTUzMTQzNjU0LC0xMz
-M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
-MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
-EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
-Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
-k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
-NzddfQ==
+eyJoaXN0b3J5IjpbNjEyODAyNTQwLDU1MzE0MzY1NCwtMTMzNj
+k4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0
+MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMz
+QyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5
+NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nz
+c4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3
+XX0=
 -->
