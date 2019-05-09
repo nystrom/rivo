@@ -282,6 +282,9 @@ The expression `e1 & e2` evaluates to the stream containing just `e1` if it is e
 
 The expression `x` or `!x` evaluates to the value in variable `x`.
 
+If `x` is overloaded, `x` evaluates to the stream of values bound to `x`.
+If `x` is not overloaded, `x` evaluates to a singleton stream in a pattern context and 
+
 The pattern `x` or `?x` binds variable `x`
 
 ### let expressions
@@ -984,11 +987,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAyNzc2NTExMSw1NTMxNDM2NTQsLTEzMz
-Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
-NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
-M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
-OTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOT
-c3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3
-N119
+eyJoaXN0b3J5IjpbNjY4Mjk4NTc3LDU1MzE0MzY1NCwtMTMzNj
+k4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0
+MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMz
+QyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5
+NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nz
+c4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3
+XX0=
 -->
