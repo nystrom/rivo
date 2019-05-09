@@ -487,7 +487,12 @@ A `data` definition may optionally contain a block with nested definitions. Fiel
 The field definition `_` captures the unknowns in the `data` definition parameters as `let` definitions. If the block is missing, the fields are captured from the definition parameters; that is, the default block is `{ _ }`.
 
 A `let` or `var` definition defines fields using a formula.
-If a record is created in an expression context, it  
+If a record is created in an expression context, it is an error if these formulas have more than one solution, or no solution.
+If a record is created in a pattern context, a stream of records is created for each solution.
+
+A `fun` definition defines immutable fields of function type.
+
+A `data` definition defines a nested data type as well as a constructor for that type. 
 
 The following are equivalent:
 
@@ -995,11 +1000,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA2NjcyNjc1MCwtMTU5OTkyMjc5MCw1NT
-MxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4
-MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LD
-E1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5
-MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMT
-YzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzky
-Mzk0XX0=
+eyJoaXN0b3J5IjpbODg5NzkyODEzLC0xNTk5OTIyNzkwLDU1Mz
+E0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgw
+MjU1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMT
+UxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkx
+OTYzOTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNj
+MwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIz
+OTRdfQ==
 -->
