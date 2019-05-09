@@ -586,9 +586,7 @@ When a module `M` is loaded, it may provide a new alternative `a` for an existin
 The following example is taken from the classboxes  [Bergel '05]
 
     module System
-    data Socket
-    data HTTPSocket
-    fun ping (Socket) (host)
+    fun ping (host)
 
     module Html
     fun parseHtml -> HTMLEntity
@@ -603,24 +601,23 @@ The following example is taken from the classboxes  [Bergel '05]
 
     module LinkChecker
     import Html.parseHtml
-    import System.Socket
-    import System.HTTPSocket
+    import System.ping
     import GetLinks
-    fun ping (Socket) (host) // override (only visible here)
+    fun ping (host) // override (only visible here)
     fun check (url) = {
         socket = HTTPSocket url
         contents = getHttp socket
         body = parseHtml
         for link in getLinks body {
-            Socket ping link.host
+            ping link.host
         }
     }
 
 	module Foo
 	import LinkChecker
 	import System.Socket
-	check ("foo")
-	ping Socket 
+	check ("foo")      // uses LinkChecker.ping
+	ping Socket "bar"  // uses System.ping
     
 When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
 
@@ -1093,7 +1090,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTMwNjc5NDI5MSwtNTA5NjUwMzc4LDE0NT
+eyJoaXN0b3J5IjpbMTYxNTEwMTA0OSwtNTA5NjUwMzc4LDE0NT
 Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
 NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
 wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
