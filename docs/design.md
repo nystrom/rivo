@@ -754,7 +754,13 @@ Trait instances may be guarded.
 	    fun (x::xs) == (y::ys) = x == y && xs == ys
 	}
 
-Multi-parameter traits are allowed. O
+Multi-parameter traits are allowed. One parameter is declared to be the _independent_ parameter and the others dependent.
+
+    trait Seq (s) (a) {
+        fun nil -> s
+        fun (x: a) :: (xs: s) -> s
+    }
+    
 ## Function definitions
 
 Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. 
@@ -1093,11 +1099,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MDc5MzgyNjMsLTE3NTMwODMzMTIsLT
-MzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAz
-NzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLT
-E4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2
-OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1Mz
-QzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEz
-NDI0ODA3NzBdfQ==
+eyJoaXN0b3J5IjpbLTE5MDY2NDMwNCwtMTc1MzA4MzMxMiwtMz
+M4MDE2NTEzLDQzNDUyNzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3
+OCwxNDU2NjQ3MjMzLC04MzY0MDIxNDMsMjEwNjA2MzgxMywtMT
+gzNjkwNzY3MCwtMTU5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5
+ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUzND
+M2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMTM0
+MjQ4MDc3MF19
 -->
