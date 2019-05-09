@@ -603,22 +603,31 @@ The following example is taken from the classboxes  [Bergel '05]
     import Html.parse
     import System.ping
     import GetLinks
+    // override System.ping
     fun ping (host) = {
-        System.ping (host) 
+        System.ping (host) // delegate back
+        // other stuff
     }
     fun check (url) = {
         contents = getHttp url
         body = parse contents
         for link in getLinks body {
-            ping link.host  // local ping
+            ping link.host  // LinkChecker.ping
         }
     }
 
 	module Foo
-	import LinkChecker
+	import LinkChecker.check
 	import System.ping
-	check ("foo")      // uses LinkChecker.ping
-	ping "bar"  // calls System.ping
+	check ("foo")   // uses LinkChecker.ping
+	ping "bar"      // calls System.ping
+
+    module Bar
+    import LinkChecker.ping
+	import System.ping
+	ping "bar"      // calls System.ping
+
+
     
 When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
 
@@ -1091,11 +1100,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQzMzcyNjU5LC01MDk2NTAzNzgsMTQ1Nj
-Y0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2
-NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC
-0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1
-MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3Nz
-AsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQw
-NjgxMTZdfQ==
+eyJoaXN0b3J5IjpbLTU1NTc2NDY5MCwtNTA5NjUwMzc4LDE0NT
+Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
+NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
+wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
+NTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQyNDgwNz
+cwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0
+MDY4MTE2XX0=
 -->
