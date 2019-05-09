@@ -457,7 +457,7 @@ The pattern `x` or `?x` binds the variable `x`.
 
 ### Generator patterns
 
-`p <- e` matches `True` and matches elements of `e` against `p`.
+`p <- e` matches `True` and `e` is a stream and `p` matches elements of `e`.
 
 ### Apply patterns
 
@@ -465,7 +465,7 @@ The semantics are given by the Redex model.
 
 ### Ascribe patterns
 
-`p : T` matches if `p` matches and if the scrutinee has type `T`.
+`p : T` matches `v` if if `p` matches `v` and if the `v` has type `T`.
 
 ## Data definitions
 
@@ -979,11 +979,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI3NDg2MDc2Myw1NTMxNDM2NTQsLTEzMz
-Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
-NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
-M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
-OTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOT
-c3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3
-N119
+eyJoaXN0b3J5IjpbLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMz
+M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
+MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
+EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
+Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
+k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
+NzddfQ==
 -->
