@@ -291,11 +291,11 @@ The expression `e1 & e2` evaluates to the stream containing just `e1` if it is e
 
 The expression `!x` evaluates to the value in variable `x`.
 
-If `x` is overloaded, `!x` evaluates to the stream of values bound to `x` in a pattern context and to a runtime error in an expression context.
+If `x` is overloaded, `!x` evaluates to the stream of values bound to `x` in a pattern context and to a runtime error in a forward context.
 
-If `x` is not overloaded, `!x` evaluates to a singleton stream in a pattern context and to the value in an expression context.
+If `x` is not overloaded, `!x` evaluates to a singleton stream in a pattern context and to the value in a forward context.
 
-In an expression context `!x` can be shortened to just `x`.
+In a fora context `!x` can be shortened to just `x`.
 
 ### let expressions
 
@@ -754,12 +754,14 @@ Trait instances may be guarded.
 	    fun (x::xs) == (y::ys) = x == y && xs == ys
 	}
 
-Multi-parameter traits are allowed. One parameter is declared to be the _independent_ parameter and the others dependent.
+Multi-parameter traits are allowed. One parameter is declared to be the _independent_ parameter and the others dependent. The first parameter is independent.
 
     trait Seq (s) (a) {
         fun nil -> s
         fun (x: a) :: (xs: s) -> s
     }
+    
+> TODO: allow arbitrary functional dependencies
     
 ## Function definitions
 
@@ -1099,11 +1101,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MDY2NDMwNCwtMTc1MzA4MzMxMiwtMz
-M4MDE2NTEzLDQzNDUyNzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3
-OCwxNDU2NjQ3MjMzLC04MzY0MDIxNDMsMjEwNjA2MzgxMywtMT
-gzNjkwNzY3MCwtMTU5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5
-ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUzND
-M2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMTM0
-MjQ4MDc3MF19
+eyJoaXN0b3J5IjpbMjIzMTkzMzc1LC0xNzUzMDgzMzEyLC0zMz
+gwMTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4
+LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xOD
+M2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4
+NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0Mz
+YsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQy
+NDgwNzcwXX0=
 -->
