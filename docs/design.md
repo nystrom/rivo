@@ -228,7 +228,7 @@ The expression `!` is the nil literal.
 
 ### List literals
 
-The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Cons e2 (Prelude::Cons e3 Prelude::Nil))`. `n` may be 0.
+The list literal `[e1, e2, e3]` is equivalent to `Prelude::Cons e1 (Prelude::Cons e2 (Prelude::Cons e3 Prelude::Nil))`. A list may be empty.
 
 ### Set literals
 
@@ -268,6 +268,9 @@ If `e` is a stream, `e.x` is the stream of all members named `x` in any element 
 ### Union expressions
 
 The expression `e1 | e2` evaluates to the stream containing the values of `e1` and `e2`. All members of the stream must have the same tag. Duplicates are elided.
+
+The expression `e1 :| e2` is prepends value `e1` to the stream `e2`.
+The expression `|e|` is sugar for `e :| !`.
 
 ### Intersection expressions
 
@@ -979,11 +982,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjEyODAyNTQwLDU1MzE0MzY1NCwtMTMzNj
-k4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0
-MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMz
-QyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5
-NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nz
-c4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3
-XX0=
+eyJoaXN0b3J5IjpbMTU3NzQwMzE2Niw1NTMxNDM2NTQsLTEzMz
+Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
+NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
+M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
+OTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMTYzMDc5MjE5NiwtOT
+c3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzkyMzk0LDg0MTMyODU3
+N119
 -->
