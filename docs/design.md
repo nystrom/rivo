@@ -751,14 +751,8 @@ Trait instances may be guarded.
 
 	trait Eq (List a) where (Eq a) {
 	    fun (Nil) == (Nil) = True
-	    fun (x::xs) == 
-
-## Types
-
-Each data definition defines a type constructor.
-Function types are defined by the built-in class constructor `->`.
-Tuple types are defined by the built-in data constructors '(,)', `(,,)`, etc.
-The unit type is defined by the built-in data type `()`.
+	    fun (x::xs) == (y::ys) = x == y && xs == ys
+	}
 
 ## Function definitions
 
@@ -826,7 +820,7 @@ Each alternative is given by the function name and patterns for each argument, a
     fun if (True) then {e} else {e} = e
     fun if (False) then {_} else {e} = e
     
-## Mixfix function parsing
+## Mixfix resolution
 
 Mixfix operators may be declared with `fun` definitions. A function is *mixfix* if its signature
 includes a symbol identifier or any identifier after the first position.
@@ -853,10 +847,13 @@ where `ri` is generated as follows from definition `fi`:
 
 If there is an associativity annotation on a type, `Ei` is generated on the RHS
 instead of `E{i+1}`.
+
 If there is more than one functions with the same name, a rule is generated
 for the first such function. The actual function call is resolved using the overloading rules below.
+
 When a module is imported, the parser is extended with the rules generated from the functions
 in the imported module.
+
 Since multiple functions may have the same name or overlapping names, parsing using these rules may be ambiguous.
 In this case, the compiler will report an error for any expression that cannot be parsed
 unambiguously. The programmer can usually resolve the error by adding parentheses.
@@ -1109,7 +1106,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNjkwNzAwODksLTE3NTMwODMzMTIsLT
+eyJoaXN0b3J5IjpbLTE4MjAyNzM4MDQsLTE3NTMwODMzMTIsLT
 MzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAz
 NzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLT
 E4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2
