@@ -269,12 +269,14 @@ If `e` is a stream, `e.x` is the stream of all members named `x` in any element 
 
 The expression `e1 | e2` evaluates to the stream containing the values of `e1` and `e2`. All members of the stream must have the same tag. Duplicates are elided.
 
-The expression `e1 :| e2` is prepends value `e1` to the stream `e2`.
-The expression `|e|` is sugar for `e :| !`.
+> TODO: do we union values or streams?
+> TODO: just drop this in favor of implicit unions and `for`.
+> The expression `e1 :| e2` is prepends value `e1` to the stream `e2`.
+> The expression `|e|` is sugar for `e :| !`.
 
 ### Intersection expressions
 
-The expression `e1 & e2` evaluates to the stream containing just `e1` if it is equal to `e2` and to the empty stream `()` otherwise.
+The expression `e1 & e2` evaluates to the stream containing just `e1` if it is equal to `e2` and to the empty stream `!` otherwise.
 
 ### Variables
 
@@ -982,7 +984,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTU3NzQwMzE2Niw1NTMxNDM2NTQsLTEzMz
+eyJoaXN0b3J5IjpbMjAyNzc2NTExMSw1NTMxNDM2NTQsLTEzMz
 Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
 NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
 M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
