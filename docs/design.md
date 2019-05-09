@@ -492,7 +492,7 @@ A `data` definition may optionally contain a block with nested definitions. Fiel
 
 The field definition `_` captures the unknowns in the `data` definition parameters as `let` definitions. If the block is missing, the fields are captured from the definition parameters; that is, the default block is `{ _ }`.
 
-The following are equivalent:
+Thus, the following are equivalent:
 
     data Nil
     data Nil { }
@@ -503,9 +503,8 @@ The following are equivalent:
     data Cons (hd') (tl') { let hd = hd'; let tl = tl' }
    
 A `let` or `var` definition defines fields using a formula.
-
 A `let` definition consists of the keyword `let` and a formula. The unknowns in the formula become immutable fields of the record.
-A `var` definition consists of the keyword `var` and a formula. The unknowns in the formula become mutable fields of the record.
+A `var` definition consists of the keyword `var` and a formula. The unknowns in the formula become *mutable* fields of the record.
 
 If a record is created in an expression context, it is an error if these formulas have more than one solution, or no solution.
 If a record is created in a pattern context, a stream of records is created for each solution.
@@ -998,11 +997,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0NjI0NTYxNjAsLTE1OTk5MjI3OTAsNT
-UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
-ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
-wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
-OTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLD
-E2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5
-MjM5NF19
+eyJoaXN0b3J5IjpbODczNTg2ODk2LC0xNTk5OTIyNzkwLDU1Mz
+E0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgw
+MjU1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMT
+UxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkx
+OTYzOTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNj
+MwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIz
+OTRdfQ==
 -->
