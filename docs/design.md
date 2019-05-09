@@ -656,8 +656,12 @@ Declaring a trait instance `unique` means there cannot be overlapping instances 
 Declaring a trait instance `default` means if it overlaps, it should yield to the other instance (unless both are `default`).
 Declaring a trait instance without a flag allows overlapping instances, which may result in an ambiguity error. But, imported instance still lose if there's more than once instance.
 
-> Can we trick aMIGHT have to 
+> Can we trick an upstream module into using the wrong instance?
+> 
+			module M
+		 	fun foo (a) where Eq a -> a
 
+module
 ## Linking 
 
 When linking modules, the modules are checked for ambiguous or incomplete open functions and ambiguous open types.
@@ -1083,7 +1087,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzQwNjIwNTY5LC01MDk2NTAzNzgsMTQ1Nj
+eyJoaXN0b3J5IjpbMzk3NTQzMTA0LC01MDk2NTAzNzgsMTQ1Nj
 Y0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2
 NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC
 0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1
