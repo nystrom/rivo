@@ -652,7 +652,9 @@ The following example is taken from the classboxes  [Bergel '05]
 Circular imports may result in an ambiguity error.
 Still require no overlapping instances.
 
-Declaring a trait `unique` means there 
+Declaring a trait instance `unique` means there cannot be overlapping instances at run time.
+Declaring a trait instance `default` means if it overlaps, it should yield to the other instance (unless both are `default`).
+Declaring a trait instance without a flag al
 
 ## Linking 
 
@@ -1079,7 +1081,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg2OTM2NTA4NCwtNTA5NjUwMzc4LDE0NT
+eyJoaXN0b3J5IjpbMTEyNzU2NjkxMSwtNTA5NjUwMzc4LDE0NT
 Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
 NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
 wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
