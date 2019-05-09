@@ -291,9 +291,9 @@ The expression `e1 & e2` evaluates to the stream containing just `e1` if it is e
 
 The expression `!x` evaluates to the value in variable `x`.
 
-If `x` is overloaded, `!x` evaluates to the stream of values bound to `x` in a pattern context and to a runtime error in a forward context.
+If `x` is overloaded, `!x` evaluates to the stream of values bound to `x` in a backward context and to a runtime error in a forward context.
 
-If `x` is not overloaded, `!x` evaluates to a singleton stream in a pattern context and to the value in a forward context.
+If `x` is not overloaded, `!x` evaluates to a singleton stream in a backward context and to the value in a forward context.
 
 In a forward context `!x` can be shortened to just `x`.
 
@@ -469,9 +469,9 @@ The semantics are given by the Redex model.
 
 ## Evaluation contexts
 
-An expression may be evaluated in either forward context_ or backward context_. In the former, the expression should evaluate to a single unique value. In the latter, the expression may evaluate to a stream of values, including the empty stream `!`.
+An expression may be evaluated in either _forward context_ or _backward context_. In the former, the expression should evaluate to a single unique value. In the latter, the expression may evaluate to a stream of values, including the empty stream `!`.
 
-Pattern contexts occur in the formula part of a `for`, `let`, or `var` expression and elsewhere.
+Backward contexts occur in the formula part of a `for`, `let`, or `var` expression and elsewhere.
 
 ## Formula definitions
 
@@ -507,7 +507,7 @@ A `let` definition consists of the keyword `let` and a formula. The unknowns in 
 A `var` definition consists of the keyword `var` and a formula. The unknowns in the formula become *mutable* fields of the record.
 
 If a record is created in a forward context, it is an error if these formulas have more than one solution, or no solution.
-If a record is created in a pattern context, a stream of records is created for each solution. Thus:
+If a record is created in a backward context, a stream of records is created for each solution. Thus:
 
 	data C (xs) {
 	   let x in xs
@@ -1101,11 +1101,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM4MjU1OTQ4LC0xNzUzMDgzMzEyLC0zMz
-gwMTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4
-LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xOD
-M2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4
-NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0Mz
-YsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQy
-NDgwNzcwXX0=
+eyJoaXN0b3J5IjpbMTg1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMz
+M4MDE2NTEzLDQzNDUyNzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3
+OCwxNDU2NjQ3MjMzLC04MzY0MDIxNDMsMjEwNjA2MzgxMywtMT
+gzNjkwNzY3MCwtMTU5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5
+ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUzND
+M2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMTM0
+MjQ4MDc3MF19
 -->
