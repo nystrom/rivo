@@ -174,7 +174,12 @@ Thunk values include an optional flag (`default` or `unique`).
 
 ### Streams
 
-Streams are essentially lazy lists. A stream may be created by invoking an overloaded function (creating a stream of the results), typically in back. Typically they are evaluated in the
+Streams are essentially lazy lists. A stream may be created in several ways:
+
+- by invoking an overloaded function (creating a stream of the results)
+- by evaluating a formula in a `for`, `let`, or `var` expression, producing a stream results
+
+A stream may be empty. This often indicates an error. The stream of Typically they are evaluated in the
 
 ### Tagged records
 
@@ -974,7 +979,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3NjYxOTczMTgsNTUzMTQzNjU0LC0xMz
+eyJoaXN0b3J5IjpbLTExOTUzNTc2NTcsNTUzMTQzNjU0LC0xMz
 M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
 MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
 EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
