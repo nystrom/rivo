@@ -594,7 +594,15 @@ Or: the definition in a module overrides the definition in imported modules.
 	
 	module M3
 	import M1
-	fun f = 3
+	import M2
+	f // ambiguous
+	for (x <- f) x // [1,2]
+ 
+    module M4
+    import M1
+    fun f = 4
+    f // 4
+     
 	
 
 This is basically the same as the overlapping instances requirement: it is an error if there is more than one matching instance of a trait.
@@ -1024,7 +1032,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTIzMDY1NzEzOCwyMTA2MDYzODEzLC0xOD
+eyJoaXN0b3J5IjpbLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xOD
 M2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4
 NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0Mz
 YsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQy
