@@ -469,7 +469,10 @@ The semantics are given by the Redex model.
 
 ## Evaluation contexts
 
-An expression may be evaluated in either _expression context_ or _pattern context_
+An expression may be evaluated in either _expression context_ or _pattern context_. In the former, the expression should evaluate to a single unique value. In the latter, the expression may evaluate to a stream of values, including the empty stream `!`.
+
+Pattern contexts occur in the formula part of a `for`, `let`, or `var` expression and elsewhere.
+
 ## Formula definitions
 
 A `let` or `var` definition introduces variables in the body of a `data` definition.
@@ -995,11 +998,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg0NjExMzE5NCwtMTU5OTkyMjc5MCw1NT
-MxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4
-MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LD
-E1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5
-MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMT
-YzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzky
-Mzk0XX0=
+eyJoaXN0b3J5IjpbLTE0NjI0NTYxNjAsLTE1OTk5MjI3OTAsNT
+UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
+ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
+wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
+OTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLD
+E2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5
+MjM5NF19
 -->
