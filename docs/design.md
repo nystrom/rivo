@@ -579,8 +579,11 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 
 Types can be extended in any module.
 Functions can be extended in any module.
+Instances of traits can be implemented in any module.
 
-When a module imports another, only the imported overloads are visible. Thus, if `M` imports
+When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
+
+T
 
 To prevent a module from changing the behavior of existing code, it is an error if alternatives in more than one module match.
 
@@ -1034,7 +1037,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNTA5NDkyNjksLTgzNjQwMjE0MywyMT
+eyJoaXN0b3J5IjpbLTE3MTg5NzI1NDgsLTgzNjQwMjE0MywyMT
 A2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0
 MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMj
 U1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUx
