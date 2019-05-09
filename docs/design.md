@@ -511,13 +511,18 @@ If a record is created in a pattern context, a stream of records is created for 
 
 	data C (xs) {
 	   let x in xs
+	   let y in xs
 	}
 
 	C []    // match failed error
-	C [1]   // C { x = 1 }
-	C [1,2] // ambiguous error
+	C [1]   // C { x = 1, y = 1 }
+	C [1,2] // match ambiguous error
 	
-	for (c = C [1,2]) c  // [C { x = 1 }, C { x = 2 }]
+	for (c = C [1,2]) c  // C { x = 1, y = 1 }, 
+						 // C { x = 1, y = 2 },						
+						 // C { x = 2, y = 1 },
+						 // C { x = 2, y = 2 }
+
 
 A `fun` definition defines immutable fields of function type.
 
@@ -1007,11 +1012,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzkyMDA2ODY2LC0xNTk5OTIyNzkwLDU1Mz
-E0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgw
-MjU1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMT
-UxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkx
-OTYzOTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNj
-MwNzkyMTk2LC05Nzc4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIz
-OTRdfQ==
+eyJoaXN0b3J5IjpbLTEyMjQ3MDY4OTcsLTE1OTk5MjI3OTAsNT
+UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
+ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
+wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
+OTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLD
+E2MzA3OTIxOTYsLTk3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5
+MjM5NF19
 -->
