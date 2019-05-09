@@ -661,14 +661,14 @@ Declaring a trait instance without a flag allows overlapping instances, which ma
 Foo
 
 	module M
-		fun foo (a) where Eq a -> a
+	fun foo (a) where Eq a -> a
 
-				module M2
-				import M
-				instance Eq (Int) { ... } // override
-				fun bar (a) where Eq a = foo a
-				bar 1 // calls bar with local Eq Int
-				      // passes local Eq Int to foo
+	module M2
+	import M
+	trait Eq (Int) { ... } // override
+	fun bar (a) where Eq a = foo a
+	bar 1 // calls bar with local Eq Int
+		  // passes local Eq Int to foo
 				      
 				
 ## Linking 
@@ -1096,11 +1096,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTQ1NTE4NDYzMCwtNTA5NjUwMzc4LDE0NT
-Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
-NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
-wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
-NTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQyNDgwNz
-cwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5NTAsNDE0
-MDY4MTE2XX0=
+eyJoaXN0b3J5IjpbMjExMTA4MjA5LC01MDk2NTAzNzgsMTQ1Nj
+Y0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2
+NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC
+0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1
+MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3Nz
+AsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQw
+NjgxMTZdfQ==
 -->
