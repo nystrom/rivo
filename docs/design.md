@@ -174,13 +174,22 @@ Thunk values include an optional flag (`default` or `unique`).
 
 ### Streams
 
+A stream expression generates a possibly infinite sequence of values.
+
 Streams are essentially lazy lists. A stream may be created in several ways:
 
-- by invoking an overloaded function (creating a stream of the results)
+- by accessing an overloaded variable or invoking an overloaded function
 - by evaluating a formula in a `for`, `let`, or `var` expression, producing a stream results
+- explicitly creating a stream using the `Prelude::Stream` constructor
 
 A stream may be empty. This often indicates an error. The nil value `!` is the empty stream.
 The stream `_` is the infinite stream of all values.
+
+Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
+A stream may be empty, finite, or infinite.
+Streams can also be created directly by implementing the `Stream` trait.
+A `for` expression can iterate through a stream.
+Any unknowns in the formula are bound in the body of the `for` .
 
 ### Tagged records
 
@@ -380,14 +389,8 @@ If a variable is captured by a function (including within a trait or instance de
 If a variable is captured by a data (constructor) declaration, that constructor cannot be invoked before the variable is defined.
 The value of the block is the value of the last expression in the block.
 
-### Streams
 
-A stream expression generates a possibly infinite sequence of values. There are several ways to define streams, including implementing the `Stream` trait. However, typically a stream can be generated from a formula. 
-Given a formula, a stream can be created that iterates through all satisfying assignments of the formula. For instance, the formula `xs contains x && x > 0` iterates through all values in the collection `xs` that are greater than 0.
-A stream may be empty, finite, or infinite.
-Streams can also be created directly by implementing the `Stream` trait.
-A `for` expression can iterate through a stream.
-Any unknowns in the formula are bound in the body of the `for` .
+
 
 ### Core expressions
 
@@ -990,11 +993,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODQ5MjU0ODMzLDU1MzE0MzY1NCwtMTMzNj
-k4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0
-MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMz
-QyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5
-NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nz
-c4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3
-XX0=
+eyJoaXN0b3J5IjpbLTE2MzI1MzYyNDQsNTUzMTQzNjU0LC0xMz
+M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
+MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
+EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
+Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
+k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
+NzddfQ==
 -->
