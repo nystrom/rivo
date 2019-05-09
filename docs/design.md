@@ -581,6 +581,8 @@ Types can be extended in any module.
 Functions can be extended in any module.
 Instances of traits can be implemented in any module.
 
+When a module is loaded, it may provide a new alternative for an existing function. If the new alternative overlaps the existing function, it has priority in that module and in any module that imports it.
+
 When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
 
 Thus:
@@ -1052,11 +1054,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMD
-YwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQz
-NjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNT
-UsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0
-MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5Nj
-M5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3
-OTIxOTZdfQ==
+eyJoaXN0b3J5IjpbMTAxMjM4MTQwOSwxNDU2NjQ3MjMzLC04Mz
+Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
+Mjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MD
+MsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0
+NTIwMDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5ND
+Q0LC0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0
+MTcxMTBdfQ==
 -->
