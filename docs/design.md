@@ -295,7 +295,7 @@ If `x` is overloaded, `!x` evaluates to the stream of values bound to `x` in a p
 
 If `x` is not overloaded, `!x` evaluates to a singleton stream in a pattern context and to the value in a forward context.
 
-In a fora context `!x` can be shortened to just `x`.
+In a forward context `!x` can be shortened to just `x`.
 
 ### let expressions
 
@@ -469,7 +469,7 @@ The semantics are given by the Redex model.
 
 ## Evaluation contexts
 
-An expression may be evaluated in either _expression context_ or _pattern context_. In the former, the expression should evaluate to a single unique value. In the latter, the expression may evaluate to a stream of values, including the empty stream `!`.
+An expression may be evaluated in either forward context_ or backward context_. In the former, the expression should evaluate to a single unique value. In the latter, the expression may evaluate to a stream of values, including the empty stream `!`.
 
 Pattern contexts occur in the formula part of a `for`, `let`, or `var` expression and elsewhere.
 
@@ -506,7 +506,7 @@ A `let` or `var` definition defines fields using a formula.
 A `let` definition consists of the keyword `let` and a formula. The unknowns in the formula become *immutable* fields of the record.
 A `var` definition consists of the keyword `var` and a formula. The unknowns in the formula become *mutable* fields of the record.
 
-If a record is created in an expression context, it is an error if these formulas have more than one solution, or no solution.
+If a record is created in a forward context, it is an error if these formulas have more than one solution, or no solution.
 If a record is created in a pattern context, a stream of records is created for each solution. Thus:
 
 	data C (xs) {
@@ -583,7 +583,7 @@ Types and functions can be extended in any module.
 Instances of traits can be implemented in any module.
 
 It is an error if trait instances overlap.
-It is an error if a call (in expression context) dispatches to zero or more than one alternative. No module's alternatives are higher priority than another. The only case we have to watch out for is if a "new" alternative has a more specific pattern than an "old" alternative. This will change the behavior of the function.
+It is an error if a call (in forward context) dispatches to zero or more than one alternative. No module's alternatives are higher priority than another. The only case we have to watch out for is if a "new" alternative has a more specific pattern than an "old" alternative. This will change the behavior of the function.
 
 ## Mixfix resolution
 
@@ -1101,7 +1101,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjIzMTkzMzc1LC0xNzUzMDgzMzEyLC0zMz
+eyJoaXN0b3J5IjpbMTM4MjU1OTQ4LC0xNzUzMDgzMzEyLC0zMz
 gwMTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4
 LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xOD
 M2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4
