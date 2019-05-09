@@ -289,6 +289,7 @@ If `x` is not overloaded, `!x` evaluates to a singleton stream in a pattern cont
 In an expression context `!x` can be shortened to just `x`.
 
 ### let expressions
+
 A `let` expression tries to satisfy a formula, binding new variables as necessary. For example,
 
      let 2 + x == 5 {
@@ -314,6 +315,7 @@ An `if` expression is like a `let`, but does not generate an error if the formul
     if 2 + x == 5 {
         print x
     }
+    
 An `if` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of an `if` without an `else` is the unit value. The result of an `if` with an `else` is the result of whichever clause is evaluated.
 
@@ -321,14 +323,14 @@ The result of an `if` without an `else` is the unit value. The result of an `if`
 
 A `for` expression is like a `let`, but evaluates the body for each solution, returning a stream of the results.
 
+	# evaluates to the stream 2,3,4
+	for x in [1,2,3] { x + 1 }
+
     # prints 1,2,3
-    # evalutaes to the stream (),(),()
+    # evaluates to the stream (),(),() [which can be discarded]
     for x in [1,2,3] {
         print x
     }
-
-	# evaluates to the stream 2,3,4
-	for x in [1,2,3] { x + 1 }
 
 A `for` expression can have an optional `else` clause, which is evaluated if there are no solutions to the formula.
 The result of a `for` expression is a stream of the `for` body results, or the empty stream if there is no `else` or the singleton stream of the `else` body.
@@ -988,11 +990,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1MzQyNjExNzYsNTUzMTQzNjU0LC0xMz
-M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
-MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
-EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
-Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
-k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
-NzddfQ==
+eyJoaXN0b3J5IjpbODQ5MjU0ODMzLDU1MzE0MzY1NCwtMTMzNj
+k4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0
+MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMz
+QyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5
+NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nz
+c4MDQwMDIsMTE3MDExNTE1LDE0MjIzOTIzOTQsODQxMzI4NTc3
+XX0=
 -->
