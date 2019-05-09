@@ -669,8 +669,8 @@ Yes.
 	fun bar (a) where Eq a = foo a
 	bar 1 // calls bar with local Eq Int
 		  // passes local Eq Int to foo
-		  // 
-				      
+
+Alternatively, we can just make it an error to have overlapping alternatives, excluding alternatives declared `default`. This seems to be the simplest solution. When dispatching, if more than one alternative matches, we report an error.				      
 
 ## Type inference
 
@@ -1082,11 +1082,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA0Njc1NDU5MCw0MzQ1Mjc0NzYsMjExMT
-A4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQz
-LDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNT
-UzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIx
-ODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NS
-wxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcx
-OTE5NjM5Nl19
+eyJoaXN0b3J5IjpbLTE4ODMzMjU0MjAsNDM0NTI3NDc2LDIxMT
+EwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0
+MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLD
+U1MzE0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEy
+MTgwMjU1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNj
+UsMTUxNDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3
+MTkxOTYzOTZdfQ==
 -->
