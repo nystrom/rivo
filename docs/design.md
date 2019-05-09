@@ -580,6 +580,8 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 Types can be extended in any module.
 Functions can be extended in any module.
 
+When a module imports another, only the imported overloads are visible. Thus, if `M` imports
+
 To prevent a module from changing the behavior of existing code, it is an error if alternatives in more than one module match.
 
 Or: the definition in a module overrides the definition in imported modules.
@@ -1032,11 +1034,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xOD
-M2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4
-NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0Mz
-YsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUxNDM2Mjk2NCwxMzQy
-NDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOTYzOTYsLTI2MzI5NT
-AsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMwNzkyMTk2LC05Nzc4
-MDQwMDJdfQ==
+eyJoaXN0b3J5IjpbLTEwNTA5NDkyNjksLTgzNjQwMjE0MywyMT
+A2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0
+MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMj
+U1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUx
+NDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOT
+YzOTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMw
+NzkyMTk2XX0=
 -->
