@@ -441,15 +441,15 @@ The pattern `x` or `?x` binds the variable `x`.
 
 ### Where patterns
 
-`p where f` matches `p` against the scrutinee then matches `f` against `True`. It is equivalent to `p & (f = True)`.
+`p where f` matches `v` if `p` matches `v` and if `f` matches `True`. It is equivalent to `p & (f = True)`.
 
 ### Union patterns
 
-`p1 | p2` matches both patterns against the scrutinee, matching if either pattern matches. It is a dynamic error if the patterns match different unknowns.
+`p1 | p2` matches `v` if one or both patterns match `v`. It is an error if the patterns have different unknowns with different types.
 
 ### Intersection patterns
 
-`p1 & p2` matches both patterns against the scrutinee, matching if both patterns match.
+`p1 & p2` matches `v` if both patterns match `v`. All unknowns in both patterns are matched.
 
 ### Bind patterns
 
@@ -979,7 +979,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM4NzcyNDYyOCw1NTMxNDM2NTQsLTEzMz
+eyJoaXN0b3J5IjpbMTI3NDg2MDc2Myw1NTMxNDM2NTQsLTEzMz
 Y5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUz
 NDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMT
 M0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5MTk2Mzk2LC0yNjMy
