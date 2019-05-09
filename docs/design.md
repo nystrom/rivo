@@ -467,6 +467,15 @@ The semantics are given by the Redex model.
 
 `p : T` matches `v` if if `p` matches `v` and if the `v` has type `T`.
 
+## Formula definitions
+
+A `let` or `var` definition introduces variables in the body of a `data` definition.
+
+## Function definitions
+
+A `fun` definition introduces a function.
+
+
 ## Data definitions
 
 A `data` definition introduces a data type. Members of the type are tagged records.
@@ -553,6 +562,10 @@ A type declared `open` can be overloaded in other modules. Generally, when a typ
 Functions using `open` types should be declared `open`. That is, an `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type. It is allowed for a function to treat an open type parametrically (that is, to move it between variables).
 
 > TODO: Matching of type is checked for completeness within a module. Matching of open types is not checked for completeness.
+
+## Open types and functions
+
+
 
 ## Linking 
 
@@ -979,11 +992,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMz
-M2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEzOTE1
-MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0MzYyOTY0LD
-EzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5NjM5NiwtMjYz
-Mjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3OTIxOTYsLT
-k3NzgwNDAwMiwxMTcwMTE1MTUsMTQyMjM5MjM5NCw4NDEzMjg1
-NzddfQ==
+eyJoaXN0b3J5IjpbMTgxMDc4OTI5OCwtMTU5OTkyMjc5MCw1NT
+MxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4
+MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LD
+E1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5NDQ0LC0xNzE5
+MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0MTcxMTAsMT
+YzMDc5MjE5NiwtOTc3ODA0MDAyLDExNzAxMTUxNSwxNDIyMzky
+Mzk0XX0=
 -->
