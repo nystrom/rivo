@@ -590,7 +590,14 @@ The following example is taken from the classboxes  [Bergel '05]
     data HTTPSocket
     fun ping (host)
 
-    module HTML
+    module Html
+    fun parseHtml -> HTMLEntity
+    data HTMLBody
+    data HTMLAnchor
+    type HTMLEntity = HTMLBody | HTMLAnchor | ...
+    
+    module GetLinks
+    fun getLinks(HTMLB
 When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
 
 Thus:
@@ -1062,11 +1069,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTgxNzQwNzgzOCwxNDU2NjQ3MjMzLC04Mz
-Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
-Mjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MD
-MsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0
-NTIwMDY1LDE1MTQzNjI5NjQsMTM0MjQ4MDc3MCwtMTc5Mjk5ND
-Q0LC0xNzE5MTk2Mzk2LC0yNjMyOTUwLDQxNDA2ODExNiwzNzA0
-MTcxMTBdfQ==
+eyJoaXN0b3J5IjpbNjU3NTQyOTUsMTQ1NjY0NzIzMywtODM2ND
+AyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3
+OTAsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC
+03MTIxODAyNTUsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUy
+MDA2NSwxNTE0MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NC
+wtMTcxOTE5NjM5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwNDE3
+MTEwXX0=
 -->
