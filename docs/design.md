@@ -754,6 +754,7 @@ Trait instances may be guarded.
 	    fun (x::xs) == (y::ys) = x == y && xs == ys
 	}
 
+Multi-parameter traits are allowed. O
 ## Function definitions
 
 Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. 
@@ -858,7 +859,7 @@ Since multiple functions may have the same name or overlapping names, parsing us
 In this case, the compiler will report an error for any expression that cannot be parsed
 unambiguously. The programmer can usually resolve the error by adding parentheses.
 
-### Backward functions
+## Backward functions
 
 Functions in Ivo can be declared to support several *modes* of evaluation.
 Normal evaluation is referred to as *forward mode*. A function can be invoked in a *backward mode* by passing in its return value and optionally some arguments, yielding the other arguments.
@@ -942,23 +943,7 @@ Then we can define `unzip` as:
         ys = map snd xys
       }
 
-Operations and their inverses:
 
-    fun (a) ** (Nat) -> a where Num a
-    fun (x) ** (0) = 1
-    fun (x) ** (1) = x
-    fun (x) ** (2) = x * x
-    fun (x) ** (3) = x * x * x
-    fun (x) ** (4) = x * x * x * x
-    fun (x) ** (2*n) = {
-      let y = x ** n {
-          y * y
-      }
-    }
-    fun (x) ** (2*n+1) = x * (x ** 2*n)
-    
-    fun sqrt (x : Double) = math.sqrt(x)
-    fun sqrt (! y * y) = (? y)
 
 
 ## Type system
@@ -970,7 +955,9 @@ for each binding group, which is solved to compute the types.
 The base type system is extended with constraints (similarly to type classes in Haskell).
 Overloading is handled by generating constraints on the types of variables and then
 rejecting infeasible constraints. Functions that access overloaded variables are specialized on the overloading.
-**Partial application (currying)**
+
+### Partial application (currying)
+
 A function can be applied partially by filling in the writing `_` for some arguments.
 For example,
 
@@ -1106,7 +1093,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4MjAyNzM4MDQsLTE3NTMwODMzMTIsLT
+eyJoaXN0b3J5IjpbLTE5MDc5MzgyNjMsLTE3NTMwODMzMTIsLT
 MzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAz
 NzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLT
 E4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC0xMzM2
