@@ -583,7 +583,22 @@ Instances of traits can be implemented in any module.
 
 When a module imports another, only the imported definitions are visible, even dynamically. Local definitions override imported definitions.
 
-T
+Thus:
+
+	module M1
+	fun f = 1
+	module M2
+	import M1
+	fun f = 2 // overrides f
+	module M3
+	import M1
+	fun g = f  // M1.f
+	module M4
+	import M2
+	import M3.g
+	f // 2
+	g // 1
+	
 
 To prevent a module from changing the behavior of existing code, it is an error if alternatives in more than one module match.
 
@@ -1037,11 +1052,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MTg5NzI1NDgsLTgzNjQwMjE0MywyMT
-A2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0
-MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMj
-U1LDExMzkxNTM0MzYsODcwNTI2NDkyLDE1NzQ1MjAwNjUsMTUx
-NDM2Mjk2NCwxMzQyNDgwNzcwLC0xNzkyOTk0NDQsLTE3MTkxOT
-YzOTYsLTI2MzI5NTAsNDE0MDY4MTE2LDM3MDQxNzExMCwxNjMw
-NzkyMTk2XX0=
+eyJoaXN0b3J5IjpbMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMD
+YwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQz
+NjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNT
+UsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0
+MzYyOTY0LDEzNDI0ODA3NzAsLTE3OTI5OTQ0NCwtMTcxOTE5Nj
+M5NiwtMjYzMjk1MCw0MTQwNjgxMTYsMzcwNDE3MTEwLDE2MzA3
+OTIxOTZdfQ==
 -->
