@@ -573,8 +573,6 @@ A type declared `open` can be overloaded in other modules. Generally, when a typ
 
 Functions using `open` types should be declared `open`. That is, an `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type. It is allowed for a function to treat an open type parametrically (that is, to move it between variables).
 
-> TODO: Matching of type is checked for completeness within a module. Matching of open types is not checked for completeness.
-
 ## Linking
 
 > This section overrides other sections that discuss linking.
@@ -1101,11 +1099,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMz
-M4MDE2NTEzLDQzNDUyNzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3
-OCwxNDU2NjQ3MjMzLC04MzY0MDIxNDMsMjEwNjA2MzgxMywtMT
-gzNjkwNzY3MCwtMTU5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5
-ODcxODMsLTEwMDIyNzM2MDMsLTcxMjE4MDI1NSwxMTM5MTUzND
-M2LDg3MDUyNjQ5MiwxNTc0NTIwMDY1LDE1MTQzNjI5NjQsMTM0
-MjQ4MDc3MF19
+eyJoaXN0b3J5IjpbNTA0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NT
+MwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5
+LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMD
+YwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQz
+NjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNT
+UsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0
+MzYyOTY0XX0=
 -->
