@@ -582,11 +582,11 @@ A `trait` definition defines a trait or a trait instance. A trait definition may
 
 The parameters of a trait definition are types, not values.
 
-If the parameters of the trait are unknowns, the definition is a trait definition.
+If the parameters of the trait are unknowns (type variables), the definition is a trait definition.
 
     trait Monoid (m) {
         fun mempty -> m
-        fun mappend (m) (m) -> m
+        fun mappend (_: m) (_: m) -> m
     }
 
 The members of a trait may be abstract.
@@ -1103,7 +1103,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTcyNzQzNDQ0NCw1MDQzODYzMTQsMTg1Mz
+eyJoaXN0b3J5IjpbLTQ2OTU1OTUwOCw1MDQzODYzMTQsMTg1Mz
 QyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUyNzQ3
 NiwyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC04Mz
 Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
