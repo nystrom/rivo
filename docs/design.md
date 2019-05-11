@@ -578,7 +578,9 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 
 ## Trait definitions
 
-A `trait` definition defines a trait or a trait instance. A trait definition includes a record, just like a `data` definition.
+A `trait` definition defines a trait or a trait instance. A trait definition may include an optional record, just like a `data` definition.
+
+The parameters of a trait definition are types, not values.
 
 If the parameters of the trait are unknowns, the definition is a trait definition.
 
@@ -1101,7 +1103,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTM2MzM0Mjc4NCw1MDQzODYzMTQsMTg1Mz
+eyJoaXN0b3J5IjpbLTcyNzQzNDQ0NCw1MDQzODYzMTQsMTg1Mz
 QyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUyNzQ3
 NiwyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC04Mz
 Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
