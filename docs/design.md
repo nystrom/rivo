@@ -573,6 +573,45 @@ A type declared `open` can be overloaded in other modules. Generally, when a typ
 
 Functions using `open` types should be declared `open`. That is, an `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type. It is allowed for a function to treat an open type parametrically (that is, to move it between variables).
 
+
+
+
+## Trait definitions
+
+A `trait` definition defines a trait or a trait instance. A trait definition includes a record, just like a `data` definition.
+
+If the parameters of the trait are unknowns, the definition is a trait definition.
+
+    trait Monoid (m) {
+        fun mempty -> m
+        fun mappend (m) (m) -> m
+    }
+
+The members of a trait may be abstract.
+
+If the parameters of the trait are not unknowns, they must be types. This defines a trait instance. Members must be non-abstract.
+
+    trait Monoid (List a) {
+        fun mempty = []
+        fun mappend (xs) (ys) = xs ++ ys
+    }
+    
+Trait instances may be guarded.
+
+	trait Eq (List a) where (Eq a) {
+	    fun (Nil) == (Nil) = True
+	    fun (x::xs) == (y::ys) = x == y && xs == ys
+	}
+
+Multi-parameter traits are allowed. One parameter is declared to be the _independent_ parameter and the others dependent. The first parameter is independent.
+
+    trait Seq (s) (a) {
+        fun nil -> s
+        fun (x: a) :: (xs: s) -> s
+    }
+    
+> TODO: allow arbitrary functional dependencies
+    
 ## Linking
 
 > This section overrides other sections that discuss linking.
@@ -724,43 +763,6 @@ If a type is omitted, it is inferred. If the inferred type results in a type err
 When unifying `C` is preferred to `?`, which is preferred to `a`.
 
 
-
-
-## Trait definitions
-
-A `trait` definition defines a trait or a trait instance.
-If the parameters of the trait are unknowns, the definition is a trait definition.
-
-    trait Monoid (m) {
-        fun mempty -> m
-        fun mappend (m) (m) -> m
-    }
-
-The members of a trait may be abstract.
-
-If the parameters of the trait are not unknowns, they must be types. This defines a trait instance. Members must be non-abstract.
-
-    trait Monoid (List a) {
-        fun mempty = []
-        fun mappend (xs) (ys) = xs ++ ys
-    }
-    
-Trait instances may be guarded.
-
-	trait Eq (List a) where (Eq a) {
-	    fun (Nil) == (Nil) = True
-	    fun (x::xs) == (y::ys) = x == y && xs == ys
-	}
-
-Multi-parameter traits are allowed. One parameter is declared to be the _independent_ parameter and the others dependent. The first parameter is independent.
-
-    trait Seq (s) (a) {
-        fun nil -> s
-        fun (x: a) :: (xs: s) -> s
-    }
-    
-> TODO: allow arbitrary functional dependencies
-    
 ## Function definitions
 
 Functions are declared with the `fun` keyword, followed by zero or more _parameter attributes_ in parentheses. After the parameters is an optional guard `where e`, where `e` is a formula. 
@@ -1099,11 +1101,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTA0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NT
-MwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5
-LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMD
-YwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQz
-NjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNT
-UsMTEzOTE1MzQzNiw4NzA1MjY0OTIsMTU3NDUyMDA2NSwxNTE0
-MzYyOTY0XX0=
+eyJoaXN0b3J5IjpbLTM2MzM0Mjc4NCw1MDQzODYzMTQsMTg1Mz
+QyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUyNzQ3
+NiwyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC04Mz
+Y0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5OTky
+Mjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEwMDIyNzM2MD
+MsLTcxMjE4MDI1NSwxMTM5MTUzNDM2LDg3MDUyNjQ5MiwxNTc0
+NTIwMDY1XX0=
 -->
