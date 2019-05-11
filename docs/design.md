@@ -573,7 +573,6 @@ A type declared `open` can be overloaded in other modules. Generally, when a typ
 
 Functions using `open` types should be declared `open`. That is, an `open` type cannot be matched as a parameter of a closed function nor matched using `match` in the body of a closed function. This ensures that the function can be extended to match extensions of the open type. It is allowed for a function to treat an open type parametrically (that is, to move it between variables).
 
-
 ## Trait definitions
 
 	TraitDef ::= trait MixfixTypeSignature Block?
@@ -1103,11 +1102,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwND
-M4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1
-MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LDE0NT
-Y2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3
-NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4My
-wtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDExMzkxNTM0MzYsODcw
-NTI2NDkyXX0=
+eyJoaXN0b3J5IjpbMTA1ODk5MzgyMywtOTg5NzkwMDY3LC00Nj
+k1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NTMwODMz
+MTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MD
+k2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4
+MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC
+0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEz
+OTE1MzQzNl19
 -->
