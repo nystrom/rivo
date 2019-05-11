@@ -479,9 +479,13 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 
 ## Function definitions
 
+	FunDef ::= fun MixfixSignature = Exp
+	
 A `fun` definition introduces a function.
 
 ## Data definitions
+
+	DataDef ::= data MixfixSignature Block?
 
 A `data` definition introduces a data type. Members of the type are tagged records.
 
@@ -549,6 +553,8 @@ Each `data` definition induces a record type (constructor) with the same name, f
 
 ## Type definitions
 
+	TypeDef ::= type MixfixTypeSignature = Type
+	
 A `type` definition specifies an alias for a type.
 
 	type Boolean = False | True
@@ -1102,11 +1108,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTA1ODk5MzgyMywtOTg5NzkwMDY3LC00Nj
-k1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NTMwODMz
-MTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MD
-k2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4
-MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OTAsNTUzMTQzNjU0LC
-0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03MTIxODAyNTUsMTEz
-OTE1MzQzNl19
+eyJoaXN0b3J5IjpbLTE5NjI5MTMxMjUsLTk4OTc5MDA2NywtND
+Y5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgz
+MzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNT
+A5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYz
+ODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NC
+wtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDEx
+MzkxNTM0MzZdfQ==
 -->
