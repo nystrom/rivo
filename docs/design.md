@@ -514,7 +514,7 @@ A `fun` definition introduces a function.
 
 	StructDef ::= struct ForwardSignature Guard? Block?
 
-A `struct` definition introduces a data type constructor. Members of the type are tagged records.
+A `struct` definition introduces a data type (constructor). Members of the type are tagged records.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns may be used to define fields. The name of the definition (and the enclosing definitions) is the tag of the record.
 The definition, like a `fun` definition, may be mixfix. The definition defines a constructor that creates a tagged record.
@@ -578,19 +578,19 @@ Each `struct` definition induces a record type (constructor) with the same name,
 	struct False // type False	
 	struct True  // type True
 
-## Type definitions
+## Enum definitions
 
-    type List (a) {
+    enum List (a) {
 	    Nil
 	    Cons (hd: a) (tl: List a)
 	}
 
-    type Boolean {
+    enum Boolean {
 		False
 		True
 	}
 
-Members of an `type` definition are `struct` definitions, (without the keyword `struct`). 
+Members of an `enum` definition are `struct` definitions, (without the keyword `struct`). 
 
 `enum` definitions may be overloaded and may be open.
 
@@ -1169,11 +1169,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1NDk0NTkzMDksLTY1OTMxMzg5MywyND
-U4MzUxODMsMTk0MjYzMDUzMSwtMjEzNjU5NjY1NywxNTk1Mzkz
-Mzk5LC0yNDQyOTY0NzgsLTE5NjI5MTMxMjUsLTk4OTc5MDA2Ny
-wtNDY5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUz
-MDgzMzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOS
-wtNTA5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2
-MDYzODEzXX0=
+eyJoaXN0b3J5IjpbLTg1NjgwMzgzNiwtNjU5MzEzODkzLDI0NT
+gzNTE4MywxOTQyNjMwNTMxLC0yMTM2NTk2NjU3LDE1OTUzOTMz
+OTksLTI0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOTg5NzkwMDY3LC
+00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NTMw
+ODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC
+01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYw
+NjM4MTNdfQ==
 -->
