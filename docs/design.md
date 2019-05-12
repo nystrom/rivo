@@ -594,6 +594,15 @@ Members of an `enum` definition are `struct` definitions, (without the keyword `
 
 `enum` definitions may be overloaded and may be open.
 
+## Records
+
+A record has zero or more fields, declared with formulas.
+A record 
+
+A tuple is just a record.
+
+{ fst 
+
 ## Type definitions
 
 	TypeDef ::= type MixfixTypeSignature TypeGuard? = Type
@@ -1169,11 +1178,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTg1NjgwMzgzNiwtNjU5MzEzODkzLDI0NT
-gzNTE4MywxOTQyNjMwNTMxLC0yMTM2NTk2NjU3LDE1OTUzOTMz
-OTksLTI0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOTg5NzkwMDY3LC
-00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NTMw
-ODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC
-01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYw
-NjM4MTNdfQ==
+eyJoaXN0b3J5IjpbLTIxMTQ4NTM2NywtODU2ODAzODM2LC02NT
+kzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMzY1OTY2
+NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEzMTI1LC
+05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMTQsMTg1MzQy
+NDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUyNzQ3Ni
+wyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC04MzY0
+MDIxNDNdfQ==
 -->
