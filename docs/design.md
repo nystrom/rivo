@@ -519,7 +519,7 @@ A `struct` definition introduces a data type. Members of the type are tagged rec
 The definition may take parameter patterns. Unknowns in the parameter patterns may be used to define fields. The name of the definition (and the enclosing definitions) is the tag of the record.
 The definition, like a `fun` definition, may be mixfix. The definition defines a constructor that creates a tagged record.
 
-A `struct` definition may optionally contain a block with nested definitions. Field definitions are either `let` definitions, `var` definitions, `fun` definitions, `struct` definitions, or the definition `_`.
+A `struct` definition may optionally contain a block with nested definitions. Field definitions are either `let` definitions, `var` definitions, or the definition `_`.
 
 The field definition `_` captures the unknowns in the `struct` definition parameters as `let` definitions. If the block is missing, the fields are captured from the definition parameters; that is, the default block is `{ _ }`.
 
@@ -556,11 +556,11 @@ If a record is created in a backward context, a stream of records is created for
 
 A `fun` definition defines immutable fields of function type.
 
-A `data` definition defines a nested data type as well as a constructor for that type. 
+A `struct` definition defines a nested data type as well as a constructor for that type. 
 
-A `data` definition induces a function definition for the constructor and for functions that matche instances of the type. For instance,
+A `struct` definition induces a function definition for the constructor and for functions that matche instances of the type. For instance,
 
-	data Cons (hd) (tl)
+	struct Cons (hd) (tl)
 
 induces the following definitions:
   
@@ -571,7 +571,7 @@ induces the following definitions:
 
 Each `data` definition induces a record type (constructor) with the same name, for example:
 
-	data Nil   // type Nil { }
+	struct Nil   // type Nil { }
 	data Cons (hd) (tl) 
 	           // type forall a b. Cons { hd: a, tl: b }
 
@@ -1153,11 +1153,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTc3OTY0NTI3OCwyNDU4MzUxODMsMTk0Mj
-YzMDUzMSwtMjEzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0
-NzgsLTE5NjI5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LD
-UwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgw
-MTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LD
-E0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2
-OTA3NjcwXX0=
+eyJoaXN0b3J5IjpbNjMzNDI0OTE4LDI0NTgzNTE4MywxOTQyNj
+MwNTMxLC0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3
+OCwtMTk2MjkxMzEyNSwtOTg5NzkwMDY3LC00Njk1NTk1MDgsNT
+A0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NTMwODMzMTIsLTMzODAx
+NjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAzNzgsMT
+Q1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5
+MDc2NzBdfQ==
 -->
