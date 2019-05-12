@@ -657,8 +657,9 @@ Multi-parameter traits are allowed. One parameter is declared to be the _indepen
 ## Modules
 
 A module is a set of definitions.
-Modules can 
-    
+Modules can have mutable and immutable state.
+Exported functions can only accept and return values.
+ 
 ## Linking
 
 > This section overrides other sections that discuss linking.
@@ -1148,7 +1149,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA2Njk3ODM4NiwtMjEzNjU5NjY1NywxNT
+eyJoaXN0b3J5IjpbMTk0MjYzMDUzMSwtMjEzNjU5NjY1NywxNT
 k1MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5MTMxMjUsLTk4OTc5
 MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0MDE2LC
 0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LDIxMTEw
