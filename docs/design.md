@@ -482,10 +482,15 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 
 ## Function definitions
 
-	FunDef ::= fun MixfixSignature = Exp
-	MixfixSignature ::= Id MixfixParams
-	MixfixSignature ::= Op MixfixParams
-	MixfixSignature ::= ( Pat ) 
+	FunDef ::= fun MixfixSignature Arrow? = Exp
+	MixfixSignature ::= Part MixfixParams
+	MixfixSignature ::= ( AnnotatedTerm ) MixfixSignature
+	MixfixSignature ::= (( AnnotatedTerm )) MixfixSignature
+	MixfixSignature ::= { AnnotatedTerm } MixfixSignature
+	MixfixSignature ::= {{ AnnotatedTerm }} MixfixSignature
+	AnnotatedTerm ::= 
+	Arrow ::= -> Type
+
 
 A `fun` definition introduces a function.
 
@@ -1114,7 +1119,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNzY5MzcwMDMsLTE5NjI5MTMxMjUsLT
+eyJoaXN0b3J5IjpbLTEyNDI0NDk0ODgsLTE5NjI5MTMxMjUsLT
 k4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0
 MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LD
 IxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQw
