@@ -597,11 +597,9 @@ Members of an `enum` definition are `struct` definitions, (without the keyword `
 ## Records
 
 A record has zero or more fields, declared with formulas.
-A record 
 
 A tuple is just a record.
 
-{ fst 
 
 ## Type definitions
 
@@ -1178,11 +1176,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIxMTQ4NTM2NywtODU2ODAzODM2LC02NT
-kzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMzY1OTY2
-NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEzMTI1LC
-05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMTQsMTg1MzQy
-NDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUyNzQ3Ni
-wyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC04MzY0
-MDIxNDNdfQ==
+eyJoaXN0b3J5IjpbMTQzMjYxNDgzNSwtMjExNDg1MzY3LC04NT
+Y4MDM4MzYsLTY1OTMxMzg5MywyNDU4MzUxODMsMTk0MjYzMDUz
+MSwtMjEzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0NzgsLT
+E5NjI5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4
+NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MT
+MsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2
+NDcyMzNdfQ==
 -->
