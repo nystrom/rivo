@@ -654,16 +654,6 @@ Multi-parameter traits are allowed. One parameter is declared to be the _indepen
     
 > TODO: allow arbitrary functional dependencies
 
-## Modules
-
-A module is a set of definitions.
-Modules can have mutable and immutable state.
-Exported functions can only accept and return values.
-There is a primitive ownership model.
-An exported value borrows the module immutably.
-This prevents mutation of the module.
-
- 
 ## Linking
 
 > This section overrides other sections that discuss linking.
@@ -1153,11 +1143,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjExNzE2MDEyNSwxOTQyNjMwNTMxLC0yMT
-M2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2Mjkx
-MzEyNSwtOTg5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2MzE0LD
-E4NTM0MjQwMTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0MzQ1
-Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMy
-wtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLTE1
-OTk5MjI3OTBdfQ==
+eyJoaXN0b3J5IjpbLTEwODk5Njc5MjEsMTk0MjYzMDUzMSwtMj
+EzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5
+MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNC
+wxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsNDM0
+NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMz
+MsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0x
+NTk5OTIyNzkwXX0=
 -->
