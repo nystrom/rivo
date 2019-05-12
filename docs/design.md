@@ -378,7 +378,7 @@ A `let` expression can also declare a function or trait, or a group of mutually 
 A lexical block is enclosed in curly brackets `{}`.
 
 A block expression may contain both expressions and definitions.
-The block with nested definitions is equivalent to a telescoping `let`  expression for consecutive definitions declared in the same `let`.
+The block with nested definitions is equivalent to a telescoping `let` (`var`) expression for consecutive definitions declared in the same `let` (`var`).
 
 Variables, functions, data types, and traits defined within the block are in scope throughout the block.
 These definitions can capture variables from the enclosing scopes.
@@ -1136,11 +1136,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjk5ODM4ODg1LC0yNDQyOTY0NzgsLTE5Nj
-I5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMx
-NCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsND
-M0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcy
-MzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC
-0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4MywtMTAw
-MjI3MzYwM119
+eyJoaXN0b3J5IjpbMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOT
+YyOTEzMTI1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYz
+MTQsMTg1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLD
+QzNDUyNzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3
+MjMzLC04MzY0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MC
+wtMTU5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEw
+MDIyNzM2MDNdfQ==
 -->
