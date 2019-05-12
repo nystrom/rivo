@@ -582,10 +582,17 @@ Each `struct` definition induces a record type (constructor) with the same name,
 
     enum List (a) {
 	    Nil
-	    Cons (a) (List a)
+	    Cons (hd: a) (tl: List a)
 	}
 
-Members of an `enum` definition are `struct` definitions, without the keyword `struct`). 
+    enum Boolean {
+		False
+		True
+				    }
+
+Members of an `enum` definition are `struct` definitions, (without the keyword `struct`). 
+
+`enum` definitions may be open.
 
 ## Type definitions
 
@@ -1162,7 +1169,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTgyMTQxNTAxMCwyNDU4MzUxODMsMTk0Mj
+eyJoaXN0b3J5IjpbMTA1MTAxOTg3MywyNDU4MzUxODMsMTk0Mj
 YzMDUzMSwtMjEzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0
 NzgsLTE5NjI5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LD
 UwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgw
