@@ -508,7 +508,6 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 	Guard ::= where Formula
 	Return ::= -> Type
 
-
 A `fun` definition introduces a function.
 
 ## Data definitions
@@ -1136,7 +1135,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTA0OTMwNTg3MiwtMTk2MjkxMzEyNSwtOT
+eyJoaXN0b3J5IjpbLTI0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOT
 g5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQw
 MTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMj
 ExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAy
