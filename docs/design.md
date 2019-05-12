@@ -582,7 +582,15 @@ Each `data` definition induces a record type (constructor) with the same name, f
 
 	TypeDef ::= type MixfixTypeSignature TypeGuard? = Type
 	TypeGuard ::= where Type
-	
+		MixfixTypeSignature ::= Part TypeParams
+	                   | TypeParam MixfixTypeSignature
+	ForwardParams ::= Part TypeParams
+	                  | TypeParam TypeParams
+	                  | empty
+	ForwardParam ::= ( Pat ) 
+	                  | (( Pat )) 
+	                  | { Pat } 
+	                  | {{ Pat }} 
 A `type` definition specifies an alias for a type.
 
 	type Boolean = False | True
@@ -1136,11 +1144,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOT
-YyOTEzMTI1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYz
-MTQsMTg1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLD
-QzNDUyNzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3
-MjMzLC04MzY0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MC
-wtMTU5OTkyMjc5MCw1NTMxNDM2NTQsLTEzMzY5ODcxODMsLTEw
-MDIyNzM2MDNdfQ==
+eyJoaXN0b3J5IjpbMTI4MzIyNTQ2NywxNTk1MzkzMzk5LC0yND
+QyOTY0NzgsLTE5NjI5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5
+NTA4LDUwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC
+0zMzgwMTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUw
+Mzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC
+0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMz
+Njk4NzE4M119
 -->
