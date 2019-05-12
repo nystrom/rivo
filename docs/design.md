@@ -653,6 +653,11 @@ Multi-parameter traits are allowed. One parameter is declared to be the _indepen
     }
     
 > TODO: allow arbitrary functional dependencies
+
+## Modules
+
+A module is a set of definitions.
+Modules can 
     
 ## Linking
 
@@ -1143,11 +1148,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIxMzY1OTY2NTcsMTU5NTM5MzM5OSwtMj
-Q0Mjk2NDc4LC0xOTYyOTEzMTI1LC05ODk3OTAwNjcsLTQ2OTU1
-OTUwOCw1MDQzODYzMTQsMTg1MzQyNDAxNiwtMTc1MzA4MzMxMi
-wtMzM4MDE2NTEzLDQzNDUyNzQ3NiwyMTExMDgyMDksLTUwOTY1
-MDM3OCwxNDU2NjQ3MjMzLC04MzY0MDIxNDMsMjEwNjA2MzgxMy
-wtMTgzNjkwNzY3MCwtMTU5OTkyMjc5MCw1NTMxNDM2NTQsLTEz
-MzY5ODcxODNdfQ==
+eyJoaXN0b3J5IjpbMjA2Njk3ODM4NiwtMjEzNjU5NjY1NywxNT
+k1MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5MTMxMjUsLTk4OTc5
+MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0MDE2LC
+0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LDIxMTEw
+ODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0My
+wyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1
+MzE0MzY1NF19
 -->
