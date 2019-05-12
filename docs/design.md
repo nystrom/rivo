@@ -580,7 +580,8 @@ Each `data` definition induces a record type (constructor) with the same name, f
 
 ## Type definitions
 
-	TypeDef ::= type MixfixTypeSignature = Type
+	TypeDef ::= type MixfixTypeSignature TypeGuard? = Type
+	TypeGuard ::= where Type
 	
 A `type` definition specifies an alias for a type.
 
@@ -608,7 +609,7 @@ Functions using `open` types should be declared `open`. That is, an `open` type 
 
 ## Trait definitions
 
-	TraitDef ::= trait MixfixTypeSignature Block?
+	TraitDef ::= trait MixfixTypeSignature TypeGuard? Block?
 
 A `trait` definition defines a trait or a trait instance. A trait definition may include an optional record, just like a `data` definition.
 
@@ -1135,11 +1136,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOT
-g5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQw
-MTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMj
-ExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAy
-MTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OT
-AsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03
-MTIxODAyNTVdfQ==
+eyJoaXN0b3J5IjpbNjk5ODM4ODg1LC0yNDQyOTY0NzgsLTE5Nj
+I5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMx
+NCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsND
+M0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcy
+MzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC
+0xNTk5OTIyNzkwLDU1MzE0MzY1NCwtMTMzNjk4NzE4MywtMTAw
+MjI3MzYwM119
 -->
