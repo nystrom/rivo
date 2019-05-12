@@ -482,7 +482,9 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 
 ## Function definitions
 
-	FunDef ::= fun MixfixSignature Arrow? = Exp
+	FunDef ::= fun MixfixSignature Guard? Return? = Exp Guard?
+	            fun MixfixSignature Guard? Return? = Exp Guard?
+
 	MixfixSignature ::= Part MixfixParams
 	                  | ( AnnotatedTerm ) MixfixSignature
 	                  | (( AnnotatedTerm )) MixfixSignature
@@ -491,15 +493,16 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 	AnnotatedTerm ::= ? Pat | ! Exp | Term
 	Mode ::= ? | !
 	Term ::= Pat | Exp
-	Part ::= 
-	Arrow ::= -> Type
+	Part ::= Id | Op
+	Guard ::= where Formula
+	Return ::= -> Type
 
 
 A `fun` definition introduces a function.
 
 ## Data definitions
 
-	DataDef ::= data MixfixSignature Block?
+	DataDef ::= data ForwardSignature Guard? Block?
 
 A `data` definition introduces a data type. Members of the type are tagged records.
 
@@ -1122,7 +1125,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTQyNTc4OTk0MSwtMTk2MjkxMzEyNSwtOT
+eyJoaXN0b3J5IjpbLTM1NjQyMDU0NSwtMTk2MjkxMzEyNSwtOT
 g5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQw
 MTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMj
 ExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAy
