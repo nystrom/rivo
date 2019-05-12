@@ -484,11 +484,14 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 
 	FunDef ::= fun MixfixSignature Arrow? = Exp
 	MixfixSignature ::= Part MixfixParams
-	MixfixSignature ::= ( AnnotatedTerm ) MixfixSignature
-	MixfixSignature ::= (( AnnotatedTerm )) MixfixSignature
-	MixfixSignature ::= { AnnotatedTerm } MixfixSignature
-	MixfixSignature ::= {{ AnnotatedTerm }} MixfixSignature
-	AnnotatedTerm ::= 
+	                  | ( AnnotatedTerm ) MixfixSignature
+	                  | (( AnnotatedTerm )) MixfixSignature
+	                  | { AnnotatedTerm } MixfixSignature
+	                  | {{ AnnotatedTerm }} MixfixSignature
+	AnnotatedTerm ::= ? Pat | ! Exp | Term
+	Mode ::= ? | !
+	Term ::= Pat | Exp
+	Part ::= 
 	Arrow ::= -> Type
 
 
@@ -1119,11 +1122,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNDI0NDk0ODgsLTE5NjI5MTMxMjUsLT
-k4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0
-MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LD
-IxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQw
-MjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNz
-kwLDU1MzE0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywt
-NzEyMTgwMjU1XX0=
+eyJoaXN0b3J5IjpbLTQyNTc4OTk0MSwtMTk2MjkxMzEyNSwtOT
+g5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQw
+MTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMj
+ExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAy
+MTQzLDIxMDYwNjM4MTMsLTE4MzY5MDc2NzAsLTE1OTk5MjI3OT
+AsNTUzMTQzNjU0LC0xMzM2OTg3MTgzLC0xMDAyMjczNjAzLC03
+MTIxODAyNTVdfQ==
 -->
