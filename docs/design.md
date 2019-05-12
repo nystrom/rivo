@@ -475,12 +475,18 @@ Backward contexts occur in the formula part of a `for`, `let`, or `var` expressi
 
 ## Formula definitions
 
+	LetDef ::= let Formula
+	VarDef ::= var Formula
+
 A `let` or `var` definition introduces variables in the body of a `data` definition.
 
 ## Function definitions
 
 	FunDef ::= fun MixfixSignature = Exp
-	
+	MixfixSignature ::= Id MixfixParams
+	MixfixSignature ::= Op MixfixParams
+	MixfixSignature ::= ( Pat ) 
+
 A `fun` definition introduces a function.
 
 ## Data definitions
@@ -1108,11 +1114,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5NjI5MTMxMjUsLTk4OTc5MDA2NywtND
-Y5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgz
-MzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNT
-A5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYz
-ODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNzkwLDU1MzE0MzY1NC
-wtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywtNzEyMTgwMjU1LDEx
-MzkxNTM0MzZdfQ==
+eyJoaXN0b3J5IjpbLTEwNzY5MzcwMDMsLTE5NjI5MTMxMjUsLT
+k4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0
+MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsNDM0NTI3NDc2LD
+IxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMzMsLTgzNjQw
+MjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0xNTk5OTIyNz
+kwLDU1MzE0MzY1NCwtMTMzNjk4NzE4MywtMTAwMjI3MzYwMywt
+NzEyMTgwMjU1XX0=
 -->
