@@ -1114,6 +1114,10 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 	import x
 	import parent::x
 
+## New imports
+
+    import  "http://github.com/nystrom/ivo/Prelude.ivo"
+    import 
 ## Modules and linking
 
 A module consists of a set of definitions and an initializer expression. A module can import names from other modules.
@@ -1143,11 +1147,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwODk5Njc5MjEsMTk0MjYzMDUzMSwtMj
-EzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5
-MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNC
-wxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgwMTY1MTMsNDM0
-NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LDE0NTY2NDcyMz
-MsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2OTA3NjcwLC0x
-NTk5OTIyNzkwXX0=
+eyJoaXN0b3J5IjpbOTEwODYwNjM5LDE5NDI2MzA1MzEsLTIxMz
+Y1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEz
+MTI1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMTQsMT
+g1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUy
+NzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC
+04MzY0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5
+OTkyMjc5MF19
 -->
