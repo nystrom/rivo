@@ -598,6 +598,8 @@ Members of an `enum` definition are `struct` definitions, (without the keyword `
 
 A record has zero or more fields, declared with formulas.
 
+
+
 A tuple is just a record.
 
 
@@ -1176,7 +1178,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQzMjYxNDgzNSwtMjExNDg1MzY3LC04NT
+eyJoaXN0b3J5IjpbLTk2NTY0OTgzMywtMjExNDg1MzY3LC04NT
 Y4MDM4MzYsLTY1OTMxMzg5MywyNDU4MzUxODMsMTk0MjYzMDUz
 MSwtMjEzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0NzgsLT
 E5NjI5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4
