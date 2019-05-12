@@ -482,14 +482,17 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 
 ## Function definitions
 
-	FunDef ::= fun MixfixSignature Guard? Return? = Exp Guard?
-	            fun MixfixSignature Guard? Return? = Exp Guard?
+	FunDef ::= fun MixfixSignature Guard? Return? = ( AnnotatedTerm ) Guard?
+	         | fun ForwardSignature Guard? Return? = Exp Guard?
 
-	MixfixSignature ::= Part MixfixParams
+	ForwardSignature ::= Part ForwardParams
 	                  | ( AnnotatedTerm ) MixfixSignature
 	                  | (( AnnotatedTerm )) MixfixSignature
 	                  | { AnnotatedTerm } MixfixSignature
 	                  | {{ AnnotatedTerm }} MixfixSignature
+	MixfixSignature ::= Part MixfixParam*
+	                  | MixfixParam MixfixSignature
+	MixfixParams ::= MixfixParam*
 	AnnotatedTerm ::= ? Pat | ! Exp | Term
 	Mode ::= ? | !
 	Term ::= Pat | Exp
@@ -1125,7 +1128,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTM1NjQyMDU0NSwtMTk2MjkxMzEyNSwtOT
+eyJoaXN0b3J5IjpbLTEyMjgyNzQ4MSwtMTk2MjkxMzEyNSwtOT
 g5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQw
 MTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMj
 ExMTA4MjA5LC01MDk2NTAzNzgsMTQ1NjY0NzIzMywtODM2NDAy
