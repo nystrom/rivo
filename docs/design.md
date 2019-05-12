@@ -510,18 +510,18 @@ A `let` or `var` definition introduces variables in the body of a `data` definit
 
 A `fun` definition introduces a function.
 
-## Data definitions
+## Struct definitions
 
-	DataDef ::= data ForwardSignature Guard? Block?
+	StructDef ::= struct ForwardSignature Guard? Block?
 
-A `data` definition introduces a data type. Members of the type are tagged records.
+A `struct` definition introduces a data type. Members of the type are tagged records.
 
 The definition may take parameter patterns. Unknowns in the parameter patterns may be used to define fields. The name of the definition (and the enclosing definitions) is the tag of the record.
 The definition, like a `fun` definition, may be mixfix. The definition defines a constructor that creates a tagged record.
 
-A `data` definition may optionally contain a block with nested definitions. Field definitions are either `let` definitions, `var` definitions, `fun` definitions, `data` definitions, or the definition `_`.
+A `struct` definition may optionally contain a block with nested definitions. Field definitions are either `let` definitions, `var` definitions, `fun` definitions, `struct` definitions, or the definition `_`.
 
-The field definition `_` captures the unknowns in the `data` definition parameters as `let` definitions. If the block is missing, the fields are captured from the definition parameters; that is, the default block is `{ _ }`.
+The field definition `_` captures the unknowns in the `struct` definition parameters as `let` definitions. If the block is missing, the fields are captured from the definition parameters; that is, the default block is `{ _ }`.
 
 Thus, the following are equivalent:
 
@@ -1153,11 +1153,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMz
-Y1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEz
-MTI1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMTQsMT
-g1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUy
-NzQ3NiwyMTExMDgyMDksLTUwOTY1MDM3OCwxNDU2NjQ3MjMzLC
-04MzY0MDIxNDMsMjEwNjA2MzgxMywtMTgzNjkwNzY3MCwtMTU5
-OTkyMjc5MF19
+eyJoaXN0b3J5IjpbLTc3OTY0NTI3OCwyNDU4MzUxODMsMTk0Mj
+YzMDUzMSwtMjEzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0
+NzgsLTE5NjI5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LD
+UwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgw
+MTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LD
+E0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2
+OTA3NjcwXX0=
 -->
