@@ -569,14 +569,23 @@ induces the following definitions:
 	fun Cons (! hd) (? tl) = (? Cons { hd, tl })
 	fun Cons (? hd) (! tl) = (? Cons { hd, tl })
 
-Each `data` definition induces a record type (constructor) with the same name, for example:
+Each `struct` definition induces a record type (constructor) with the same name, for example:
 
 	struct Nil   // type Nil { }
-	data Cons (hd) (tl) 
+	struct Cons (hd) (tl) 
 	           // type forall a b. Cons { hd: a, tl: b }
 
-	data False // type False	
-	data True  // type True
+	struct False // type False	
+	struct True  // type True
+
+## Enum definitions
+
+    enum List (a) {
+	    Nil
+	    Cons (a) (List a)
+	}
+
+Members of an `enum` definition are `struct` definitions, without the keyword `struct`). 
 
 ## Type definitions
 
@@ -1153,11 +1162,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjMzNDI0OTE4LDI0NTgzNTE4MywxOTQyNj
-MwNTMxLC0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3
-OCwtMTk2MjkxMzEyNSwtOTg5NzkwMDY3LC00Njk1NTk1MDgsNT
-A0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NTMwODMzMTIsLTMzODAx
-NjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MDk2NTAzNzgsMT
-Q1NjY0NzIzMywtODM2NDAyMTQzLDIxMDYwNjM4MTMsLTE4MzY5
-MDc2NzBdfQ==
+eyJoaXN0b3J5IjpbMTgyMTQxNTAxMCwyNDU4MzUxODMsMTk0Mj
+YzMDUzMSwtMjEzNjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0
+NzgsLTE5NjI5MTMxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LD
+UwNDM4NjMxNCwxODUzNDI0MDE2LC0xNzUzMDgzMzEyLC0zMzgw
+MTY1MTMsNDM0NTI3NDc2LDIxMTEwODIwOSwtNTA5NjUwMzc4LD
+E0NTY2NDcyMzMsLTgzNjQwMjE0MywyMTA2MDYzODEzLC0xODM2
+OTA3NjcwXX0=
 -->
