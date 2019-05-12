@@ -1116,8 +1116,14 @@ Without a module name, an `import` imports from the enclosing scope. That is, th
 
 ## New imports
 
-    import  "http://github.com/nystrom/ivo/Prelude.ivo"
-    import 
+	// import all members from Prelude
+    import "http://github.com/nystrom/ivo/Prelude.ivo"
+    import _ from "Prelude"
+    import x from "Prelude"
+    import (x -> y) from "Prelude"
+
+imports are macros. 
+
 ## Modules and linking
 
 A module consists of a set of definitions and an initializer expression. A module can import names from other modules.
@@ -1147,7 +1153,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTEwODYwNjM5LDE5NDI2MzA1MzEsLTIxMz
+eyJoaXN0b3J5IjpbMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMz
 Y1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEz
 MTI1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMTQsMT
 g1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUy
