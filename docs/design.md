@@ -602,10 +602,11 @@ Implicit conversions give you type classes.
 	data Num (Int)
 	data Num (Float)
 		
+    fun - (x: Num a) = fromInt (0) - x
     fun (x: Num a) - (y: Num a) = x + (- y)
     fun (x: Num Int) + (y: Num Int) = iadd x.0 y.0
     fun (x: Num Int) - (y: Num Int) = isub x.0 y.0
-    fun - (x: Num a) = fromInt (0) - x
+    fun fromInt (x: Num Float) = f2i x.0
 
 ## Records
 
@@ -1189,11 +1190,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI5NzkwMDI2NywtMTgxODAyMjk5OCwxND
-MyNjE0ODM1LC05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAz
-ODM2LC02NTkzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLT
-IxMzY1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYy
-OTEzMTI1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMT
-QsMTg1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQz
-NDUyNzQ3Nl19
+eyJoaXN0b3J5IjpbLTIwOTE3MjU0MzgsLTE4MTgwMjI5OTgsMT
+QzMjYxNDgzNSwtOTY1NjQ5ODMzLC0yMTE0ODUzNjcsLTg1Njgw
+MzgzNiwtNjU5MzEzODkzLDI0NTgzNTE4MywxOTQyNjMwNTMxLC
+0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2
+MjkxMzEyNSwtOTg5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2Mz
+E0LDE4NTM0MjQwMTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0
+MzQ1Mjc0NzZdfQ==
 -->
