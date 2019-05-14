@@ -598,13 +598,15 @@ Members of an `enum` definition are `struct` definitions, (without the keyword `
 
 Implicit conversions give you type classes.
 
-	data Num a
-	data Num Int
-	data Num Float
-	
-    fun (x: Num a) - (y: Num a) = x + (negate y)
+	data Num (a)
+	data Num (Int)
+	data Num (Float)
+		
+    fun (x: Num a) - (y: Num a) = x + (- y)
     fun (x: Num Int) + (y: Num Int) = iadd x.0 y.0
-    fun negate (x: Num Int) = ineg x.0
+    fun - (x: Num Int) = ineg x.0
+
+
 
 ## Records
 
@@ -1188,11 +1190,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4MTgwMjI5OTgsMTQzMjYxNDgzNSwtOT
-Y1NjQ5ODMzLC0yMTE0ODUzNjcsLTg1NjgwMzgzNiwtNjU5MzEz
-ODkzLDI0NTgzNTE4MywxOTQyNjMwNTMxLC0yMTM2NTk2NjU3LD
-E1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOTg5
-NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQwMT
-YsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjEx
-MTA4MjA5XX0=
+eyJoaXN0b3J5IjpbLTk4MDc3NzczNSwtMTgxODAyMjk5OCwxND
+MyNjE0ODM1LC05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAz
+ODM2LC02NTkzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLT
+IxMzY1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYy
+OTEzMTI1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMT
+QsMTg1MzQyNDAxNiwtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQz
+NDUyNzQ3Nl19
 -->
