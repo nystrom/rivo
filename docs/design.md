@@ -594,6 +594,17 @@ Members of an `enum` definition are `struct` definitions, (without the keyword `
 
 `enum` definitions may be overloaded and may be open.
 
+## Trait definitions
+
+Implicit conversions give you type classes.
+
+	trait Num (a)
+	trait Num Int
+	trait Num Float
+	
+    fun (x: Num a) - (y: Num a) = x + (negate y)
+    fun (x: 
+
 ## Records
 
 A record has zero or more fields, declared with formulas.
@@ -1176,11 +1187,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQzMjYxNDgzNSwtOTY1NjQ5ODMzLC0yMT
-E0ODUzNjcsLTg1NjgwMzgzNiwtNjU5MzEzODkzLDI0NTgzNTE4
-MywxOTQyNjMwNTMxLC0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLT
-I0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOTg5NzkwMDY3LC00Njk1
-NTk1MDgsNTA0Mzg2MzE0LDE4NTM0MjQwMTYsLTE3NTMwODMzMT
-IsLTMzODAxNjUxMyw0MzQ1Mjc0NzYsMjExMTA4MjA5LC01MDk2
-NTAzNzhdfQ==
+eyJoaXN0b3J5IjpbLTY1MjQ2NTc0OCwxNDMyNjE0ODM1LC05Nj
+U2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAzODM2LC02NTkzMTM4
+OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMzY1OTY2NTcsMT
+U5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEzMTI1LC05ODk3
+OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMTQsMTg1MzQyNDAxNi
+wtMTc1MzA4MzMxMiwtMzM4MDE2NTEzLDQzNDUyNzQ3NiwyMTEx
+MDgyMDldfQ==
 -->
