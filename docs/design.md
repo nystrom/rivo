@@ -604,9 +604,8 @@ Implicit conversions give you type classes.
 		
     fun (x: Num a) - (y: Num a) = x + (- y)
     fun (x: Num Int) + (y: Num Int) = iadd x.0 y.0
-    fun - (x: Num Int) = ineg x.0
-
-
+    fun (x: Num Int) - (y: Num Int) = isub x.0 y.0
+    fun - (x: Num a) = fromInt (0) - x
 
 ## Records
 
@@ -1190,7 +1189,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk4MDc3NzczNSwtMTgxODAyMjk5OCwxND
+eyJoaXN0b3J5IjpbLTI5NzkwMDI2NywtMTgxODAyMjk5OCwxND
 MyNjE0ODM1LC05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAz
 ODM2LC02NTkzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLT
 IxMzY1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYy
