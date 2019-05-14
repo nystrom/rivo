@@ -596,6 +596,8 @@ Members of an `enum` definition are `struct` definitions, (without the keyword `
 
 ## Trait definitions
 
+> TODO
+
 Implicit conversions give you type classes.
 
 	data Num (a)
@@ -1190,11 +1192,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwOTE3MjU0MzgsLTE4MTgwMjI5OTgsMT
-QzMjYxNDgzNSwtOTY1NjQ5ODMzLC0yMTE0ODUzNjcsLTg1Njgw
-MzgzNiwtNjU5MzEzODkzLDI0NTgzNTE4MywxOTQyNjMwNTMxLC
-0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2
-MjkxMzEyNSwtOTg5NzkwMDY3LC00Njk1NTk1MDgsNTA0Mzg2Mz
-E0LDE4NTM0MjQwMTYsLTE3NTMwODMzMTIsLTMzODAxNjUxMyw0
-MzQ1Mjc0NzZdfQ==
+eyJoaXN0b3J5IjpbLTkzODAxNDA5MCwtMjA5MTcyNTQzOCwtMT
+gxODAyMjk5OCwxNDMyNjE0ODM1LC05NjU2NDk4MzMsLTIxMTQ4
+NTM2NywtODU2ODAzODM2LC02NTkzMTM4OTMsMjQ1ODM1MTgzLD
+E5NDI2MzA1MzEsLTIxMzY1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0
+Mjk2NDc4LC0xOTYyOTEzMTI1LC05ODk3OTAwNjcsLTQ2OTU1OT
+UwOCw1MDQzODYzMTQsMTg1MzQyNDAxNiwtMTc1MzA4MzMxMiwt
+MzM4MDE2NTEzXX0=
 -->
