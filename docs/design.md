@@ -578,11 +578,6 @@ Each `struct` definition induces a record type (constructor) with the same name,
 	struct False // type False	
 	struct True  // type True
 
-Structs are actually just enums. Indeed the following are equivalent:
-
-    struct S
-    enum S { S }
-
 ## Enum definitions
 
     enum List (a) {
@@ -598,6 +593,15 @@ Structs are actually just enums. Indeed the following are equivalent:
 Members of an `enum` definition are `struct` definitions, (without the keyword `struct`). 
 
 `enum` definitions may be overloaded and may be open.
+
+Each struct definition inside an enum defines a subtype of the enum.
+
+	False <: Boolean
+	True <: Boolean
+	
+	Nil <: List a
+	Cons 
+
 
 ## Trait definitions
 
@@ -1197,11 +1201,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI5NDI1MjcwNywtOTM4MDE0MDkwLC0yMD
-kxNzI1NDM4LC0xODE4MDIyOTk4LDE0MzI2MTQ4MzUsLTk2NTY0
-OTgzMywtMjExNDg1MzY3LC04NTY4MDM4MzYsLTY1OTMxMzg5My
-wyNDU4MzUxODMsMTk0MjYzMDUzMSwtMjEzNjU5NjY1NywxNTk1
-MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5MTMxMjUsLTk4OTc5MD
-A2NywtNDY5NTU5NTA4LDUwNDM4NjMxNCwxODUzNDI0MDE2LC0x
-NzUzMDgzMzEyXX0=
+eyJoaXN0b3J5IjpbLTEwMTY0MDcyNzMsLTI5NDI1MjcwNywtOT
+M4MDE0MDkwLC0yMDkxNzI1NDM4LC0xODE4MDIyOTk4LDE0MzI2
+MTQ4MzUsLTk2NTY0OTgzMywtMjExNDg1MzY3LC04NTY4MDM4Mz
+YsLTY1OTMxMzg5MywyNDU4MzUxODMsMTk0MjYzMDUzMSwtMjEz
+NjU5NjY1NywxNTk1MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5MT
+MxMjUsLTk4OTc5MDA2NywtNDY5NTU5NTA4LDUwNDM4NjMxNCwx
+ODUzNDI0MDE2XX0=
 -->
