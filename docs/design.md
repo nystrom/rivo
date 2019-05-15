@@ -605,7 +605,7 @@ Each struct definition inside an enum defines a subtype of the enum.
 The alternatives can be referred to by qualifying the type:
 
 	Boolean.False  :: Boolean
-	(List Int).Nil :: Nil
+	(List Int).Nil :: List Int
 	(List _).Nil   :: List a [a fresh]
 
 ## Trait definitions
@@ -1206,11 +1206,11 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY2MTYzOTEwLC0yOTQyNTI3MDcsLTkzOD
-AxNDA5MCwtMjA5MTcyNTQzOCwtMTgxODAyMjk5OCwxNDMyNjE0
-ODM1LC05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAzODM2LC
-02NTkzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMzY1
-OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEzMT
-I1LC05ODk3OTAwNjcsLTQ2OTU1OTUwOCw1MDQzODYzMTQsMTg1
-MzQyNDAxNl19
+eyJoaXN0b3J5IjpbNzIxNDAxMTYyLDE2NjE2MzkxMCwtMjk0Mj
+UyNzA3LC05MzgwMTQwOTAsLTIwOTE3MjU0MzgsLTE4MTgwMjI5
+OTgsMTQzMjYxNDgzNSwtOTY1NjQ5ODMzLC0yMTE0ODUzNjcsLT
+g1NjgwMzgzNiwtNjU5MzEzODkzLDI0NTgzNTE4MywxOTQyNjMw
+NTMxLC0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3OC
+wtMTk2MjkxMzEyNSwtOTg5NzkwMDY3LC00Njk1NTk1MDgsNTA0
+Mzg2MzE0XX0=
 -->
