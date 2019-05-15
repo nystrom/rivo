@@ -578,7 +578,10 @@ Each `struct` definition induces a record type (constructor) with the same name,
 	struct False // type False	
 	struct True  // type True
 
-Structs are actually just enums. I
+Structs are actually just enums. Indeed the following are equivalent:
+
+    struct S
+    enum S { S }
 
 ## Enum definitions
 
@@ -1194,7 +1197,7 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTczMjg2NDE3NiwtOTM4MDE0MDkwLC0yMD
+eyJoaXN0b3J5IjpbLTI5NDI1MjcwNywtOTM4MDE0MDkwLC0yMD
 kxNzI1NDM4LC0xODE4MDIyOTk4LDE0MzI2MTQ4MzUsLTk2NTY0
 OTgzMywtMjExNDg1MzY3LC04NTY4MDM4MzYsLTY1OTMxMzg5My
 wyNDU4MzUxODMsMTk0MjYzMDUzMSwtMjEzNjU5NjY1NywxNTk1
