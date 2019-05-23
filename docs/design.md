@@ -1234,15 +1234,21 @@ Serde
 load table from file
 load matrix / vector from file (Matlab)
 
+### From distributed systems
+
+Want to check for non-overlapping instances.
+Easy fix is to move all instances to the same module.
+But, can we think of this as like a distributed consistency problem and 
+
 ### From Fortress
 
 match with
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTYyMjk0OTk3NSwxNzU4NTc4OTY0LDcyMT
-QwMTE2MiwxNjYxNjM5MTAsLTI5NDI1MjcwNywtOTM4MDE0MDkw
-LC0yMDkxNzI1NDM4LC0xODE4MDIyOTk4LDE0MzI2MTQ4MzUsLT
-k2NTY0OTgzMywtMjExNDg1MzY3LC04NTY4MDM4MzYsLTY1OTMx
-Mzg5MywyNDU4MzUxODMsMTk0MjYzMDUzMSwtMjEzNjU5NjY1Ny
-wxNTk1MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5MTMxMjUsLTk4
-OTc5MDA2N119
+eyJoaXN0b3J5IjpbNTA5MDAwODI5LDE2MjI5NDk5NzUsMTc1OD
+U3ODk2NCw3MjE0MDExNjIsMTY2MTYzOTEwLC0yOTQyNTI3MDcs
+LTkzODAxNDA5MCwtMjA5MTcyNTQzOCwtMTgxODAyMjk5OCwxND
+MyNjE0ODM1LC05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAz
+ODM2LC02NTkzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLT
+IxMzY1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYy
+OTEzMTI1XX0=
 -->
