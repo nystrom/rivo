@@ -1204,13 +1204,17 @@ Same with traits and overlapping instances.
 
 If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separately compile every module without reference to others. We infer the "minimum" types of imported modules (based not on their declarations, but on how they are used in the importing modules). We then check then types on linking: unifying type variables in the cross-module signatures. This means that if a module changes, only that module needs to be recompiled. 
 
+## Things to steal
 
+### From Matlab
+
+### From Fortress
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzIxNDAxMTYyLDE2NjE2MzkxMCwtMjk0Mj
-UyNzA3LC05MzgwMTQwOTAsLTIwOTE3MjU0MzgsLTE4MTgwMjI5
-OTgsMTQzMjYxNDgzNSwtOTY1NjQ5ODMzLC0yMTE0ODUzNjcsLT
-g1NjgwMzgzNiwtNjU5MzEzODkzLDI0NTgzNTE4MywxOTQyNjMw
-NTMxLC0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3OC
-wtMTk2MjkxMzEyNSwtOTg5NzkwMDY3LC00Njk1NTk1MDgsNTA0
-Mzg2MzE0XX0=
+eyJoaXN0b3J5IjpbMTc1ODU3ODk2NCw3MjE0MDExNjIsMTY2MT
+YzOTEwLC0yOTQyNTI3MDcsLTkzODAxNDA5MCwtMjA5MTcyNTQz
+OCwtMTgxODAyMjk5OCwxNDMyNjE0ODM1LC05NjU2NDk4MzMsLT
+IxMTQ4NTM2NywtODU2ODAzODM2LC02NTkzMTM4OTMsMjQ1ODM1
+MTgzLDE5NDI2MzA1MzEsLTIxMzY1OTY2NTcsMTU5NTM5MzM5OS
+wtMjQ0Mjk2NDc4LC0xOTYyOTEzMTI1LC05ODk3OTAwNjcsLTQ2
+OTU1OTUwOF19
 -->
