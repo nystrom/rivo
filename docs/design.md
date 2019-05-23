@@ -1214,16 +1214,23 @@ Matrix is a 1-indexed 2-dim table.
 Array is a 0-indexed n-dim table.
 Tables replace dictionaries, arrays.
 
+A | A - concat columns
+A / A - concat rows
+[1 2 3 ; 4 5 6 ; 7 8 9]
+[1,2,3] / [4,5,6] / [7,8,9]
+
+slicing
+operations like transpose, flipud, 
 transpose A
 A(:,1)
 
 ### From Fortress
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI5MTA5MDY5LDE3NTg1Nzg5NjQsNzIxND
-AxMTYyLDE2NjE2MzkxMCwtMjk0MjUyNzA3LC05MzgwMTQwOTAs
-LTIwOTE3MjU0MzgsLTE4MTgwMjI5OTgsMTQzMjYxNDgzNSwtOT
-Y1NjQ5ODMzLC0yMTE0ODUzNjcsLTg1NjgwMzgzNiwtNjU5MzEz
-ODkzLDI0NTgzNTE4MywxOTQyNjMwNTMxLC0yMTM2NTk2NjU3LD
-E1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOTg5
-NzkwMDY3XX0=
+eyJoaXN0b3J5IjpbLTE2MTc2NTc3MjcsMTc1ODU3ODk2NCw3Mj
+E0MDExNjIsMTY2MTYzOTEwLC0yOTQyNTI3MDcsLTkzODAxNDA5
+MCwtMjA5MTcyNTQzOCwtMTgxODAyMjk5OCwxNDMyNjE0ODM1LC
+05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAzODM2LC02NTkz
+MTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMzY1OTY2NT
+csMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYyOTEzMTI1LC05
+ODk3OTAwNjddfQ==
 -->
