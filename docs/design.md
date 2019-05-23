@@ -1238,17 +1238,17 @@ load matrix / vector from file (Matlab)
 
 Want to check for non-overlapping instances.
 Easy fix is to move all instances to the same module.
-But, can we think of this as like a distributed consistency problem and 
+But, can we think of this as like a distributed consistency problem and use Paxos to solve it.
 
 ### From Fortress
 
 match with
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTA5MDAwODI5LDE2MjI5NDk5NzUsMTc1OD
-U3ODk2NCw3MjE0MDExNjIsMTY2MTYzOTEwLC0yOTQyNTI3MDcs
-LTkzODAxNDA5MCwtMjA5MTcyNTQzOCwtMTgxODAyMjk5OCwxND
-MyNjE0ODM1LC05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAz
-ODM2LC02NTkzMTM4OTMsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLT
-IxMzY1OTY2NTcsMTU5NTM5MzM5OSwtMjQ0Mjk2NDc4LC0xOTYy
-OTEzMTI1XX0=
+eyJoaXN0b3J5IjpbMTY4NDU5MTQ2NCwxNjIyOTQ5OTc1LDE3NT
+g1Nzg5NjQsNzIxNDAxMTYyLDE2NjE2MzkxMCwtMjk0MjUyNzA3
+LC05MzgwMTQwOTAsLTIwOTE3MjU0MzgsLTE4MTgwMjI5OTgsMT
+QzMjYxNDgzNSwtOTY1NjQ5ODMzLC0yMTE0ODUzNjcsLTg1Njgw
+MzgzNiwtNjU5MzEzODkzLDI0NTgzNTE4MywxOTQyNjMwNTMxLC
+0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2
+MjkxMzEyNV19
 -->
