@@ -1208,15 +1208,22 @@ If we adopt "smarted recompilation" from Shao and Appel (POPL'93), we can separa
 
 ### From Matlab
 
+First class tables / arrays.
 
+Matrix is a 1-indexed 2-dim table.
+Array is a 0-indexed n-dim table.
+Tables replace dictionaries, arrays.
+
+transpose A
+A(:,1)
 
 ### From Fortress
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk1NDcxNjEwNCwxNzU4NTc4OTY0LDcyMT
-QwMTE2MiwxNjYxNjM5MTAsLTI5NDI1MjcwNywtOTM4MDE0MDkw
-LC0yMDkxNzI1NDM4LC0xODE4MDIyOTk4LDE0MzI2MTQ4MzUsLT
-k2NTY0OTgzMywtMjExNDg1MzY3LC04NTY4MDM4MzYsLTY1OTMx
-Mzg5MywyNDU4MzUxODMsMTk0MjYzMDUzMSwtMjEzNjU5NjY1Ny
-wxNTk1MzkzMzk5LC0yNDQyOTY0NzgsLTE5NjI5MTMxMjUsLTk4
-OTc5MDA2N119
+eyJoaXN0b3J5IjpbLTI5MTA5MDY5LDE3NTg1Nzg5NjQsNzIxND
+AxMTYyLDE2NjE2MzkxMCwtMjk0MjUyNzA3LC05MzgwMTQwOTAs
+LTIwOTE3MjU0MzgsLTE4MTgwMjI5OTgsMTQzMjYxNDgzNSwtOT
+Y1NjQ5ODMzLC0yMTE0ODUzNjcsLTg1NjgwMzgzNiwtNjU5MzEz
+ODkzLDI0NTgzNTE4MywxOTQyNjMwNTMxLC0yMTM2NTk2NjU3LD
+E1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2MjkxMzEyNSwtOTg5
+NzkwMDY3XX0=
 -->
