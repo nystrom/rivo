@@ -1220,13 +1220,21 @@ A / A - concat rows
 [1,2,3] / [4,5,6] / [7,8,9]
 
 slicing
-operations like transpose, flipud, 
-transpose A
+operations like transpose, flipud, etc
+flatten into a single vector
+dot product
+cross product
+element-wise operations with .
+1 ./ A
+map (1 /) A
+
+sum A
+sum
 A(:,1)
 
 ### From Fortress
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE2MTc2NTc3MjcsMTc1ODU3ODk2NCw3Mj
+eyJoaXN0b3J5IjpbLTEyMTIwNDAzNTEsMTc1ODU3ODk2NCw3Mj
 E0MDExNjIsMTY2MTYzOTEwLC0yOTQyNTI3MDcsLTkzODAxNDA5
 MCwtMjA5MTcyNTQzOCwtMTgxODAyMjk5OCwxNDMyNjE0ODM1LC
 05NjU2NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAzODM2LC02NTkz
