@@ -4,7 +4,7 @@ use std::fmt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 // start and end offset into file
 pub struct Loc {
     start: u32,
