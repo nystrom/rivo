@@ -456,16 +456,21 @@ impl<'a> Lexer<'a> {
 
         match text.as_str() {
             "_"      => self.locate(Token::Underscore, text.len() as u32),
+            "else"   => self.locate(Token::Else, text.len() as u32),
+            "enum"   => self.locate(Token::Enum, text.len() as u32),
+            "for"    => self.locate(Token::For, text.len() as u32),
             "fun"    => self.locate(Token::Fun, text.len() as u32),
+            "if"     => self.locate(Token::If, text.len() as u32),
+            "import" => self.locate(Token::Import, text.len() as u32),
+            "let"    => self.locate(Token::Let, text.len() as u32),
+            "match"  => self.locate(Token::Match, text.len() as u32),
+            "module" => self.locate(Token::Module, text.len() as u32),
             "struct" => self.locate(Token::Struct, text.len() as u32),
             "trait"  => self.locate(Token::Trait, text.len() as u32),
             "val"    => self.locate(Token::Val, text.len() as u32),
             "var"    => self.locate(Token::Var, text.len() as u32),
-            "let"    => self.locate(Token::Let, text.len() as u32),
-            "for"    => self.locate(Token::For, text.len() as u32),
             "with"   => self.locate(Token::With, text.len() as u32),
             "where"  => self.locate(Token::Where, text.len() as u32),
-            "import" => self.locate(Token::Import, text.len() as u32),
             text     => self.locate(Token::Id(text.to_string()), text.len() as u32)
         }
     }

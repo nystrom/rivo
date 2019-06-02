@@ -8,7 +8,7 @@ license = "BSD-3"
 readme = "README.md"
 repository = "https://github.com/nystrom/rivo.git"
 homepage = "https://github.com/nystrom/rivo"
-# build = "build.rs"
+build = "build.rs"
 
 [profile.release]
 opt-level = 3
@@ -22,12 +22,14 @@ pretty = "*"
 rpds = "*"
 trace = "*"
 rayon = "*"
-
 lazy_static = "*"
 string-interner = "0.7.0"
-
 gearley = "*"
 cfg = "*"
+salsa = "*"
+lalrpop-util = "0.17.0"
+regex = "0.2.0"
+
 
 [patch.crates-io]
 trace = { git = "https://github.com/gsingh93/trace.git" }
@@ -37,5 +39,5 @@ pretty_assertions = "*"
 quickcheck = "*"
 quickcheck_macros = "*"
 
-# [build-dependencies]
-# menhir = "*"
+[build-dependencies]
+lalrpop = "0.17.0"

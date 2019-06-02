@@ -1,0 +1,405 @@
+use std::str::FromStr;
+
+use crate::syntax::loc::*;
+use crate::syntax::names::Interned;
+use crate::parser::trees::*;
+use crate::parser::lex::*;
+use crate::parser::tokens::*;
+
+use num::bigint::BigInt;
+use num::rational::BigRational;
+
+grammar<'err>(
+    errors: &'err mut Vec<Located<String>>
+);
+
+pub Root: Root = {
+    Semi<Sp<ModuleMember>> => Root { defs: <> }
+}
+
+ModuleDef: ModuleDef = {
+    "module" Sp<Id> Block<Sp<ModuleMember>>? => Root { defs: vec![] }
+};
+
+ModuleMember: Def = {
+    ModuleDef => { Def::Module(<>) },
+    StructDef => { Def::Struct(<>) },
+    EnumDef => { Def::Enum(<>) },
+    TraitDef => { Def::Trait(<>) },
+    FunDef => { Def::Fun(<>) },
+    LetDef => { Def::Let(<>) },
+    VarDef => { Def::Var(<>) },
+    Import => { Def::Import(<>) },
+    <!> => { errors.push(<>); Def::Error },
+};
+
+StructDef: StructDef = {
+    "struct" <StructBody> => <>,
+};
+
+StructBody: StructDef = {
+    <x:Id> <g:Sp<Guard>?> <b:Block<Sp<StructMember>>?> =>
+        StructDef { attrs: vec![], name: x, params: vec![], opt_guard: g, defs: b },
+    <h:Header<FunParam>> <g:Sp<Guard>?> <b:Block<Sp<StructMember>>?> =>
+        StructDef { attrs: vec![], name: h.name, params: h.params, opt_guard: g, defs: b },
+};
+
+EnumDef: EnumDef = {
+    "enum" <EnumBody> => <>,
+};
+
+EnumBody: EnumDef = {
+    <x:Id> <b:Block<Sp<EnumMember>>?> =>
+        EnumDef { attrs: vec![], name: x, params: vec![], defs: b },
+    <h:Header<TyvarParam>> <b:Block<Sp<EnumMember>>?> =>
+        EnumDef { attrs: vec![], name: h.name, params: h.params, defs: b },
+};
+
+TraitDef: TraitDef = {
+    "trait" <TraitBody> => <>,
+};
+
+TraitBody: TraitDef = {
+    <x:Id> <b:Block<Sp<TraitMember>>?> => 
+        TraitDef { attrs: vec![], name: x, params: vec![], supers: vec![], defs: b },
+    <h:Header<TyParam>> <b:Block<Sp<TraitMember>>?> =>
+        TraitDef { attrs: vec![], name: h.name, params: h.params, supers: vec![], defs: b },
+};
+
+StructMember: StructMember = {
+    LetDef => StructMember::Let(<>),
+    VarDef => StructMember::Var(<>),
+};
+
+EnumMember: StructDef = {
+    StructBody
+};
+
+TraitMember: TraitMember = {
+    FunDef => TraitMember::Fun(<>),
+    LetDef => TraitMember::Let(<>),
+    VarDef => TraitMember::Var(<>),
+};
+
+LetDef: LetDef = {
+    "let" Sp<Term> => { LetDef { attrs: vec![], formula: <> } }
+};
+
+VarDef: VarDef = {
+    "var" Sp<Term> => { VarDef { attrs: vec![], formula: <> } }
+};
+
+FunDef: FunDef = {
+    "fun" Sp<Id> Sp<Guard>? "=" Sp<Mixfix>,
+    "fun" Sp<Id> Sp<Guard>? "=" Sp<ModalRet> Sp<Guard>?,
+    "fun" Header<FunParam> Sp<Guard>? "=" Sp<Mixfix>,
+    "fun" Header<ModalParam> Sp<Guard>? "=" Sp<ModalRet> Sp<Guard>?,
+}
+
+#[inline]
+Header<Rule>: () = {
+    Sp<Rule>+ Sp<Part> Rest<Rule>*,
+    Sp<Part>+ Sp<Rule> Rest<Rule>*,
+}
+
+#[inline]
+Rest<Rule>: () = {
+    Sp<Part>,
+    Sp<Rule>,
+}
+
+Part: Part = {
+    <x:Id> => match x { Name::Id(x) => Part::Id(x) },
+    <x:Op> => x,
+}
+
+Guard: Exp = {
+    "where" Sp<Select> => <>
+};
+
+// TODO: the semantic action has to decide if the term is a single term and is parenthesized. In this case, it should change the Assoc.
+FunParam: Param = {
+    "(" Comma<Sp<Term>> ")" =>
+        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
+};
+
+TyParam: TypeParam = {
+    "(" Comma<Sp<Type>> ")" => <>,
+};
+
+TyvarParam: TypeParam = {
+    "(" Sp<Id> ")" => <>,
+    "(" "(" Sp<Id> ")" ")" => <>,
+};
+
+ModalParam: Param = {
+    "(" "?" Comma<Sp<Term>> ")" =>
+        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
+    "(" "(" "?" Comma<Sp<Term>> ")" ")" =>
+        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::Assoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
+    "(" "!" Comma<Sp<Term>> ")" =>
+        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: <> },
+    "(" "(" "!" Comma<Sp<Term>> ")" ")" =>
+        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::Assoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: <> },
+};
+
+ModalRet: Param = {
+    "(" "?" Comma<Sp<Term>> ")" => 
+        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
+    "(" "!" Comma<Sp<Term>> ")" =>
+        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: <> },
+};
+
+Type: Type = {
+    Path => Type::Dynamic,
+    "(" Comma<Sp<Type>> ")" => Type::Dynamic,
+    "[" Sp<Type> "]" => Type::Dynamic,
+}
+
+Import: Import = {
+    "import" <Sp<Path>> "." <Sp<Selector>> => 
+        Import { path: <>, selector: <> },
+    "import" <p:Sp<Path>> => {
+        match p {
+            Path::Root => Import { path: p, selector: vec![] },
+            Path::Member(box p, x) => Import { path: p, selector: vec![Selector::Including(x)] }
+        }
+    },
+    "import" <x:Sp<"_">> => 
+        Import { path: Located { loc: x.loc, value: Path::Root }, selector![Selector::All] },
+    "import" <x:Sp<"(">> <y:Sp<")">> =>
+        Import { path: Located { loc: x.loc, value: Path::Root }, selector![Selector::None] },
+}
+
+Selector: Vec<Selector> = {
+    "_" => vec![Selector::All],
+    "(" ")" => vec![Selector::None],
+    "(" <Comma<Sp<BaseSelector>>> ")" => <>,
+}
+
+BaseSelector: Selector = {
+    Id => Selector::Including(<>),
+    Id "->" Id => Selector::Renaming(<>, <>),
+    Id "->" "(" ")" => Selector::Excluding(<>),
+    "_" => Selector::All,
+}
+
+Path: Path = {
+    Id => Path::Member(box Path::Root, <>),
+    Path "." Id => Path::Member(box <>, <>),
+}
+
+Term: Exp = {
+    If,
+    Let,
+    Var,
+    For,
+    Match,
+    Lambda,
+    Block<Sp<Term>>,
+    Term1,
+    ! => { errors.push(<>); Exp::Error }
+};
+
+Mixfix: Exp = {
+    Sp<Select>+ => Exp::Mixfix { es: <> },
+};
+
+Term1: Exp = {
+    Sp<Mixfix> "=" Sp<Term> => 
+        Exp::Bind { lhs: box <>, rhs: box <> },
+    Sp<Mixfix> "<-" Sp<Term> =>
+        Exp::Generator { lhs: box <>, rhs: box <> },
+    Sp<Mixfix> "where" Sp<Term> =>
+        Exp::Where { pat: box <>, guard: box <> },
+    Mixfix => <>,
+};
+
+If: Exp = {
+    "if" Sp<Mixfix> <Block<Sp<Term>>> => 
+        Exp::Let { formula: box <>, body: <>, otherwise: vec![] },
+    "if" Sp<Mixfix> Sp<Block<Sp<Term>>> "else" Sp<Block<Sp<Term>>> =>
+        Exp::Let { formula: box <>, body: <>, otherwise: <> },
+};
+
+Let: Exp = {
+    "let" Sp<Mixfix> <Block<Sp<Term>>> => 
+        Exp::Let { formula: box <>, body: <>, otherwise: vec![] },
+    "let" Sp<Mixfix> <Block<Sp<Term>>> "else" <Block<Sp<Term>>> =>
+        Exp::Let { formula: box <>, body: <>, otherwise: <> },
+};
+
+Var: Exp = {
+    "var" Sp<Mixfix> <Block<Sp<Term>>> =>
+        Exp::LetVar { formula: box <>, body: <>, otherwise: vec![] },
+    "var" Sp<Mixfix> <Block<Sp<Term>>> "else" <Block<Sp<Term>>> =>
+        Exp::LetVar { formula: box <>, body: <>, otherwise: <> },
+};
+
+For: Exp = {
+    "for" Sp<Mixfix> <Block<Sp<Term>>> =>
+        Exp::For { formula: box <>, body: <>, otherwise: vec![] },
+    "for" Sp<Mixfix> <Block<Sp<Term>>> "else" <Block<Sp<Term>>> =>
+        Exp::For { formula: box <>, body: <>, otherwise: <> },
+};
+
+Match: Exp = {
+    "match" Sp<Mixfix> Block<Sp<Case>> =>
+        Exp::Match { value: box <>, cases: box <> }
+};
+
+Case: Exp = {
+    <p:Sp<Mixfix>> <g:Sp<Guard>?> "->" <e:Term> =>
+        Exp::Lambda { params: vec![p], opt_guard: g, ret: box e }, 
+};
+
+Select: Exp = {
+    <p:Sp<Path>> "." "(" <m:Sp<Mixfix>> ")" =>
+        Exp::SelectMixfix { module: box p, es: m.es },
+    <p:Sp<Path>> => {
+        match p {
+            Path::Root => { errors.push(); Exp::Error }
+            Path::Member(box Root, x) => Exp::Name { name: x },
+            Path::Member(box p, x) => Exp::Select { module: box p, name: x },
+        }
+    },
+    <Primary> => <>,
+};
+
+Primary: Exp = {
+    Lit => Exp::Lit { lit: <> },
+    "(" <Comma<Term>> ")" => Exp::Tuple { es: <> },
+    "[" <Comma<Term>> "]" => Exp::List { es: <> },
+};
+
+Lambda: Exp = {
+    "fun" <ps:Sp<LambdaParam>*> <g:Guard?> "->" <e:Term> =>
+        Exp::Lambda { params: ps, opt_guard: g, ret: box e }, 
+};
+
+LambdaParam: Located<Exp> = {
+    "(" <Term> ")" => <>,
+    <Id> => Exp::Unknown { name: <> },
+};
+
+Name: Name = {
+    Id,
+    MixfixName,
+};
+
+MixfixName: Name = {
+    "`" <PartOrPlaceholder+> "`" => Name::Mixfix(<>),
+};
+
+PartOrPlaceholder: Part = {
+    "_" => Part::Placeholder,
+    Part,
+};
+
+Lit: Exp = {
+    "string" => Exp::Lit { lit: Lit::String { value: <> } },
+    "char" => Exp::Lit { lit: Lit::Char { value: <> } },
+    "int" => Exp::Lit { lit: Lit::Int { value: <> } },
+    "rational" => Exp::Lit { lit: Lit::Rat { value: <> } },
+    "_",
+    "(" ")",
+    "[" "]",
+};
+
+Block<Rule>: Vec<Rule> =
+    "{" ";"? <rules: (<Rule> ";")*> <last: Rule?> "}" => {
+        let mut rules = rules;
+        rules.extend(last);
+        rules
+    };
+
+Comma<Rule>: Vec<Rule> =
+    <rules: (<Rule> ",")*> <last: Rule> => {
+        let mut rules = rules;
+        rules.push(last);
+        rules
+    };
+
+Semi<Rule>: Vec<Rule> =
+    <rules: (<Rule> ";")*> <last: Rule> => {
+        let mut rules = rules;
+        rules.push(last);
+        rules
+    };
+
+#[inline]
+Sp<Rule>: Located<Rule> =
+    <l: @L> <rule: Rule> <r: @R> =>
+        Located::new(Loc::span(l, r), rule);
+
+IdStr: Interned = {
+    "identifier" => Interned::new(&<>),
+};
+
+OpStr: Interned = {
+    "operator" => Interned::new(&<>),
+};
+
+Id: Name = {
+    IdStr => Name::Id(<>)
+};
+
+Op: Part = {
+    OpStr => Part::Op(<>)
+};
+
+
+// Tokens
+
+
+extern {
+    type Location = Loc;
+    type Error = Located<String>;
+
+    enum Token {
+        "identifier" => Token::Id(<String>),
+        "operator" => Token::Op(<String>),
+        "string" => Token::String(<String>),
+        "char" => Token::Char(<char>),
+        "int" => Token::Int(<BigInt>, <String>),
+        "rational" => Token::Rat(<BigRational>, <String>),
+
+        "else" => Token::Else,
+        "enum" => Token::Enum,
+        "module" => Token::Module,
+        "for" => Token::For,
+        "if" => Token::If,
+        "let" => Token::Let,
+        "var" => Token::Var,
+        "fun" => Token::Fun,
+        "struct" => Token::Struct,
+        "trait" => Token::Trait,
+        "where" => Token::Where,
+        "import" => Token::Import,
+        "match" => Token::Match,
+
+        "@" => Token::At,
+        ":" => Token::Colon,
+       // "::" => Token::ColonColon,
+        "#" => Token::Hash,
+        "," => Token::Comma,
+        "." => Token::Dot,
+        "=" => Token::Eq,
+        "->" => Token::Arrow,
+        "<-" => Token::Backarrow,
+        "?" => Token::Question,
+        "!" => Token::Bang,
+        "`" => Token::Tick,
+        "_" => Token::Underscore,
+
+        "{" => Token::Lc,
+        "[" => Token::Lb,
+        "(" => Token::Lp,
+
+        "}" => Token::Rc,
+        "]" => Token::Rb,
+        ")" => Token::Rp,
+
+        ";" => Token::Semi,
+    }
+}

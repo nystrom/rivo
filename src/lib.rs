@@ -21,6 +21,11 @@
 #![allow(clippy::redundant_closure)]
 #![allow(clippy::wrong_self_convention)]
 
+#[macro_use] 
+extern crate lalrpop_util;
+
+#[macro_use]
+extern crate salsa;
 
 extern crate num;
 extern crate unicode_categories;
@@ -58,3 +63,5 @@ pub mod visit;
 pub mod driver;
 
 pub mod lower;
+
+

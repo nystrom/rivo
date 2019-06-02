@@ -32,16 +32,23 @@ pub enum Token {
     Op(String),
     Id(String),
 
+    Enum,
     For,
     Fun,
     Import,
     Let,
-    Val,
-    Var,
+    Module,
     Struct,
     Trait,
-    With,
-    Where,
+    Val, // DEPRECATED
+    Var,
+    With, // DEPRECATED
+    Where, // DEPRECATED (replace with if)
+
+    // There should be removed once we have call-by-name working.
+    If,
+    Else,
+    Match,
 
     Char(char),
     Rat(BigRational, String),
@@ -109,16 +116,22 @@ impl fmt::Display for Token {
             Token::Op(ref s) => write!(f, "operator `{}`", s),
             Token::Id(ref s) => write!(f, "identifier `{}`", s),
 
+            Token::Enum => write!(f, "`enum`"),
             Token::For => write!(f, "`for`"),
             Token::Fun => write!(f, "`fun`"),
             Token::Import => write!(f, "`import`"),
             Token::Let => write!(f, "`let`"),
-            Token::Val => write!(f, "`val`"),
-            Token::Var => write!(f, "`var`"),
+            Token::Module => write!(f, "`module`"),
             Token::Struct => write!(f, "`struct`"),
             Token::Trait => write!(f, "`trait`"),
+            Token::Val => write!(f, "`val`"),
+            Token::Var => write!(f, "`var`"),
             Token::With => write!(f, "`with`"),
             Token::Where => write!(f, "`where`"),
+
+            Token::If => write!(f, "`if`"),
+            Token::Else => write!(f, "`else`"),
+            Token::Match => write!(f, "`match`"),
 
             Token::Char(ref ch) => write!(f, "character literal `'{}'`", ch),
             Token::Rat(ref n, ref s) => write!(f, "rational literal `{}`", s),
