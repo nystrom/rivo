@@ -1261,6 +1261,7 @@ macro derive (Eq) (x @ struct t { ... }) = x ; trait Eq (y) { .. }
 
 Parse program into a database.
 Parse bytecode into THE SAME database.
+Type check, etc., by writing queries.
 
 ### Unsafe
 
@@ -1271,11 +1272,11 @@ Parse bytecode into THE SAME database.
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTU0MjQwNzc2OCwtNDcxNDk4ODQ3LDE2OD
-Q1OTE0NjQsMTYyMjk0OTk3NSwxNzU4NTc4OTY0LDcyMTQwMTE2
-MiwxNjYxNjM5MTAsLTI5NDI1MjcwNywtOTM4MDE0MDkwLC0yMD
-kxNzI1NDM4LC0xODE4MDIyOTk4LDE0MzI2MTQ4MzUsLTk2NTY0
-OTgzMywtMjExNDg1MzY3LC04NTY4MDM4MzYsLTY1OTMxMzg5My
-wyNDU4MzUxODMsMTk0MjYzMDUzMSwtMjEzNjU5NjY1NywxNTk1
-MzkzMzk5XX0=
+eyJoaXN0b3J5IjpbNDA0MjM5NDkxLC00NzE0OTg4NDcsMTY4ND
+U5MTQ2NCwxNjIyOTQ5OTc1LDE3NTg1Nzg5NjQsNzIxNDAxMTYy
+LDE2NjE2MzkxMCwtMjk0MjUyNzA3LC05MzgwMTQwOTAsLTIwOT
+E3MjU0MzgsLTE4MTgwMjI5OTgsMTQzMjYxNDgzNSwtOTY1NjQ5
+ODMzLC0yMTE0ODUzNjcsLTg1NjgwMzgzNiwtNjU5MzEzODkzLD
+I0NTgzNTE4MywxOTQyNjMwNTMxLC0yMTM2NTk2NjU3LDE1OTUz
+OTMzOTldfQ==
 -->
