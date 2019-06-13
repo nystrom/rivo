@@ -1247,25 +1247,29 @@ match with
 
 ### Macros
 
+See Ryan Culpepper's work on Racket
+
 macro if (a) (b) else (c) = match (eval a) {
    Boolean::True -> eval b
    Boolean::False -> eval c
 }
 
+macro derive (Eq) (x @ struct t { ... }) = x ; trait Eq 
+
 ### Unsafe
 
-macro 
+
 
 
 
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM4NDk4Mzk3MCwtNDcxNDk4ODQ3LDE2OD
-Q1OTE0NjQsMTYyMjk0OTk3NSwxNzU4NTc4OTY0LDcyMTQwMTE2
-MiwxNjYxNjM5MTAsLTI5NDI1MjcwNywtOTM4MDE0MDkwLC0yMD
-kxNzI1NDM4LC0xODE4MDIyOTk4LDE0MzI2MTQ4MzUsLTk2NTY0
-OTgzMywtMjExNDg1MzY3LC04NTY4MDM4MzYsLTY1OTMxMzg5My
-wyNDU4MzUxODMsMTk0MjYzMDUzMSwtMjEzNjU5NjY1NywxNTk1
-MzkzMzk5XX0=
+eyJoaXN0b3J5IjpbLTE5OTM1NjUxMjMsLTQ3MTQ5ODg0NywxNj
+g0NTkxNDY0LDE2MjI5NDk5NzUsMTc1ODU3ODk2NCw3MjE0MDEx
+NjIsMTY2MTYzOTEwLC0yOTQyNTI3MDcsLTkzODAxNDA5MCwtMj
+A5MTcyNTQzOCwtMTgxODAyMjk5OCwxNDMyNjE0ODM1LC05NjU2
+NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAzODM2LC02NTkzMTM4OT
+MsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMzY1OTY2NTcsMTU5
+NTM5MzM5OV19
 -->
