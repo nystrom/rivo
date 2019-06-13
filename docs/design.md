@@ -1247,15 +1247,19 @@ match with
 
 ### Macros
 
+Allow quoting and unquoting of ASTs for functions.
+If a function takes a code argument, 
 fun if ($a) then ($b) else ($c) = match ($a) {
-   True -> $b
-   False -> $c
+   Boolean::True -> $b
+   Boolean::False -> $c
 }
 
 
 
+
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk4MTg4MTcxNSwxNjg0NTkxNDY0LDE2Mj
+eyJoaXN0b3J5IjpbMTE0MjU5NTM3MSwxNjg0NTkxNDY0LDE2Mj
 I5NDk5NzUsMTc1ODU3ODk2NCw3MjE0MDExNjIsMTY2MTYzOTEw
 LC0yOTQyNTI3MDcsLTkzODAxNDA5MCwtMjA5MTcyNTQzOCwtMT
 gxODAyMjk5OCwxNDMyNjE0ODM1LC05NjU2NDk4MzMsLTIxMTQ4
