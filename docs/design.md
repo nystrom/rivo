@@ -1243,12 +1243,42 @@ But, can we think of this as like a distributed consistency problem and use Paxo
 ### From Fortress
 
 match with
+
+
+### Macros
+
+See Ryan Culpepper's work on Racket
+
+macro if (a) (b) else (c) = match (eval a) {
+   Boolean::True -> eval b
+   Boolean::False -> eval c
+}
+
+macro derive (Eq) (x @ struct t { ... }) = x ; trait Eq (y) { .. }
+
+
+### QL
+
+Parse program into a database.
+Parse bytecode into THE SAME database.
+Type check, etc., by writing queries.
+
+Chalk or Salsa?
+
+### Unsafe
+
+
+
+
+
+
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY4NDU5MTQ2NCwxNjIyOTQ5OTc1LDE3NT
-g1Nzg5NjQsNzIxNDAxMTYyLDE2NjE2MzkxMCwtMjk0MjUyNzA3
-LC05MzgwMTQwOTAsLTIwOTE3MjU0MzgsLTE4MTgwMjI5OTgsMT
-QzMjYxNDgzNSwtOTY1NjQ5ODMzLC0yMTE0ODUzNjcsLTg1Njgw
-MzgzNiwtNjU5MzEzODkzLDI0NTgzNTE4MywxOTQyNjMwNTMxLC
-0yMTM2NTk2NjU3LDE1OTUzOTMzOTksLTI0NDI5NjQ3OCwtMTk2
-MjkxMzEyNV19
+eyJoaXN0b3J5IjpbLTE1MTY3MjIxNDQsLTQ3MTQ5ODg0NywxNj
+g0NTkxNDY0LDE2MjI5NDk5NzUsMTc1ODU3ODk2NCw3MjE0MDEx
+NjIsMTY2MTYzOTEwLC0yOTQyNTI3MDcsLTkzODAxNDA5MCwtMj
+A5MTcyNTQzOCwtMTgxODAyMjk5OCwxNDMyNjE0ODM1LC05NjU2
+NDk4MzMsLTIxMTQ4NTM2NywtODU2ODAzODM2LC02NTkzMTM4OT
+MsMjQ1ODM1MTgzLDE5NDI2MzA1MzEsLTIxMzY1OTY2NTcsMTU5
+NTM5MzM5OV19
 -->
