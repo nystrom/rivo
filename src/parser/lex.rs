@@ -31,7 +31,7 @@ pub enum LexError {
     UnexpectedChar(char),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Lexer<'a> {
     // char position of the lexer
     offset: u32,
@@ -45,12 +45,13 @@ pub struct Lexer<'a> {
 }
 
 impl<'input> Iterator for Lexer<'input> {
-    type Item = LexResult<Located<Token>>;
+    type Item = Located<Token>;
 
-    fn next(&mut self) -> Option<LexResult<Located<Token>>> {
+    fn next(&mut self) -> Option<Located<Token>> {
         match self.next_token() {
             Ok(Located { value: Token::EOF, .. }) => None,
-            t => Some(t)
+            Ok(t) => Some(t),
+            _ => None,
         }
     }
 }
@@ -117,15 +118,25 @@ impl<'a> Lexer<'a> {
         let pos = self.offset;
 
         let prev_can_end = self.prev_token_can_end_statement;
-        let next_token = self.next_token()?;
 
         // println!("prev_can_end={:?} next={:?}", prev_can_end, next_token);
 
-        // If we're in a block, generate a virtual semicolon.
+        // If we're in a block (or the file scope) generate a virtual semicolon.
         let mut insert_semi = self.stack.is_empty();
         if let Some(Token::Lc) = self.stack.last() {
             insert_semi = true;
         }
+
+        // println!("virtual_semi: prev_can_end = {}", prev_can_end);
+        // println!("virtual_semi: insert_semi = {}", insert_semi);
+
+        // Get the next token.
+        // Important: this should be done AFTER checking the stack for open blocks
+        // because next_token() modifies the stack.
+        let next_token = self.next_token()?;
+
+        // println!("virtual_semi: next_token = {:?}", next_token);
+        // println!("virtual_semi: can_start = {}", Lexer::can_start_statement(&next_token.value));
 
         if insert_semi && prev_can_end && Lexer::can_start_statement(&next_token.value) {
             self.token_buffer.push_back(next_token);
@@ -212,15 +223,18 @@ impl<'a> Lexer<'a> {
             Some(&ch) => {
                 let t = self.read_token()?;
 
+
                 match t.value {
                     Token::Lb | Token::Lp | Token::Lc => {
                         self.stack.push(t.value.clone());
+                        // println!("next_token: push {:?}", t);
                     },
                     Token::Rb | Token::Rp | Token::Rc => {
                         // Pop the stack to the next matching delimiter, if any.
                         // We could just blindly pop, but this helps to localize parse errors
                         // when we have unbalanced parens.
                         while let Some(v) = self.stack.pop() {
+                            // println!("next_token: pop {:?}", v);
                             match (v, &t.value) {                  // &t.value to let (,) borrow t
                                 (Token::Lb, Token::Rb) => { break; },
                                 (Token::Lc, Token::Rc) => { break; },
@@ -331,31 +345,11 @@ impl<'a> Lexer<'a> {
             },
             Some('!') => {
                 self.read_char();
-                if let Some(&ch) = self.peek_char() {
-                    if Lexer::is_op_char(ch) {
-                        self.read_operator('!')
-                    }
-                    else {
-                        self.locate(Token::Bang, 1)
-                    }
-                }
-                else {
-                    self.locate(Token::Bang, 1)
-                }
+                self.read_operator('!')
             },
             Some('?') => {
                 self.read_char();
-                if let Some(&ch) = self.peek_char() {
-                    if Lexer::is_op_char(ch) {
-                        self.read_operator('?')
-                    }
-                    else {
-                        self.locate(Token::Question, 1)
-                    }
-                }
-                else {
-                    self.locate(Token::Question, 1)
-                }
+                self.read_operator('?')
             },
             Some('=') => {
                 self.read_char();
@@ -456,14 +450,18 @@ impl<'a> Lexer<'a> {
 
         match text.as_str() {
             "_"      => self.locate(Token::Underscore, text.len() as u32),
+            "in"     => self.locate(Token::In, text.len() as u32),
+            "out"    => self.locate(Token::Out, text.len() as u32),
             "else"   => self.locate(Token::Else, text.len() as u32),
             "enum"   => self.locate(Token::Enum, text.len() as u32),
+            "type"   => self.locate(Token::Type, text.len() as u32),
             "for"    => self.locate(Token::For, text.len() as u32),
             "fun"    => self.locate(Token::Fun, text.len() as u32),
             "if"     => self.locate(Token::If, text.len() as u32),
             "import" => self.locate(Token::Import, text.len() as u32),
             "let"    => self.locate(Token::Let, text.len() as u32),
             "match"  => self.locate(Token::Match, text.len() as u32),
+            "while"  => self.locate(Token::While, text.len() as u32),
             "module" => self.locate(Token::Module, text.len() as u32),
             "struct" => self.locate(Token::Struct, text.len() as u32),
             "trait"  => self.locate(Token::Trait, text.len() as u32),
@@ -1177,16 +1175,14 @@ mod tests {
     #[test]
     fn test_builtin_operators() {
         assert_tokens!(
-            "-> := @ <- ! : , . = ? ; ` [] {} ()"
+            "-> := @ <- : , . = ; ` [] {} ()"
             , Ok(Token::Arrow)
             , Ok(Token::Assign)
             , Ok(Token::At)
-            , Ok(Token::Bang)
             , Ok(Token::Colon)
             , Ok(Token::Comma)
             , Ok(Token::Dot)
             , Ok(Token::Eq)
-            , Ok(Token::Question)
             , Ok(Token::Semi)
             , Ok(Token::Tick)
             , Ok(Token::Lb)

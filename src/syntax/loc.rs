@@ -17,6 +17,14 @@ impl Loc {
         Loc { start, end }
     }
 
+    pub fn start_loc(self) -> Loc {
+        Loc { start: self.start, end: self.start }
+    }
+    
+    pub fn end_loc(self) -> Loc {
+        Loc { start: self.end, end: self.end }
+    }
+
     pub fn no_loc() -> Loc {
         NO_LOC
     }

@@ -11,16 +11,17 @@ pub enum Token {
     Assign,
     At,
     Backarrow,
-    Bang,
     Colon,
     Comma,
     Dot,
     Eq,
     Hash,
-    Question,
     Semi,
     Tick,
     Underscore,
+    
+    Bang, // DEPRECATED
+    Question, // DEPRECATED
 
     Lb,
     Rb,
@@ -44,11 +45,16 @@ pub enum Token {
     Var,
     With, // DEPRECATED
     Where, // DEPRECATED (replace with if)
+    In, 
+    Out, 
+    Type, 
 
     // There should be removed once we have call-by-name working.
     If,
     Else,
     Match,
+    While,
+    Do,
 
     Char(char),
     Rat(BigRational, String),
@@ -94,17 +100,19 @@ impl fmt::Display for Token {
             Token::Arrow => write!(f, "`->`"),
             Token::Assign => write!(f, "`:=`"),
             Token::At => write!(f, "`@`"),
-            Token::Bang => write!(f, "`!`"),
             Token::Backarrow => write!(f, "`<-`"),
             Token::Colon => write!(f, "`:`"),
             Token::Comma => write!(f, "`,`"),
             Token::Dot => write!(f, "`.`"),
             Token::Eq => write!(f, "`=`"),
             Token::Hash => write!(f, "`#`"),
-            Token::Question => write!(f, "`?`"),
             Token::Semi => write!(f, "`;`"),
             Token::Tick => write!(f, "`"),
             Token::Underscore => write!(f, "`_`"),
+
+            // DEPRECATED
+            Token::Bang => write!(f, "`!`"),
+            Token::Question => write!(f, "`?`"),
 
             Token::Lb => write!(f, "`[`"),
             Token::Rb => write!(f, "`]`"),
@@ -116,6 +124,8 @@ impl fmt::Display for Token {
             Token::Op(ref s) => write!(f, "operator `{}`", s),
             Token::Id(ref s) => write!(f, "identifier `{}`", s),
 
+            Token::In => write!(f, "`in`"),
+            Token::Out => write!(f, "`out`"),
             Token::Enum => write!(f, "`enum`"),
             Token::For => write!(f, "`for`"),
             Token::Fun => write!(f, "`fun`"),
@@ -128,10 +138,13 @@ impl fmt::Display for Token {
             Token::Var => write!(f, "`var`"),
             Token::With => write!(f, "`with`"),
             Token::Where => write!(f, "`where`"),
+            Token::Type => write!(f, "`type`"),
 
             Token::If => write!(f, "`if`"),
             Token::Else => write!(f, "`else`"),
             Token::Match => write!(f, "`match`"),
+            Token::While => write!(f, "`while`"),
+            Token::Do => write!(f, "`do`"),
 
             Token::Char(ref ch) => write!(f, "character literal `'{}'`", ch),
             Token::Rat(ref n, ref s) => write!(f, "rational literal `{}`", s),

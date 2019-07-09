@@ -60,24 +60,37 @@ pub struct TypeParam {
 }
 
 #[derive(Clone, Debug)]
+pub enum Kind {
+    Type,
+    Fun(Box<Kind>, Box<Kind>)
+}
+
+#[derive(Clone, Debug)]
 pub enum Type {
-    Name(Name),
+    Path(Path),
     Part(Part),
+    Var(Name),
+    Fun(Box<Located<Type>>, Box<Located<Type>>),
+    SelectMixfix(Path, Vec<Located<Type>>),
     Mixfix(Vec<Located<Type>>),
     Forall(Vec<Name>, Box<Located<Type>>),
+    Tuple(Vec<Located<Type>>),
+    List(Box<Located<Type>>),
+    Kinded(Box<Located<Type>>, Located<Kind>),
     Dynamic,
 }
 
 #[derive(Clone, Debug)]
 pub struct ModuleDef {
-    imports: Vec<Located<Import>>,
-    defs: Vec<Located<Def>>,
+    pub attrs: Vec<Located<Attr>>,
+    pub name: Name,
+    pub defs: Vec<Located<Def>>,
 }
 
 #[derive(Clone, Debug)]
 pub struct Import {
-    path: Located<Path>,
-    selector: Vec<Located<Selector>>,
+    pub path: Located<Path>,
+    pub selector: Vec<Located<Selector>>,
 }
 
 #[derive(Clone, Debug)]
@@ -90,10 +103,7 @@ pub enum Selector {
 }
 
 #[derive(Clone, Debug)]
-pub enum Name {
-    Id(Interned),
-    Mixfix(Vec<Part>),
-}
+pub struct Name(pub Vec<Part>);
 
 #[derive(Clone, Debug)]
 pub enum Part {
@@ -109,57 +119,59 @@ pub type Pat = Exp;
 
 #[derive(Clone, Debug)]
 pub struct VarDef {
-    attrs: Vec<Located<Attr>>,
-    formula: Located<Formula>,
+    pub attrs: Vec<Located<Attr>>,
+    pub formula: Located<Formula>,
 }
 
 #[derive(Clone, Debug)]
 pub struct LetDef {
-    attrs: Vec<Located<Attr>>,
-    formula: Located<Formula>,
+    pub attrs: Vec<Located<Attr>>,
+    pub formula: Located<Formula>,
 }
 
 #[derive(Clone, Debug)]
 pub struct FunDef {
-    attrs: Vec<Located<Attr>>,
-    name: Name,
-    opt_guard: Option<Located<Exp>>,
-    opt_body: Option<Located<Exp>>,
-    params: Vec<Located<Param>>,
-    ret: Located<Param>,
+    pub attrs: Vec<Located<Attr>>,
+    pub name: Name,
+    pub opt_guard: Option<Located<Exp>>,
+    pub opt_body: Option<Located<Exp>>,
+    pub params: Vec<Located<Param>>,
+    pub ret: Located<Param>,
+    pub ret_type: Option<Located<Type>>,
 }
 
 #[derive(Clone, Debug)]
 pub struct StructDef {
-    attrs: Vec<Located<Attr>>,
-    name: Name,
-    opt_guard: Option<Located<Exp>>,
-    params: Vec<Located<Param>>,
-    defs: Vec<Located<StructMember>>,  // only formula defs
+    pub attrs: Vec<Located<Attr>>,
+    pub name: Name,
+    pub opt_guard: Option<Located<Exp>>,
+    pub params: Vec<Located<Param>>,
+    pub defs: Vec<Located<StructMember>>,  // only formula defs
 }
 
 #[derive(Clone, Debug)]
 pub struct EnumDef {
-    attrs: Vec<Located<Attr>>,
-    name: Name,
-    params: Vec<Located<TypeParam>>,
-    defs: Vec<Located<StructDef>>,  // only struct defs
+    pub attrs: Vec<Located<Attr>>,
+    pub name: Name,
+    pub params: Vec<Located<TypeParam>>,
+    pub defs: Vec<Located<StructDef>>,  // only struct defs
 }
 
 #[derive(Clone, Debug)]
 pub struct TraitDef {
-    attrs: Vec<Located<Attr>>,
-    name: Name,
-    params: Vec<Located<TypeParam>>,
-    supers: Vec<Located<Type>>,
-    defs: Vec<Located<TraitMember>>,  
+    pub attrs: Vec<Located<Attr>>,
+    pub name: Name,
+    pub params: Vec<Located<TypeParam>>,
+    pub supers: Vec<Located<Type>>,
+    pub defs: Vec<Located<TraitMember>>,  
 }
 
 #[derive(Clone, Debug)]
 pub enum TraitMember {
     Let(LetDef),
     Var(VarDef),
-    Fun(FunDef)
+    Fun(FunDef),
+    Import(Import),
 }
 
 #[derive(Clone, Debug)]
@@ -178,6 +190,7 @@ pub enum Def {
     Fun(FunDef),
     Let(LetDef),
     Var(VarDef),
+    Import(Import),
 }
 
 #[derive(Clone, Debug)]
@@ -206,33 +219,39 @@ pub enum Attr {
     Assign,
     At,
     Backarrow,
-    Bang,
     Colon,
     Comma,
     Dot,
     Eq,
     Hash,
-    Question,
     Semi,
 
+    In,
+    Out,
+    Enum,
+    Else,
     For,
+    If,
+    Cond,
+    While,
+    Struct,
+    Match,
     Fun,
     Import,
     Let,
-    Val,
     Var,
     Trait,
     Where,
-    With,
+    Module,
 
     Lit { lit: Lit },
-    Name { name: Name },
+    Part { name: Part },
 }
 
 #[derive(Clone, Debug)]
 pub enum Path {
     Root,
-    Member(Box<Path>, Name), 
+    Member(Box<Located<Path>>, Name), 
 }
 
 #[derive(Clone, Debug)]
@@ -273,11 +292,20 @@ pub enum Exp {
         value: Box<Located<Exp>>,
         cases: Vec<Located<Exp>>,
     },
+    Cond {
+        cases: Vec<Located<Exp>>,
+    },
+    While {
+        cond: Box<Located<Exp>>,
+        body: Vec<Located<Exp>>,
+    },
+    DoWhile {
+        body: Vec<Located<Exp>>,
+        cond: Box<Located<Exp>>,
+    },
 
     Block {
-        imports: Vec<Located<Import>>,
-        defs: Vec<Located<Def>>,
-        body: Box<Located<Exp>>,
+        body: Vec<Located<Exp>>,
     },
 
     Arrow {
@@ -304,6 +332,11 @@ pub enum Exp {
     Select {
         module: Box<Located<Path>>,
         name: Name,
+    },
+
+    Ascribe {
+        e: Box<Located<Exp>>,
+        ty: Box<Located<Type>>,
     },
 
     SelectMixfix {

@@ -5,6 +5,7 @@ use crate::syntax::names::Interned;
 use crate::parser::trees::*;
 use crate::parser::lex::*;
 use crate::parser::tokens::*;
+use crate::parser::either::*;
 
 use num::bigint::BigInt;
 use num::rational::BigRational;
@@ -18,7 +19,8 @@ pub Root: Root = {
 }
 
 ModuleDef: ModuleDef = {
-    "module" Sp<Id> Block<Sp<ModuleMember>>? => Root { defs: vec![] }
+    <attrs:Attrs*> "module" <name:IdName> <defs:OptBlock<Sp<ModuleMember>>> => 
+        ModuleDef { attrs, name, defs }
 };
 
 ModuleMember: Def = {
@@ -30,41 +32,109 @@ ModuleMember: Def = {
     LetDef => { Def::Let(<>) },
     VarDef => { Def::Var(<>) },
     Import => { Def::Import(<>) },
-    <!> => { errors.push(<>); Def::Error },
+    <l:@L> <x:!> <r:@R> => { 
+        println!("bad def {:?}", x);
+        errors.push(Located::new(Loc::span(l, r), "Expected a definition, not this thing.".to_string())); 
+        Def::Error 
+    }
 };
 
 StructDef: StructDef = {
-    "struct" <StructBody> => <>,
+    <attrs:Attrs*> "struct" <body:StructBody> => StructDef { attrs, ..body },
 };
 
+Attrs: Located<Attr> = {
+    "#" <attr:Sp<AttrPrimary>> ";"? => attr
+}
+
+AttrPrimary: Attr = {
+    "[" <l:@L> <attrs:Comma<Sp<Attr>>> <r:@R> "]" => Attr::Brackets(box Located::new(Loc::span(l, r), Attr::CommaSeq(attrs))),
+    "(" <l:@L> <attrs:Comma<Sp<Attr>>> <r:@R> ")" => Attr::Parens(box Located::new(Loc::span(l, r), Attr::CommaSeq(attrs))),
+    "{" <l:@L> <attrs:Comma<Sp<Attr>>> <r:@R> "}" => Attr::Braces(box Located::new(Loc::span(l, r), Attr::CommaSeq(attrs))),
+    <l:@L> "[" "]" <r:@R> => Attr::Brackets(box Located::new(Loc::span(l, r), Attr::CommaSeq(vec![]))),
+    <l:@L> "(" ")" <r:@R> => Attr::Parens(box Located::new(Loc::span(l, r), Attr::CommaSeq(vec![]))),
+    <l:@L> "{" "}" <r:@R> => Attr::Braces(box Located::new(Loc::span(l, r), Attr::CommaSeq(vec![]))),
+}
+
+Attr: Attr = {
+    <attrs:Sp<Attr0>+> => {
+        if attrs.len() == 1 {
+            attrs.first().unwrap().value.clone()
+        }
+        else {
+            Attr::Seq(attrs)
+        }
+    }
+};
+
+Attr0: Attr = {
+    "->" => Attr::Arrow,
+    "<-" => Attr::Backarrow,
+    ":" => Attr::Colon,
+    "." => Attr::Dot,
+    "=" => Attr::Eq,
+    <name:Id> => Attr::Part { name },
+    <name:Op> => Attr::Part { name },
+    "in" => Attr::In,
+    "out" => Attr::Out,
+    "enum" => Attr::Enum,
+    "else" => Attr::Else,
+    "for" => Attr::For,
+    "fun" => Attr::Fun,
+    "if" => Attr::If,
+    "import" => Attr::Import,
+    "struct" => Attr::Struct,
+    "trait" => Attr::Trait,
+    "module" => Attr::Module,
+    "let" => Attr::Let,
+    "var" => Attr::Var,
+    "match" => Attr::Match,
+    "where" => Attr::Where,
+    "string" => Attr::Lit { lit: Lit::String { value: <> } },
+    "char" => Attr::Lit { lit: Lit::Char { value: <> } },
+    "int" => Attr::Lit { lit: Lit::Int { value: <>.0 } },
+    "rational" => Attr::Lit { lit: Lit::Rat { value: <>.0 } },
+    "_" => Attr::Lit { lit: Lit::Wildcard },
+    AttrPrimary => <>,
+}
+
 StructBody: StructDef = {
-    <x:Id> <g:Sp<Guard>?> <b:Block<Sp<StructMember>>?> =>
-        StructDef { attrs: vec![], name: x, params: vec![], opt_guard: g, defs: b },
-    <h:Header<FunParam>> <g:Sp<Guard>?> <b:Block<Sp<StructMember>>?> =>
-        StructDef { attrs: vec![], name: h.name, params: h.params, opt_guard: g, defs: b },
+    <name:IdName> <g:Sp<Guard>?> <defs:OptBlock<Sp<StructMember>>> =>
+        StructDef { attrs: vec![], name, params: vec![], opt_guard: g, defs },
+    <h:Header<Sp<FunParam>>> <g:Sp<Guard>?> <defs:OptBlock<Sp<StructMember>>> =>
+        StructDef { attrs: vec![], name: h.0, params: h.1, opt_guard: g, defs },
 };
 
 EnumDef: EnumDef = {
-    "enum" <EnumBody> => <>,
+    <attrs:Attrs*> "enum" <body:EnumBody> => EnumDef { attrs, ..body },
 };
 
 EnumBody: EnumDef = {
-    <x:Id> <b:Block<Sp<EnumMember>>?> =>
-        EnumDef { attrs: vec![], name: x, params: vec![], defs: b },
-    <h:Header<TyvarParam>> <b:Block<Sp<EnumMember>>?> =>
-        EnumDef { attrs: vec![], name: h.name, params: h.params, defs: b },
+    <name:IdName> <defs:OptBlock<Sp<EnumMember>>> =>
+        EnumDef { attrs: vec![], name, params: vec![], defs },
+    <h:Header<Sp<TyvarParam>>> <defs:OptBlock<Sp<EnumMember>>> =>
+        EnumDef { attrs: vec![], name: h.0, params: h.1, defs },
 };
 
 TraitDef: TraitDef = {
-    "trait" <TraitBody> => <>,
+    <attrs:Attrs*> "trait" <body:TraitBody> => TraitDef { attrs, ..body },
 };
 
 TraitBody: TraitDef = {
-    <x:Id> <b:Block<Sp<TraitMember>>?> => 
-        TraitDef { attrs: vec![], name: x, params: vec![], supers: vec![], defs: b },
-    <h:Header<TyParam>> <b:Block<Sp<TraitMember>>?> =>
-        TraitDef { attrs: vec![], name: h.name, params: h.params, supers: vec![], defs: b },
+    <name:IdName> <supers:OptSupers> <defs:OptBlock<Sp<TraitMember>>> => 
+        TraitDef { attrs: vec![], name, params: vec![], supers: supers, defs },
+    <h:Header<Sp<TyParam>>> <supers:OptSupers> <defs:OptBlock<Sp<TraitMember>>> =>
+        TraitDef { attrs: vec![], name: h.0, params: h.1, supers: supers, defs },
 };
+
+OptSupers: Vec<Located<Type>> = {
+    <supers:Supers?> => supers.unwrap_or(vec![]),
+}
+
+Supers: Vec<Located<Type>> = {
+    //"where" "(" <tys:Comma<Sp<Type>>> ")" => tys,
+    "where" <ty:Sp<TypePrimary>> => vec![ty],
+}
 
 StructMember: StructMember = {
     LetDef => StructMember::Let(<>),
@@ -79,114 +149,318 @@ TraitMember: TraitMember = {
     FunDef => TraitMember::Fun(<>),
     LetDef => TraitMember::Let(<>),
     VarDef => TraitMember::Var(<>),
+    Import => TraitMember::Import(<>),
 };
 
 LetDef: LetDef = {
-    "let" Sp<Term> => { LetDef { attrs: vec![], formula: <> } }
+    <attrs:Attrs*> "let" <formula:Sp<Term>> => { LetDef { attrs, formula } }
 };
 
 VarDef: VarDef = {
-    "var" Sp<Term> => { VarDef { attrs: vec![], formula: <> } }
+    <attrs:Attrs*> "var" <formula:Sp<Term>> => { VarDef { attrs, formula } }
 };
 
+RetType: Located<Type> = {
+    "->" <ty:Sp<Type>> => ty,
+}
+
+
 FunDef: FunDef = {
-    "fun" Sp<Id> Sp<Guard>? "=" Sp<Mixfix>,
-    "fun" Sp<Id> Sp<Guard>? "=" Sp<ModalRet> Sp<Guard>?,
-    "fun" Header<FunParam> Sp<Guard>? "=" Sp<Mixfix>,
-    "fun" Header<ModalParam> Sp<Guard>? "=" Sp<ModalRet> Sp<Guard>?,
+    <attrs:Attrs*> "fun" <name:IdName> <ret_type:RetType?> <opt_guard:Sp<Guard>?> <r:@R> =>
+        FunDef { 
+            attrs, 
+            name, 
+            opt_guard, 
+            opt_body: None, 
+            params: vec![], 
+            ret: Located::new(
+                r,
+                Param { 
+                    attr: ParamAttr { 
+                        attrs: vec![], 
+                        assoc: Assoc::NonAssoc, 
+                        by_name: CallingConv::ByValue, 
+                        mode: CallingMode::Input 
+                    }, 
+                    term: box Located::new(r, Exp::Lit { lit: Lit::Nothing })
+                } 
+            ),
+            ret_type,
+        },
+    <attrs:Attrs*> "fun" <name:IdName> <ret_type:RetType?> <opt_guard:Sp<Guard>?> "=" <term:Sp<Term>> =>
+        FunDef { 
+            attrs, 
+            name, 
+            opt_guard, 
+            opt_body: None, 
+            params: vec![], 
+            ret: Located::new(
+                term.loc,
+                Param { 
+                    attr: ParamAttr { 
+                        attrs: vec![], 
+                        assoc: Assoc::NonAssoc, 
+                        by_name: CallingConv::ByValue, 
+                        mode: CallingMode::Input 
+                    }, 
+                    term: box term 
+                } 
+            ),
+            ret_type,
+        },
+    <attrs:Attrs*> "fun" <name:IdName> <ret_type:RetType?> <opt_guard:Sp<Guard>?> "=" <ret:Sp<ModalRet>> <opt_body:Sp<Guard>?> =>
+        FunDef { 
+            attrs, 
+            name, 
+            opt_guard, 
+            opt_body, 
+            params: vec![], 
+            ret,
+            ret_type,
+        },
+    <attrs:Attrs*> "fun" <header:Header<Sp<FunParam>>> <ret_type:RetType?> <opt_guard:Sp<Guard>?> <r:@R> =>
+        FunDef { 
+            attrs, 
+            name: header.0, 
+            opt_guard, 
+            opt_body: None, 
+            params: header.1, 
+            ret: Located::new(
+                r,
+                Param { 
+                    attr: ParamAttr { 
+                        attrs: vec![], 
+                        assoc: Assoc::NonAssoc, 
+                        by_name: CallingConv::ByValue, 
+                        mode: CallingMode::Input 
+                    }, 
+                    term: box Located::new(r, Exp::Lit { lit: Lit::Nothing })
+                }
+            ),
+            ret_type,
+        },
+    <attrs:Attrs*> "fun" <header:Header<Sp<FunParam>>> <ret_type:RetType?> <opt_guard:Sp<Guard>?> "=" <term:Sp<Term>> =>
+        FunDef { 
+            attrs, 
+            name: header.0, 
+            opt_guard, 
+            opt_body: None, 
+            params: header.1, 
+            ret: Located::new(
+                term.loc,
+                Param { 
+                    attr: ParamAttr { 
+                        attrs: vec![], 
+                        assoc: Assoc::NonAssoc, 
+                        by_name: CallingConv::ByValue, 
+                        mode: CallingMode::Input 
+                    }, 
+                    term: box term 
+                }
+            ),
+            ret_type,
+        },
+    <attrs:Attrs*> "fun" <header:Header<Sp<ModalParam>>> <ret_type:RetType?> <opt_guard:Sp<Guard>?> "=" <ret:Sp<ModalRet>> <opt_body:Sp<Guard>?> =>
+        FunDef { 
+            attrs,
+            name: header.0, 
+            opt_guard, 
+            opt_body, 
+            params: header.1, 
+            ret,
+            ret_type,
+        },
 }
 
 #[inline]
-Header<Rule>: () = {
-    Sp<Rule>+ Sp<Part> Rest<Rule>*,
-    Sp<Part>+ Sp<Rule> Rest<Rule>*,
+Header<T>: (Name, Vec<T>) = {
+    <header:Header0<T>> => {
+        (Name(header.0), header.1)
+    }
 }
 
 #[inline]
-Rest<Rule>: () = {
-    Sp<Part>,
-    Sp<Rule>,
+Header0<T>: (Vec<Part>, Vec<T>) = {
+    <rules:T+> <part:Part> <rest:Rest<T>*> => {
+        let mut ps = vec![];
+        let mut rs = vec![];
+        for r in rules {
+            ps.push(Part::Placeholder);
+            rs.push(r);
+        }
+        ps.push(part);
+        for r in rest {
+            match r {
+                Either::Left(p) => {
+                    ps.push(p);
+                }
+                Either::Right(r) => {
+                    ps.push(Part::Placeholder);
+                    rs.push(r);
+                }
+            }
+        }
+        (ps, rs)
+    },
+    <parts:Part+> <rule:T> <rest:Rest<T>*> =>  {
+        let mut ps = vec![];
+        let mut rs = vec![];
+        for p in parts {
+            ps.push(p);
+        }
+        rs.push(rule);
+        for r in rest {
+            match r {
+                Either::Left(p) => {
+                    ps.push(p);
+                }
+                Either::Right(r) => {
+                    ps.push(Part::Placeholder);
+                    rs.push(r);
+                }
+            }
+        }
+        (ps, rs)
+    },
+}
+
+#[inline]
+Rest<T>: Either<Part, T> = {
+    Part => Either::Left(<>),
+    T => Either::Right(<>),
 }
 
 Part: Part = {
-    <x:Id> => match x { Name::Id(x) => Part::Id(x) },
-    <x:Op> => x,
+    Id,
+    Op,
 }
 
 Guard: Exp = {
-    "where" Sp<Select> => <>
+    "where" <e:Mixfix> => e,
+    "where" <e:BlockExp> => e
 };
+
+BlockExp: Exp = {
+    <es:Block<Sp<Term>>> => Exp::Block { body: es }
+}
 
 // TODO: the semantic action has to decide if the term is a single term and is parenthesized. In this case, it should change the Assoc.
 FunParam: Param = {
-    "(" Comma<Sp<Term>> ")" =>
-        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
+    "(" <attrs:Attrs*> <term:Box<Sp<Tuple>>> ")" =>
+        Param { attr: ParamAttr { attrs, assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: term },
 };
 
 TyParam: TypeParam = {
-    "(" Comma<Sp<Type>> ")" => <>,
+    "(" <attrs:Attrs*> <ty:Box<Sp<TyTuple>>> ")" => {
+        TypeParam { attr: TypeParamAttr { attrs, assoc: Assoc::NonAssoc }, ty }
+    },
 };
+
+Kind: Kind = {
+    "type" => Kind::Type,
+    "type" "->" <k:Box<Kind>> => Kind::Fun(box Kind::Type, k),
+    "(" <k:Kind> ")" => k,
+}
 
 TyvarParam: TypeParam = {
-    "(" Sp<Id> ")" => <>,
-    "(" "(" Sp<Id> ")" ")" => <>,
+    "(" <attrs:Attrs*> <x:Sp<IdName>> ")" => 
+        TypeParam { attr: TypeParamAttr { attrs, assoc: Assoc::NonAssoc }, ty: box Located::new(x.loc, Type::Var(x.value)) },
+    "(" "(" <attrs:Attrs*> <x:Sp<IdName>> ")" ")" =>
+        TypeParam { attr: TypeParamAttr { attrs, assoc: Assoc::Assoc }, ty: box Located::new(x.loc, Type::Var(x.value)) },
+    "(" <attrs:Attrs*> <x:Sp<IdName>> ":" <kind:Sp<Kind>> ")" => 
+        TypeParam { attr: TypeParamAttr { attrs, assoc: Assoc::NonAssoc }, ty: box Located::new(x.loc, Type::Kinded(box Located::new(x.loc, Type::Var(x.value)), kind)) },
+    "(" "(" <attrs:Attrs*> <x:Sp<IdName>> ":" <kind:Sp<Kind>> ")" ")" =>
+        TypeParam { attr: TypeParamAttr { attrs, assoc: Assoc::Assoc }, ty: box Located::new(x.loc, Type::Kinded(box Located::new(x.loc, Type::Var(x.value)), kind)) },
 };
 
+#[inline]
+Tuple: Exp = <es:Comma<Sp<Term>>> => Exp::Tuple { es };
+
+#[inline]
+TyTuple: Type = <tys:Comma<Sp<Type>>> => Type::Tuple(tys);
+
 ModalParam: Param = {
-    "(" "?" Comma<Sp<Term>> ")" =>
-        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
-    "(" "(" "?" Comma<Sp<Term>> ")" ")" =>
-        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::Assoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
-    "(" "!" Comma<Sp<Term>> ")" =>
-        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: <> },
-    "(" "(" "!" Comma<Sp<Term>> ")" ")" =>
-        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::Assoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: <> },
+    "(" "in" <attrs:Attrs*> <term:Box<Sp<Tuple>>> ")" =>
+        Param { attr: ParamAttr { attrs, assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: term },
+    "(" "(" "in" <attrs:Attrs*> <term:Box<Sp<Tuple>>> ")" ")" =>
+        Param { attr: ParamAttr { attrs, assoc: Assoc::Assoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: term },
+    "(" "out" <attrs:Attrs*> <term:Box<Sp<Tuple>>> ")" =>
+        Param { attr: ParamAttr { attrs, assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: term },
+    "(" "(" "out" <attrs:Attrs*> <term:Box<Sp<Tuple>>> ")" ")" =>
+        Param { attr: ParamAttr { attrs, assoc: Assoc::Assoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: term },
 };
 
 ModalRet: Param = {
-    "(" "?" Comma<Sp<Term>> ")" => 
-        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: <> },
-    "(" "!" Comma<Sp<Term>> ")" =>
-        Param { attr: ParamAttr { attrs: vec![], assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: <> },
+    "(" "in" <attrs:Attrs*> <term:Box<Sp<Tuple>>> ")" => 
+        Param { attr: ParamAttr { attrs, assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Input }, term: term },
+    "(" "out" <attrs:Attrs*> <term:Box<Sp<Tuple>>> ")" =>
+        Param { attr: ParamAttr { attrs, assoc: Assoc::NonAssoc, by_name: CallingConv::ByValue, mode: CallingMode::Output }, term: term },
 };
 
 Type: Type = {
-    Path => Type::Dynamic,
-    "(" Comma<Sp<Type>> ")" => Type::Dynamic,
-    "[" Sp<Type> "]" => Type::Dynamic,
+    <ty:Sp<TypeMixfix>> ":" <k:Sp<Kind>> => Type::Kinded(box ty, k),
+    <arg:Sp<TypeMixfix>> <ret:Box<RetType>?> =>
+        match ret {
+            None => arg.value,
+            Some(ret) => Type::Fun(box arg, ret),
+        }
+}
+
+TypeMixfix: Type = {
+    Sp<TypePrimary>+ => Type::Mixfix(<>)
+}
+
+TypePrimary: Type = {
+    Part => Type::Part(<>),
+    <l:@L> <x:MixfixName> <r:@R> => Type::Path(Path::Member(box Located::new(Loc::span(l, r), Path::Root), x)),
+    FullPath => Type::Path(<>),
+    <p:Path> "." "(" <tys:Sp<TypePrimary>+> ")" => Type::SelectMixfix(p, tys),
+    "(" <tys:Comma<Sp<Type>>> ")" => Type::Tuple(tys),
+    "(" ")" => Type::Tuple(vec![]),
+    "[" <ty:Box<Sp<Type>>> "]" => Type::List(ty),
 }
 
 Import: Import = {
-    "import" <Sp<Path>> "." <Sp<Selector>> => 
-        Import { path: <>, selector: <> },
+    "import" <path:Sp<Path>> "." <selector:Selector> => 
+        Import { path, selector },
     "import" <p:Sp<Path>> => {
-        match p {
-            Path::Root => Import { path: p, selector: vec![] },
-            Path::Member(box p, x) => Import { path: p, selector: vec![Selector::Including(x)] }
+        match p.value {
+            Path::Root => { 
+                errors.push(Located::new(p.loc, "cannot import the root path".to_string())); 
+                Import { path: p, selector: vec![] }
+            },
+            Path::Member(box p, x) => {
+                let loc = p.loc;
+                Import { path: p, selector: vec![Located::new(loc, Selector::Including(x))] }
+            }
         }
     },
     "import" <x:Sp<"_">> => 
-        Import { path: Located { loc: x.loc, value: Path::Root }, selector![Selector::All] },
-    "import" <x:Sp<"(">> <y:Sp<")">> =>
-        Import { path: Located { loc: x.loc, value: Path::Root }, selector![Selector::None] },
+        Import { path: Located { loc: x.loc, value: Path::Root }, selector: vec![Located::new(x.loc, Selector::All)] },
+    "import" <l:@L>  "(" ")" <r:@R> =>
+        Import { path: Located { loc: Loc::span(l, r), value: Path::Root }, selector: vec![Located::new(Loc::span(l, r), Selector::None)] },
 }
 
-Selector: Vec<Selector> = {
-    "_" => vec![Selector::All],
-    "(" ")" => vec![Selector::None],
+Selector: Vec<Located<Selector>> = {
+    <l:@L> "_" <r:@R> => vec![Located::new(Loc::span(l, r), Selector::All)],
+    <l:@L> "(" ")" <r:@R> => vec![Located::new(Loc::span(l, r), Selector::None)],
     "(" <Comma<Sp<BaseSelector>>> ")" => <>,
 }
 
 BaseSelector: Selector = {
-    Id => Selector::Including(<>),
-    Id "->" Id => Selector::Renaming(<>, <>),
-    Id "->" "(" ")" => Selector::Excluding(<>),
+    <x:Name> => Selector::Including(x),
+    <x:Name> "->" <y:Name> => Selector::Renaming(x, y),
+    <x:Name> "->" "(" ")" => Selector::Excluding(x),
     "_" => Selector::All,
 }
 
 Path: Path = {
-    Id => Path::Member(box Path::Root, <>),
-    Path "." Id => Path::Member(box <>, <>),
+    <l:@L> <x:Name> <r:@R> => Path::Member(box Located::new(Loc::span(l, r), Path::Root), x),
+    FullPath,
+}
+
+FullPath: Path = {
+    <p:Sp<Path>> "." <x:Name> => Path::Member(box p, x),
 }
 
 Term: Exp = {
@@ -195,10 +469,17 @@ Term: Exp = {
     Var,
     For,
     Match,
+    Cond,
+    While,
+    DoWhile,
     Lambda,
-    Block<Sp<Term>>,
+    BlockExp,
     Term1,
-    ! => { errors.push(<>); Exp::Error }
+    <l:@L> <x:!> <r:@R> => { 
+        println!("bad term {:?}", x);
+        errors.push(Located::new(Loc::span(l, r), "Expected an expression, not whatever this is.".to_string())); 
+        Exp::Error 
+    }
 };
 
 Mixfix: Exp = {
@@ -206,89 +487,112 @@ Mixfix: Exp = {
 };
 
 Term1: Exp = {
-    Sp<Mixfix> "=" Sp<Term> => 
-        Exp::Bind { lhs: box <>, rhs: box <> },
-    Sp<Mixfix> "<-" Sp<Term> =>
-        Exp::Generator { lhs: box <>, rhs: box <> },
-    Sp<Mixfix> "where" Sp<Term> =>
-        Exp::Where { pat: box <>, guard: box <> },
+    <lhs:Box<Sp<Mixfix>>> "=" <rhs:Box<Sp<Term>>> => 
+        Exp::Bind { lhs, rhs },
+    <lhs:Box<Sp<Mixfix>>> "<-" <rhs:Box<Sp<Term>>> =>
+        Exp::Generator { lhs, rhs },
+    <pat:Box<Sp<Mixfix>>> "where" <guard:Box<Sp<Term>>> =>
+        Exp::Where { pat, guard },
+    <e:Box<Sp<Mixfix>>> ":" <ty:Box<Sp<Type>>> =>
+        Exp::Ascribe { e, ty },
     Mixfix => <>,
 };
 
 If: Exp = {
-    "if" Sp<Mixfix> <Block<Sp<Term>>> => 
-        Exp::Let { formula: box <>, body: <>, otherwise: vec![] },
-    "if" Sp<Mixfix> Sp<Block<Sp<Term>>> "else" Sp<Block<Sp<Term>>> =>
-        Exp::Let { formula: box <>, body: <>, otherwise: <> },
+    "if" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> => 
+        Exp::Let { formula, body, otherwise: vec![] },
+    "if" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> "else" <otherwise:Block<Sp<Term>>> =>
+        Exp::Let { formula, body, otherwise },
+};
+
+While: Exp = {
+    "while" <cond:Box<Sp<Term1>>> <body:Block<Sp<Term>>> => 
+        Exp::While { cond, body },
+};
+
+DoWhile: Exp = {
+    "do" <body:Block<Sp<Term>>> "while" <cond:Box<Sp<Mixfix>>> => 
+        Exp::DoWhile { body, cond },
 };
 
 Let: Exp = {
-    "let" Sp<Mixfix> <Block<Sp<Term>>> => 
-        Exp::Let { formula: box <>, body: <>, otherwise: vec![] },
-    "let" Sp<Mixfix> <Block<Sp<Term>>> "else" <Block<Sp<Term>>> =>
-        Exp::Let { formula: box <>, body: <>, otherwise: <> },
+    "let" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> => 
+        Exp::Let { formula, body, otherwise: vec![] },
+    "let" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> "else" <otherwise:Block<Sp<Term>>> =>
+        Exp::Let { formula, body, otherwise },
 };
 
 Var: Exp = {
-    "var" Sp<Mixfix> <Block<Sp<Term>>> =>
-        Exp::LetVar { formula: box <>, body: <>, otherwise: vec![] },
-    "var" Sp<Mixfix> <Block<Sp<Term>>> "else" <Block<Sp<Term>>> =>
-        Exp::LetVar { formula: box <>, body: <>, otherwise: <> },
+    "var" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> =>
+        Exp::LetVar { formula, body, otherwise: vec![] },
+    "var" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> "else" <otherwise:Block<Sp<Term>>> =>
+        Exp::LetVar { formula, body, otherwise },
 };
 
 For: Exp = {
-    "for" Sp<Mixfix> <Block<Sp<Term>>> =>
-        Exp::For { formula: box <>, body: <>, otherwise: vec![] },
-    "for" Sp<Mixfix> <Block<Sp<Term>>> "else" <Block<Sp<Term>>> =>
-        Exp::For { formula: box <>, body: <>, otherwise: <> },
+    "for" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> =>
+        Exp::For { formula, body, otherwise: vec![] },
+    "for" <formula:Box<Sp<Term1>>> <body:Block<Sp<Term>>> "else" <otherwise:Block<Sp<Term>>> =>
+        Exp::For { formula, body, otherwise },
 };
 
 Match: Exp = {
-    "match" Sp<Mixfix> Block<Sp<Case>> =>
-        Exp::Match { value: box <>, cases: box <> }
-};
+    "match" <value:Box<Sp<Term1>>> <cases:Block<Sp<Case>>> =>
+        Exp::Match { value, cases },
+}
+
+Cond: Exp = {
+    "if" <cases:Block<Sp<Case>>> =>
+        Exp::Cond { cases }
+}
 
 Case: Exp = {
-    <p:Sp<Mixfix>> <g:Sp<Guard>?> "->" <e:Term> =>
-        Exp::Lambda { params: vec![p], opt_guard: g, ret: box e }, 
+    <p:Sp<Mixfix>> <g:Box<Sp<Guard>>?> "->" <e:Box<Sp<Term>>> =>
+        Exp::Lambda { params: vec![p], opt_guard: g, ret: e }, 
 };
 
 Select: Exp = {
-    <p:Sp<Path>> "." "(" <m:Sp<Mixfix>> ")" =>
-        Exp::SelectMixfix { module: box p, es: m.es },
-    <p:Sp<Path>> => {
-        match p {
-            Path::Root => { errors.push(); Exp::Error }
-            Path::Member(box Root, x) => Exp::Name { name: x },
-            Path::Member(box p, x) => Exp::Select { module: box p, name: x },
+    <p:Sp<Path>> "." "(" <es:Sp<Select>+> ")" =>
+        Exp::SelectMixfix { module: box p, es },
+    <p:Sp<FullPath>> => {
+        match p.value {
+            Path::Root => { errors.push(Located::new(p.loc, "invalid root path".to_string())); Exp::Error }
+            Path::Member(box p, x) => {
+                match p.value {
+                    Path::Root => Exp::Name { name: x },
+                    _ => Exp::Select { module: box p, name: x },
+                }
+            }
         }
     },
+    <Part> => Exp::Part { part: <> },
     <Primary> => <>,
 };
 
 Primary: Exp = {
-    Lit => Exp::Lit { lit: <> },
-    "(" <Comma<Term>> ")" => Exp::Tuple { es: <> },
-    "[" <Comma<Term>> "]" => Exp::List { es: <> },
+    <x:MixfixName> => Exp::Var { name: x },
+    Lit => <>,
+    "(" <es:Comma<Sp<Term>>> ")" => Exp::Tuple { es },
+    "[" <es:Comma<Sp<Term>>> "]" => Exp::List { es },
 };
 
 Lambda: Exp = {
-    "fun" <ps:Sp<LambdaParam>*> <g:Guard?> "->" <e:Term> =>
-        Exp::Lambda { params: ps, opt_guard: g, ret: box e }, 
+    "fun" <ps:Sp<LambdaParam>*> <g:Box<Sp<Guard>>?> "->" <e:Box<Sp<Term>>> =>
+        Exp::Lambda { params: ps, opt_guard: g, ret: e }, 
 };
 
-LambdaParam: Located<Exp> = {
-    "(" <Term> ")" => <>,
-    <Id> => Exp::Unknown { name: <> },
+LambdaParam: Exp = {
+    "(" <e:Term> ")" => e,
+    <name:IdName> => Exp::Unknown { name },
 };
 
 Name: Name = {
-    Id,
+    Id => Name(vec![<>]),
     MixfixName,
 };
 
 MixfixName: Name = {
-    "`" <PartOrPlaceholder+> "`" => Name::Mixfix(<>),
+    "`" <ps:PartOrPlaceholder+> "`" => Name(ps),
 };
 
 PartOrPlaceholder: Part = {
@@ -299,38 +603,52 @@ PartOrPlaceholder: Part = {
 Lit: Exp = {
     "string" => Exp::Lit { lit: Lit::String { value: <> } },
     "char" => Exp::Lit { lit: Lit::Char { value: <> } },
-    "int" => Exp::Lit { lit: Lit::Int { value: <> } },
-    "rational" => Exp::Lit { lit: Lit::Rat { value: <> } },
-    "_",
-    "(" ")",
-    "[" "]",
+    "int" => Exp::Lit { lit: Lit::Int { value: <>.0 } },
+    "rational" => Exp::Lit { lit: Lit::Rat { value: <>.0 } },
+    "_" => Exp::Lit { lit: Lit::Wildcard },
+    "(" ")" => Exp::Lit { lit: Lit::Nothing },
+    "[" "]" => Exp::List { es: vec![] },
 };
 
-Block<Rule>: Vec<Rule> =
-    "{" ";"? <rules: (<Rule> ";")*> <last: Rule?> "}" => {
+#[inline]
+OptBlock<T>: Vec<T> = {
+    <Block<T>?> => {
+        match <> {
+            None => vec![],
+            Some(ts) => ts,
+        }
+    }
+}
+
+Block<T>: Vec<T> =
+    "{" ";"? <rules: (<T> ";"+)*> <last: T?> "}" => {
         let mut rules = rules;
         rules.extend(last);
         rules
     };
 
-Comma<Rule>: Vec<Rule> =
-    <rules: (<Rule> ",")*> <last: Rule> => {
+Comma<T>: Vec<T> =
+    <rules: (<T> ",")*> <last: T> => {
         let mut rules = rules;
         rules.push(last);
         rules
     };
 
-Semi<Rule>: Vec<Rule> =
-    <rules: (<Rule> ";")*> <last: Rule> => {
+Semi<T>: Vec<T> =
+    <rules: (<T> ";"+)*> <last: T> => {
         let mut rules = rules;
         rules.push(last);
         rules
     };
 
 #[inline]
-Sp<Rule>: Located<Rule> =
-    <l: @L> <rule: Rule> <r: @R> =>
+Sp<T>: Located<T> =
+    <l: @L> <rule: T> <r: @R> =>
         Located::new(Loc::span(l, r), rule);
+
+#[inline]
+Box<T>: Box<T> =
+    <rule: T> => box rule;
 
 IdStr: Interned = {
     "identifier" => Interned::new(&<>),
@@ -340,8 +658,13 @@ OpStr: Interned = {
     "operator" => Interned::new(&<>),
 };
 
-Id: Name = {
-    IdStr => Name::Id(<>)
+#[inline]
+IdName: Name = {
+    Id => Name(vec![<>])
+}
+
+Id: Part = {
+    IdStr => Part::Id(<>)
 };
 
 Op: Part = {
@@ -367,8 +690,11 @@ extern {
         "else" => Token::Else,
         "enum" => Token::Enum,
         "module" => Token::Module,
+        "type" => Token::Type,
         "for" => Token::For,
         "if" => Token::If,
+        "while" => Token::While,
+        "do" => Token::Do,
         "let" => Token::Let,
         "var" => Token::Var,
         "fun" => Token::Fun,
@@ -377,6 +703,8 @@ extern {
         "where" => Token::Where,
         "import" => Token::Import,
         "match" => Token::Match,
+        "in" => Token::In,
+        "out" => Token::Out,
 
         "@" => Token::At,
         ":" => Token::Colon,
@@ -387,8 +715,6 @@ extern {
         "=" => Token::Eq,
         "->" => Token::Arrow,
         "<-" => Token::Backarrow,
-        "?" => Token::Question,
-        "!" => Token::Bang,
         "`" => Token::Tick,
         "_" => Token::Underscore,
 

@@ -152,6 +152,7 @@ impl Driver {
             Bundle::Read { source, input } => {
                 let old_bundle = self.current_bundle;
                 self.current_bundle = Some(index);
+                let source1 = source.clone();
 
                 let timer = self.stats.start_timer();
 
@@ -165,7 +166,7 @@ impl Driver {
                         self.stats.accum("parse success", 1);
 
                         let line_map = LineMap::new(&input);
-                        self.set_bundle(index, Bundle::Parsed { source: source.clone(), line_map, node_id_generator, tree: t });
+                        self.set_bundle(index, Bundle::Parsed { source: source1, line_map, node_id_generator, tree: t });
                         self.current_bundle = old_bundle;
 
                         Ok(())
@@ -181,7 +182,7 @@ impl Driver {
                         // We have to clone the errors before mutating self with set_bundle.
                         let errs = parser.errors.clone();
 
-                        self.set_bundle(index, Bundle::Parsed { source: source.clone(), line_map, node_id_generator, tree: Located::new(Loc::no_loc(), Root::Bundle { id: NodeId(0), cmds: vec![] }) });
+                        self.set_bundle(index, Bundle::Parsed { source: source1, line_map, node_id_generator, tree: Located::new(Loc::no_loc(), Root::Bundle { id: NodeId(0), cmds: vec![] }) });
 
                         for err in errs {
                             self.error(err);

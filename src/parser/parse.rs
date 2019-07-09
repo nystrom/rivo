@@ -232,8 +232,33 @@ impl<'a> Parser<'a> {
         }
     }
 
-
     pub fn parse_bundle(&mut self) -> PResult<Located<Root>> {
+        use crate::parser::grammar::*;
+        let p = RootParser::new();
+        let mut err: Vec<Located<String>> = vec![];
+        let lex = self.lex.clone();
+        let mut lex2 = lex.clone();
+        while let Some(t) = lex2.next() {
+            println!("{:?}", t);
+        }
+        let t = p.parse(
+            &mut err, 
+            lex.map(|Located { loc, value }| (loc.start_loc(), value, loc.end_loc()))
+        );
+        match t {
+            Ok(t) => {
+                if err.is_empty() {
+                    println!("{:?}", t);
+                }
+                else {
+                    println!("parse failed nicely {:?}", err);
+                }
+            },
+            e => {
+                println!("parse failed {:?} {:?}", e, err);
+            }
+        }
+
         located_ok!(self, {
             let id = self.alloc_node_id();
             let cmds = self.parse_cmds()?;
